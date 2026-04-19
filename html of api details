@@ -1,0 +1,1922 @@
+<div style="margin:0 0 10px 0;">
+                                          <div class="title darkNeutral">
+                                            API Reference (2011-08-13)                                          </div>
+                                          <div style="padding:10px;">
+                                                                                                                                        
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer463'));">
+                                                      Countries                                                    </a>
+                                                  </div>
+                                                  <div id="answer463" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for country information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=c</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual country:<br><div class="code"><pre style="margin:0; padding:0;">&amp;iso=[COUNTRY_ISO]</pre></div><br><br>To retrieve multiple countries:<br><div class="code"><pre style="margin:0; padding:0;">&amp;isos=[COUNTRY_ISO],[COUNTRY_ISO],...</pre></div><br><br>To retrieve all countries:<br><div class="code"><pre style="margin:0; padding:0;">&amp;iso=all
+or
+&amp;isos=all</pre></div><br><br>If any country is not found, no information will be returned for that country, not even an empty country element.<br><br><b>Response</b><br><div class="code"><pre style="margin:0; padding:0;">&lt;country iso="EN"&gt;
+  &lt;iso&gt;EN&lt;/iso&gt;
+  &lt;name&gt;England&lt;/name&gt;
+  &lt;time_offset&gt;-12&lt;/time_offset&gt;
+  &lt;timezone&gt;Europe%2FLondon&lt;/timezone&gt;
+&lt;/country&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Time offset</b> The offset from Blackout Rugby Time in hours.<br><br><b>Timezone</b> The PHP timezone identifier.<br><br><b>Available country ISOs:</b><br><br><b>AR</b> Argentina<br><b>AU</b> Australia<br><b>BE</b> Belgium<br><b>BR</b> Brazil<br><b>CA</b> Canada<br><b>CL</b> Chile<br><b>HR</b> Croatia<br><b>CZ</b> Czech Republic<br><b>EN</b> England<br><b>FR</b> France<br><b>GE</b> Georgia<br><b>DE</b> Germany<br><b>HK</b> Hong Kong<br><b>IE</b> Ireland<br><b>IT</b> Italy<br><b>CI</b> Ivory Coast<br><b>JP</b> Japan<br><b>KE</b> Kenya<br><b>NA</b> Namibia<br><b>NL</b> Netherlands<br><b>NZ</b> New Zealand<br><b>PI</b> Pacific Islands<br><b>PL</b> Poland<br><b>PT</b> Portugal<br><b>RO</b> Romania<br><b>RU</b> Russia<br><b>SL</b> Scotland<br><b>ZA</b> South Africa<br><b>KR</b> South Korea<br><b>ES</b> Spain<br><b>US</b> United States<br><b>UY</b> Uruguay<br><b>WA</b> Wales<br><b>ZW</b> Zimbabwe</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer459'));">
+                                                      Date and Time                                                    </a>
+                                                  </div>
+                                                  <div id="answer459" style="padding:5px; display:none;">
+                                                    <div>In every response from the API, the main parent element contains information about the current date and time in Blackout Rugby. For example:<br><br><div class="code"><pre style="margin:0; padding:0;">&lt;blackoutrugby_api_response
+  brt_timestamp="1265365926" 
+  brt_sql="2010-02-05 22:32:06" 
+  brt_iso_8601="2010-02-05T22:32:06+12:00" 
+  season="7" round="16" day="5"&gt;
+  ...
+&lt;/blackoutrugby_api_response&gt;</pre></div><br><br>All times are calculated under a default timezone of <b>GMT+12</b>, which is equal to BRT (Blackout Rugby Time).<br><br>The first three attributes: brt_timestamp, brt_sql, and brt_iso_8601 hold the current BRT.<br><br><b>brt_timestamp</b> is a Unix timestamp.<br><b>brt_sql</b> is an SQL formatted datetime string.<br><b>brt_iso_8601</b> is the ISO 8601 formatted datetime string.<br><br>The last three attributes are fairly self explanatory, providing the current <b>season</b>, <b>round</b>, and <b>day</b> in Blackout Rugby.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer466'));">
+                                                      Divisions                                                    </a>
+                                                  </div>
+                                                  <div id="answer466" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for division information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=d</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual division:<br><div class="code"><pre style="margin:0; padding:0;">&amp;divisionid=[DIVISION_ID]</pre></div><br><br>To retrieve multiple divisions:<br><div class="code"><pre style="margin:0; padding:0;">&amp;divisionids=[DIVISION_ID],[DIVISION_ID],...</pre></div><br><br>To retrieve a divisionid based on the season, country, and division:<br><div class="code"><pre style="margin:0; padding:0;">&amp;season=[SEASON]&amp;country_iso=[COUNTRY_ISO]&amp;division=[DIVISION]</pre></div><br><br>To retrieve all divisions in a country:<br><div class="code"><pre style="margin:0; padding:0;">&amp;country_iso=[COUNTRY_ISO]</pre></div><br>This returns divisions for the current season.<br><br>Optionally you can specify the season as well:<br><div class="code"><pre style="margin:0; padding:0;">&amp;country_iso=[COUNTRY_ISO]&amp;season=[SEASON]</pre></div><br><br>If any division is not found, no information will be returned for that fixture, not even an empty division element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;division id="926"&gt;
+  &lt;id&gt;926&lt;/id&gt;
+  &lt;country_iso&gt;CA&lt;/country_iso&gt;
+  &lt;season&gt;8&lt;/season&gt;
+  &lt;division&gt;1&lt;/division&gt;
+&lt;/division&gt;</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer481'));">
+                                                      Finances                                                    </a>
+                                                  </div>
+                                                  <div id="answer481" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for financial information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=fi</pre></div><br><br><b>Additional Request Data</b><br><br><div class="code"><pre style="margin:0; padding:0;">&amp;season=[SEASON]&amp;round=[ROUND]</pre></div><br>There is no need to provide a team id. Financial information will be provided only if a member key is provided, for the member's club.<br><br>If no financial information is available, no information will be returned, not even an empty element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;transaction id="31991596"&gt;
+  &lt;id&gt;31991596&lt;/id&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;amount&gt;5625&lt;/amount&gt;
+  &lt;category&gt;Wages&lt;/category&gt;
+  &lt;detail&gt;Youth Manager Wages&lt;/detail&gt;
+  &lt;type&gt;2&lt;/type&gt;
+  &lt;balance&gt;6446416&lt;/balance&gt;
+  &lt;date&gt;1279540890&lt;/date&gt;
+&lt;/transaction&gt;
+&lt;transaction id="31991594"&gt;
+  &lt;id&gt;31991594&lt;/id&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;amount&gt;12500&lt;/amount&gt;
+  &lt;category&gt;Wages&lt;/category&gt;
+  &lt;detail&gt;Youth Scout Wages&lt;/detail&gt;
+  &lt;type&gt;2&lt;/type&gt;
+  &lt;balance&gt;6452041&lt;/balance&gt;
+  &lt;date&gt;1279540890&lt;/date&gt;
+&lt;/transaction&gt;
+...</pre></div><br><br><b>Notes:</b><br><br><b>Date</b> (Timestamp BRT) - The date of the transaction.<br><br><b>Type</b> - 1 = Income, 2 = Expense<br><br><b>Balance</b> - The bank balance after the transaction.<br><br><b>Sorting</b> - By default, transactions are sorted by Category. If you want them in order of processing, you will need to sort by ID locally.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer465'));">
+                                                      Fixtures                                                    </a>
+                                                  </div>
+                                                  <div id="answer465" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for fixture information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=f</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual fixture:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]</pre></div><br><br>To retrieve a group of fixtures:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureids=[FIXTURE_ID],[FIXTURE_ID],...</pre></div><br><br>To retrieve the last X fixtures for a team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;last=[NUMBER_OF_FIXTURES]
+
+optionally, you can filter these fixtures by competition:
+
+&amp;teamid=[TEAM_ID]&amp;last=[NUMBER_OF_FIXTURES]&amp;competition=[COMPETITION]
+</pre></div><br>See notes for valid competitions.<br><br><br>To retrieve all future fixtures for a team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;future=[TEAM_ID]</pre></div><br><br>To retrieve all past fixtures for a team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;past=[TEAM_ID]</pre></div><br>WARNING: Please use this request sparingly, as it can return hundreds of fixtures.<br><br>To get youth fixtures, add the youth flag:<br><div class="code"><pre style="margin:0; padding:0;">...&amp;youth=1</pre></div><br><br>To get National fixtures, add the National flag:<br><div class="code"><pre style="margin:0; padding:0;">...&amp;nat=1</pre></div><br><br>To get Under 20 fixtures, add the Under 20 flag:<br><div class="code"><pre style="margin:0; padding:0;">...&amp;u20=1</pre></div><br><br><b>For club fixtures only:</b><br><br>To retrieve fixtures from the last league round:<br><div class="code"><pre style="margin:0; padding:0;">&amp;latest=[LEAGUE_ID]</pre></div><br><br>To retrieve fixtures from a specific league round:<br><div class="code"><pre style="margin:0; padding:0;">&amp;leagueid=[LEAGUE_ID]&amp;season=[SEASON]&amp;round=[ROUND]</pre></div><br><br>To retrieve all fixtures in a league ordered by round:<br><div class="code"><pre style="margin:0; padding:0;">&amp;leagueid=[LEAGUE_ID]</pre></div><br><br><b>For National\U20 fixtures only:</b><br><br>To retrieve fixtures from the last round:<br><div class="code"><pre style="margin:0; padding:0;">&amp;latest=1&amp;nat=1
+or
+&amp;latest=1&amp;u20=1</pre></div><br><br>To retrieve all round robin fixtures for the current season ordered by round:<br><div class="code"><pre style="margin:0; padding:0;">&amp;roundrobin=1&amp;nat=1
+or
+&amp;roundrobin=1&amp;u20=1</pre></div><br><br><b>3rd Party Friendly Competitions</b><br><br>To retrieve fixtures for any given round for a 3rd party competition:<br><div class="code"><pre style="margin:0; padding:0;">&amp;friendlycompid=[FRIENDLY_COMP_ID]
+or
+&amp;friendlycompid=[FRIENDLY_COMP_ID]&amp;season=[SEASON[&amp;round=[ROUND]</pre></div><br>If a season/round is not specified, the current round is used.<br>The ID for a 3rd party competition can be found in the URL on the competition control panel summary page.<br><br>If any fixture is not found, no information will be returned for that fixture, not even an empty fixture element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;fixture id="3812580"&gt;
+  &lt;id&gt;3812580&lt;/id&gt;
+  &lt;season&gt;8&lt;/season&gt;
+  &lt;country_iso&gt;NZ&lt;/country_iso&gt;
+  &lt;leagueid&gt;61808&lt;/leagueid&gt;
+  &lt;round&gt;2&lt;/round&gt;
+  &lt;hometeamid&gt;21064&lt;/hometeamid&gt;
+  &lt;guestteamid&gt;2&lt;/guestteamid&gt;
+  &lt;competition&gt;League&lt;/competition&gt;
+  &lt;botmatch&gt;0&lt;/botmatch&gt;
+  &lt;matchstart&gt;1266633300&lt;/matchstart&gt;
+&lt;/fixture&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Match start</b> (Timestamp BRT) - The date in Blackout Rugby Time when the match starts, or started.<br><br><b>Bot match</b> If this value is 1, the match was played between two bots, and a full match did not take place. So you cannot request match reports for botmatches for example.<br><br><b>Valid competitions</b><br><b>Seniors:</b> Friendly, ThursdayFriendly, Cup, League, SemiFinal, BronzeFinal, Final, Qualifier<br><b>Juniors:</b> League<br><b>National:</b> International, WorldCup<br><b>Under 20:</b> U20International, U20WorldCup</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer473'));">
+                                                      Fixture Statistics                                                    </a>
+                                                  </div>
+                                                  <div id="answer473" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for fixture based statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=fs</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual fixture's statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]</pre></div><br><br>To retrieve a group of fixture's statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureids=[FIXTURE_ID],[FIXTURE_ID],...</pre></div><br><br><b>WARNING:</b> The above queries alone will return all team statistics and all player statistics available for a match. Please use these sparingly as they return a lot of data. Where possible, use one of the following limiters:<br><br>To only retrieve team statistics for a specified team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]&amp;teamstats=[TEAM_ID]</pre></div><br><br>To only retrieve players statistics for a specified team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]&amp;teamplayersstats=[TEAM_ID]</pre></div><br><br>To only retrieve players statistics for a specified player:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]&amp;playerstats=[PLAYER_ID]</pre></div><br><br>If any fixtures are not found, no information will be returned for that fixture, not even an empty element. If any team or player statistics for a fixture are not found, I.E. if a correct fixture ID is provided, but an incorrect team ID is provided, empty elements may be returned.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;fixture_statistics id="3812596"&gt;
+  &lt;home_team_stats id="2"&gt;
+    &lt;id&gt;2&lt;/id&gt;
+    &lt;tackles&gt;58&lt;/tackles&gt;
+    &lt;metres_gained&gt;255&lt;/metres_gained&gt;
+    &lt;tries&gt;4&lt;/tries&gt;
+    &lt;conversions&gt;2&lt;/conversions&gt;
+    &lt;missed_conversions&gt;2&lt;/missed_conversions&gt;
+    &lt;dropgoals&gt;0&lt;/dropgoals&gt;
+    &lt;missed_dropgoals&gt;0&lt;/missed_dropgoals&gt;
+    &lt;penalties&gt;0&lt;/penalties&gt;
+    &lt;missed_penalties&gt;0&lt;/missed_penalties&gt;
+    &lt;total_points&gt;24&lt;/total_points&gt;
+    &lt;yellow_cards&gt;0&lt;/yellow_cards&gt;
+    &lt;red_cards&gt;0&lt;/red_cards&gt;
+    &lt;linebreaks&gt;3&lt;/linebreaks&gt;
+    &lt;intercepts&gt;0&lt;/intercepts&gt;
+    &lt;kicks&gt;0&lt;/kicks&gt;
+    &lt;good_kicks&gt;0&lt;/good_kicks&gt;
+    &lt;bad_kicks&gt;0&lt;/bad_kicks&gt;
+    &lt;up_and_unders&gt;9&lt;/up_and_unders&gt;
+    &lt;good_up_and_unders&gt;3&lt;/good_up_and_unders&gt;
+    &lt;bad_up_and_unders&gt;6&lt;/bad_up_and_unders&gt;
+    &lt;knockons&gt;11&lt;/knockons&gt;
+    &lt;forward_passes&gt;3&lt;/forward_passes&gt;
+    &lt;phases&gt;22&lt;/phases&gt;
+    &lt;sevenplus_phases&gt;0&lt;/sevenplus_phases&gt;
+    &lt;turnovers&gt;6&lt;/turnovers&gt;
+    &lt;possession&gt;1868&lt;/possession&gt;
+    &lt;territory&gt;2603&lt;/territory&gt;
+    &lt;minutes_in_22&gt;1316&lt;/minutes_in_22&gt;
+    &lt;lineouts_won&gt;10&lt;/lineouts_won&gt;
+    &lt;lineouts_lost&gt;11&lt;/lineouts_lost&gt;
+    &lt;lineouts_against_throw&gt;1&lt;/lineouts_against_throw&gt;
+    &lt;scrums_won&gt;4&lt;/scrums_won&gt;
+    &lt;scrums_lost&gt;27&lt;/scrums_lost&gt;
+    &lt;scrums_against_put_in&gt;0&lt;/scrums_against_put_in&gt;
+    &lt;injuries&gt;0&lt;/injuries&gt;
+    &lt;category_1_injuries&gt;0&lt;/category_1_injuries&gt;
+    &lt;category_2_injuries&gt;0&lt;/category_2_injuries&gt;
+    &lt;category_3_injuries&gt;0&lt;/category_3_injuries&gt;
+    &lt;category_4_injuries&gt;0&lt;/category_4_injuries&gt;
+    &lt;category_5_injuries&gt;0&lt;/category_5_injuries&gt;
+    &lt;category_6_injuries&gt;0&lt;/category_6_injuries&gt;
+    &lt;injury_breaks&gt;3&lt;/injury_breaks&gt;
+    &lt;handling_errors&gt;16&lt;/handling_errors&gt;
+    &lt;missed_tackles&gt;29&lt;/missed_tackles&gt;
+    &lt;fights&gt;0&lt;/fights&gt;
+    &lt;kicking_metres&gt;240&lt;/kicking_metres&gt;
+    &lt;rucks_won&gt;22&lt;/rucks_won&gt;
+    &lt;mauls_won&gt;0&lt;/mauls_won&gt;
+    &lt;matches_played&gt;1&lt;/matches_played&gt;
+    &lt;penalties_conceded&gt;9&lt;/penalties_conceded&gt;
+    &lt;penalties_won&gt;5&lt;/penalties_won&gt;
+    &lt;kicks_out_on_the_full&gt;0&lt;/kicks_out_on_the_full&gt;
+    &lt;ball_time&gt;167&lt;/ball_time&gt;
+    &lt;penalty_time&gt;111&lt;/penalty_time&gt;
+    &lt;turnovers_conceded&gt;8&lt;/turnovers_conceded&gt;
+  &lt;/home_team_stats&gt;
+  &lt;guest_team_stats id="21061"&gt;
+    &lt;id&gt;21061&lt;/id&gt;
+    &lt;tackles&gt;20&lt;/tackles&gt;
+    &lt;metres_gained&gt;360&lt;/metres_gained&gt;
+    &lt;tries&gt;5&lt;/tries&gt;
+    &lt;conversions&gt;3&lt;/conversions&gt;
+    &lt;missed_conversions&gt;2&lt;/missed_conversions&gt;
+    &lt;dropgoals&gt;0&lt;/dropgoals&gt;
+    &lt;missed_dropgoals&gt;1&lt;/missed_dropgoals&gt;
+    &lt;penalties&gt;2&lt;/penalties&gt;
+    &lt;missed_penalties&gt;0&lt;/missed_penalties&gt;
+    &lt;total_points&gt;37&lt;/total_points&gt;
+    &lt;yellow_cards&gt;0&lt;/yellow_cards&gt;
+    &lt;red_cards&gt;0&lt;/red_cards&gt;
+    &lt;linebreaks&gt;3&lt;/linebreaks&gt;
+    &lt;intercepts&gt;0&lt;/intercepts&gt;
+    &lt;kicks&gt;16&lt;/kicks&gt;
+    &lt;good_kicks&gt;13&lt;/good_kicks&gt;
+    &lt;bad_kicks&gt;2&lt;/bad_kicks&gt;
+    &lt;up_and_unders&gt;2&lt;/up_and_unders&gt;
+    &lt;good_up_and_unders&gt;2&lt;/good_up_and_unders&gt;
+    &lt;bad_up_and_unders&gt;0&lt;/bad_up_and_unders&gt;
+    &lt;knockons&gt;8&lt;/knockons&gt;
+    &lt;forward_passes&gt;0&lt;/forward_passes&gt;
+    &lt;phases&gt;45&lt;/phases&gt;
+    &lt;sevenplus_phases&gt;1&lt;/sevenplus_phases&gt;
+    &lt;turnovers&gt;8&lt;/turnovers&gt;
+    &lt;possession&gt;3114&lt;/possession&gt;
+    &lt;territory&gt;2379&lt;/territory&gt;
+    &lt;minutes_in_22&gt;1171&lt;/minutes_in_22&gt;
+    &lt;lineouts_won&gt;11&lt;/lineouts_won&gt;
+    &lt;lineouts_lost&gt;10&lt;/lineouts_lost&gt;
+    &lt;lineouts_against_throw&gt;7&lt;/lineouts_against_throw&gt;
+    &lt;scrums_won&gt;27&lt;/scrums_won&gt;
+    &lt;scrums_lost&gt;4&lt;/scrums_lost&gt;
+    &lt;scrums_against_put_in&gt;5&lt;/scrums_against_put_in&gt;
+    &lt;injuries&gt;0&lt;/injuries&gt;
+    &lt;category_1_injuries&gt;0&lt;/category_1_injuries&gt;
+    &lt;category_2_injuries&gt;0&lt;/category_2_injuries&gt;
+    &lt;category_3_injuries&gt;0&lt;/category_3_injuries&gt;
+    &lt;category_4_injuries&gt;0&lt;/category_4_injuries&gt;
+    &lt;category_5_injuries&gt;0&lt;/category_5_injuries&gt;
+    &lt;category_6_injuries&gt;0&lt;/category_6_injuries&gt;
+    &lt;injury_breaks&gt;0&lt;/injury_breaks&gt;
+    &lt;handling_errors&gt;11&lt;/handling_errors&gt;
+    &lt;missed_tackles&gt;14&lt;/missed_tackles&gt;
+    &lt;fights&gt;0&lt;/fights&gt;
+    &lt;kicking_metres&gt;407&lt;/kicking_metres&gt;
+    &lt;rucks_won&gt;48&lt;/rucks_won&gt;
+    &lt;mauls_won&gt;2&lt;/mauls_won&gt;
+    &lt;matches_played&gt;1&lt;/matches_played&gt;
+    &lt;penalties_conceded&gt;5&lt;/penalties_conceded&gt;
+    &lt;penalties_won&gt;9&lt;/penalties_won&gt;
+    &lt;kicks_out_on_the_full&gt;2&lt;/kicks_out_on_the_full&gt;
+    &lt;ball_time&gt;243&lt;/ball_time&gt;
+    &lt;penalty_time&gt;184&lt;/penalty_time&gt;
+    &lt;turnovers_conceded&gt;6&lt;/turnovers_conceded&gt;
+  &lt;/guest_team_stats&gt;
+  &lt;home_player_1 id="2306143" teamid="2"&gt;
+    &lt;id&gt;2306143&lt;/id&gt;
+    &lt;tackles&gt;3&lt;/tackles&gt;
+    &lt;metres_gained&gt;38&lt;/metres_gained&gt;
+    &lt;tries&gt;1&lt;/tries&gt;
+    &lt;conversions&gt;0&lt;/conversions&gt;
+    &lt;missed_conversions&gt;0&lt;/missed_conversions&gt;
+    &lt;dropgoals&gt;0&lt;/dropgoals&gt;
+    &lt;missed_dropgoals&gt;0&lt;/missed_dropgoals&gt;
+    &lt;penalties&gt;0&lt;/penalties&gt;
+    &lt;missed_penalties&gt;0&lt;/missed_penalties&gt;
+    &lt;total_points&gt;5&lt;/total_points&gt;
+    &lt;yellow_cards&gt;0&lt;/yellow_cards&gt;
+    &lt;red_cards&gt;0&lt;/red_cards&gt;
+    &lt;linebreaks&gt;1&lt;/linebreaks&gt;
+    &lt;intercepts&gt;0&lt;/intercepts&gt;
+    &lt;kicks&gt;0&lt;/kicks&gt;
+    &lt;good_kicks&gt;0&lt;/good_kicks&gt;
+    &lt;bad_kicks&gt;0&lt;/bad_kicks&gt;
+    &lt;up_and_unders&gt;0&lt;/up_and_unders&gt;
+    &lt;good_up_and_unders&gt;0&lt;/good_up_and_unders&gt;
+    &lt;bad_up_and_unders&gt;0&lt;/bad_up_and_unders&gt;
+    &lt;knockons&gt;1&lt;/knockons&gt;
+    &lt;forward_passes&gt;0&lt;/forward_passes&gt;
+    &lt;try_assists&gt;0&lt;/try_assists&gt;
+    &lt;beaten_defenders&gt;0&lt;/beaten_defenders&gt;
+    &lt;injuries&gt;0&lt;/injuries&gt;
+    &lt;handling_errors&gt;1&lt;/handling_errors&gt;
+    &lt;missed_tackles&gt;1&lt;/missed_tackles&gt;
+    &lt;fights&gt;0&lt;/fights&gt;
+    &lt;kicking_metres&gt;0&lt;/kicking_metres&gt;
+    &lt;league_caps&gt;1&lt;/league_caps&gt;
+    &lt;friendly_caps&gt;0&lt;/friendly_caps&gt;
+    &lt;cup_caps&gt;0&lt;/cup_caps&gt;
+    &lt;under_twenty_caps&gt;0&lt;/under_twenty_caps&gt;
+    &lt;national_caps&gt;0&lt;/national_caps&gt;
+    &lt;under_twenty_world_cup_caps&gt;0&lt;/under_twenty_world_cup_caps&gt;
+    &lt;world_cup_caps&gt;0&lt;/world_cup_caps&gt;
+    &lt;other_caps&gt;0&lt;/other_caps&gt;
+    &lt;penalties_conceded&gt;0&lt;/penalties_conceded&gt;
+    &lt;kicks_out_on_the_full&gt;0&lt;/kicks_out_on_the_full&gt;
+    &lt;ball_time&gt;10&lt;/ball_time&gt;
+    &lt;penalty_time&gt;11&lt;/penalty_time&gt;
+    &lt;played&gt;0&lt;/played&gt;
+    &lt;turnovers&gt;1&lt;/turnovers&gt;
+    &lt;lineouts_secured&gt;0&lt;/lineouts_secured&gt;
+    &lt;lineouts_conceded&gt;1&lt;/lineouts_conceded&gt;
+    &lt;lineouts_stolen&gt;1&lt;/lineouts_stolen&gt;
+    &lt;successful_lineout_throws&gt;0&lt;/successful_lineout_throws&gt;
+    &lt;unsuccessful_lineout_throws&gt;0&lt;/unsuccessful_lineout_throws&gt;
+    &lt;minutes_played&gt;80&lt;/minutes_played&gt;
+  &lt;/home_player_1&gt;
+  ...
+&lt;/fixture_statistics&gt;</pre></div><br><br><b>NOTES:</b><br><br><b>Half-time stats</b><br>Half-time team statistics will be returned for fixtures where half-time statistics are available, which in general is any fixtures from Season 8 Round 8 onwards.<br><br><b>Consideration</b><br>This API module can be quite powerful. For example, you want to tally some statistics for a player over a time. You could send a group of fixture IDs, and the player ID to this module. This is ok in moderation, but please ensure you are considerate and remember that tasks like this are very expensive in terms of computing power required.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer467'));">
+                                                      Leagues                                                    </a>
+                                                  </div>
+                                                  <div id="answer467" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for league information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=l</pre></div><br>(Lower case "L")<br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual league:<br><div class="code"><pre style="margin:0; padding:0;">&amp;leagueid=[LEAGUE_ID]</pre></div><br><br>To retrieve multiple leagues:<br><div class="code"><pre style="margin:0; padding:0;">&amp;leagueids=[LEAGUE_ID],[LEAGUE_ID],...</pre></div><br><br>To retrieve a leagueid based on the season, country, division, and league:<br><div class="code"><pre style="margin:0; padding:0;">&amp;season=[SEASON]&amp;country_iso=[COUNTRY_ISO]&amp;division=[DIVISION]
+  &amp;league=[LEAGUE]</pre></div><br><br>To retrieve all leagues in a division based on the season, country, and division:<br><div class="code"><pre style="margin:0; padding:0;">&amp;season=[SEASON]&amp;country_iso=[COUNTRY_ISO]&amp;division=[DIVISION]</pre></div><br><br>To retrieve all leagues in a division based on the division ID:<br><div class="code"><pre style="margin:0; padding:0;">&amp;divisionid=[DIVISION_ID]</pre></div><br><br>If any league is not found, no information will be returned for that fixture, not even an empty league element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;league id="6"&gt;
+  &lt;id&gt;6&lt;/id&gt;
+  &lt;country_iso&gt;NZ&lt;/country_iso&gt;
+  &lt;season&gt;1&lt;/season&gt;
+  &lt;division&gt;3&lt;/division&gt;
+  &lt;league&gt;1&lt;/league&gt;
+  &lt;lounge&gt;116&lt;/lounge&gt;
+&lt;/league&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Lounge</b> This is the lounge ID of the league's clubrooms lounge.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer480'));">
+                                                      Lineups                                                    </a>
+                                                  </div>
+                                                  <div id="answer480" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for lineup information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=lu</pre></div> (Lower case L, followed by a u)<br><br><b>Additional Request Data</b><br><br>To retrieve a default lineup:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]
+or
+&amp;teamid=[TEAM_ID]&amp;fixtureid=0</pre></div><br><br>To retrieve a lineup for a fixture:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;fixtureid=[FIXTURE_ID]</pre></div><br>(If no lineup has been saved for a fixture before the deadline, nothing is returned. After the lineup deadline, the deafult lineup at the deadline will be returned)<br><br>To retrieve multiple lineups:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;fixtureids=[FIXTURE_ID],[FIXTURE_ID],...</pre></div><br><br>To retrieve youth lineups, add the youth flag:<br><div class="code"><pre style="margin:0; padding:0;">...&amp;youth=1</pre></div><br><br>To retrieve national team lineups, add the national flag:<br><div class="code"><pre style="margin:0; padding:0;">...&amp;nat=1</pre></div><br><br>To retrieve Under 20 lineups, add the U20 flag:<br><div class="code"><pre style="margin:0; padding:0;">...&amp;u20=1</pre></div><br><br>If any lineup is not found, no information will be returned for that lineup, not even an empty element.<br><br><b>Response</b><br>If a valid member key for the team's owner is not supplied, AND the first lineup deadline has passed, the following items are returned:<br><div class="code"><pre style="margin:0; padding:0;">&lt;lineup id="316490"&gt;
+  &lt;id&gt;316490&lt;/id&gt;
+  &lt;teamid&gt;19721&lt;/teamid&gt;
+  &lt;fixtureid&gt;4923627&lt;/fixtureid&gt;
+  &lt;p1&gt;6390076&lt;/p1&gt;
+  &lt;p2&gt;6390084&lt;/p2&gt;
+  &lt;p3&gt;6390071&lt;/p3&gt;
+  &lt;p4&gt;6390073&lt;/p4&gt;
+  &lt;p5&gt;6390067&lt;/p5&gt;
+  &lt;p6&gt;6390077&lt;/p6&gt;
+  &lt;p7&gt;6390089&lt;/p7&gt;
+  &lt;p8&gt;6390063&lt;/p8&gt;
+  &lt;p9&gt;6390061&lt;/p9&gt;
+  &lt;p10&gt;6390065&lt;/p10&gt;
+  &lt;p11&gt;6390086&lt;/p11&gt;
+  &lt;p12&gt;6390066&lt;/p12&gt;
+  &lt;p13&gt;6390069&lt;/p13&gt;
+  &lt;p14&gt;6390074&lt;/p14&gt;
+  &lt;p15&gt;6390075&lt;/p15&gt;
+  &lt;b1&gt;6390070&lt;/b1&gt;
+  &lt;b2&gt;6390090&lt;/b2&gt;
+  &lt;b3&gt;6390078&lt;/b3&gt;
+  &lt;b4&gt;6390079&lt;/b4&gt;
+  &lt;b5&gt;6390080&lt;/b5&gt;
+  &lt;b6&gt;6390081&lt;/b6&gt;
+  &lt;b7&gt;6390082&lt;/b7&gt;
+  &lt;captain&gt;6390073&lt;/captain&gt;
+  &lt;kicker&gt;6390073&lt;/kicker&gt;
+  &lt;deadline&gt;1278113400&lt;/deadline&gt;
+&lt;/lineup&gt;</pre></div><br><br>If a valid member key is given, and member is the owner of the team, the following items are returned:<br><br><div class="code"><pre style="margin:0; padding:0;">&lt;lineup id="793328"&gt;
+  &lt;id&gt;793328&lt;/id&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;fixtureid&gt;0&lt;/fixtureid&gt;
+  &lt;p1&gt;2306140&lt;/p1&gt;
+  &lt;p2&gt;8083009&lt;/p2&gt;
+  &lt;p3&gt;4106033&lt;/p3&gt;
+  &lt;p4&gt;4127280&lt;/p4&gt;
+  &lt;p5&gt;2306145&lt;/p5&gt;
+  &lt;p6&gt;3327223&lt;/p6&gt;
+  &lt;p7&gt;2306148&lt;/p7&gt;
+  &lt;p8&gt;2306136&lt;/p8&gt;
+  &lt;p9&gt;4566330&lt;/p9&gt;
+  &lt;p10&gt;2306127&lt;/p10&gt;
+  &lt;p11&gt;3827378&lt;/p11&gt;
+  &lt;p12&gt;2306119&lt;/p12&gt;
+  &lt;p13&gt;7228730&lt;/p13&gt;
+  &lt;p14&gt;4566329&lt;/p14&gt;
+  &lt;p15&gt;7272928&lt;/p15&gt;
+  &lt;b1&gt;8083010&lt;/b1&gt;
+  &lt;b2&gt;2306146&lt;/b2&gt;
+  &lt;b3&gt;3686163&lt;/b3&gt;
+  &lt;b4&gt;5711508&lt;/b4&gt;
+  &lt;b5&gt;2306122&lt;/b5&gt;
+  &lt;b6&gt;2306124&lt;/b6&gt;
+  &lt;b7&gt;2306144&lt;/b7&gt;
+  &lt;r1p1&gt;8083010&lt;/r1p1&gt;
+  &lt;r1p2&gt;8083010&lt;/r1p2&gt;
+  &lt;r1p3&gt;8083010&lt;/r1p3&gt;
+  &lt;r1p4&gt;8083010&lt;/r1p4&gt;
+  &lt;r1p5&gt;8083010&lt;/r1p5&gt;
+  &lt;r1p6&gt;8083010&lt;/r1p6&gt;
+  &lt;r1p7&gt;3327223&lt;/r1p7&gt;
+  &lt;r1p8&gt;8083010&lt;/r1p8&gt;
+  &lt;r1p9&gt;3686163&lt;/r1p9&gt;
+  &lt;r1p10&gt;3686163&lt;/r1p10&gt;
+  &lt;r1p11&gt;8083010&lt;/r1p11&gt;
+  &lt;r1p12&gt;8083010&lt;/r1p12&gt;
+  &lt;r1p13&gt;8083010&lt;/r1p13&gt;
+  &lt;r1p14&gt;7228730&lt;/r1p14&gt;
+  &lt;r1p15&gt;8083010&lt;/r1p15&gt;
+  &lt;r2p1&gt;3686163&lt;/r2p1&gt;
+  &lt;r2p2&gt;3686163&lt;/r2p2&gt;
+  &lt;r2p3&gt;3686163&lt;/r2p3&gt;
+  &lt;r2p4&gt;3686163&lt;/r2p4&gt;
+  &lt;r2p5&gt;3686163&lt;/r2p5&gt;
+  &lt;r2p6&gt;3686163&lt;/r2p6&gt;
+  &lt;r2p7&gt;3686163&lt;/r2p7&gt;
+  &lt;r2p8&gt;3686163&lt;/r2p8&gt;
+  &lt;r2p9&gt;8083010&lt;/r2p9&gt;
+  &lt;r2p10&gt;8083010&lt;/r2p10&gt;
+  &lt;r2p11&gt;2306146&lt;/r2p11&gt;
+  &lt;r2p12&gt;2306146&lt;/r2p12&gt;
+  &lt;r2p13&gt;2306146&lt;/r2p13&gt;
+  &lt;r2p14&gt;8083010&lt;/r2p14&gt;
+  &lt;r2p15&gt;2306146&lt;/r2p15&gt;
+  &lt;pickandgo&gt;16&lt;/pickandgo&gt;
+  &lt;driving&gt;18&lt;/driving&gt;
+  &lt;expansive&gt;26&lt;/expansive&gt;
+  &lt;creative&gt;40&lt;/creative&gt;
+  &lt;defense&gt;drift&lt;/defense&gt;
+  &lt;kicking&gt;65&lt;/kicking&gt;
+  &lt;kickfortouch&gt;90&lt;/kickfortouch&gt;
+  &lt;upandunder&gt;10&lt;/upandunder&gt;
+  &lt;dropgoals&gt;1&lt;/dropgoals&gt;
+  &lt;intensity&gt;2&lt;/intensity&gt;
+  &lt;captain&gt;2306148&lt;/captain&gt;
+  &lt;captain1&gt;2306140&lt;/captain1&gt;
+  &lt;captain2&gt;8083010&lt;/captain2&gt;
+  &lt;kicker&gt;7272928&lt;/kicker&gt;
+  &lt;kicker1&gt;4566329&lt;/kicker1&gt;
+  &lt;kicker2&gt;8083010&lt;/kicker2&gt;
+  &lt;discipline&gt;2&lt;/discipline&gt;
+  &lt;deadline&gt;1278113400&lt;/deadline&gt;
+&lt;/lineup&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Dropgoals</b> 1 = Dropgoals are allowed, 0 = dropgoals are not allowed.<br><b>Intensity</b> 1 = WNWIM, 2 = Normal, 3 = LTNT.<br><b>Discipline</b> 1 = By the book, 2 = Normal, 3 = Aggressive.<br><b>Deadline</b> (BRT Timestamp) The lineup deadline.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer485'));">
+                                                      Mail                                                    </a>
+                                                  </div>
+                                                  <div id="answer485" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for mail:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=ma</pre></div><br><br><b>Additional Request Data</b><br><br>To retrieve message summaries and subfolder information. where FOLDER_ID is 1,2,3,4 for Inbox,Sent,Deleted,Saved:<br><div class="code"><pre style="margin:0; padding:0;">&amp;folderid=[FOLDER_ID],[FOLDER_ID],...</pre></div><br><br>To retrieve message summaries of messages in a subfolder:<br><div class="code"><pre style="margin:0; padding:0;">&amp;subfolderid=[SUBFOLDER_ID],[SUBFOLDER_ID],...</pre></div><br><br>To retrieve an individual message:<br><div class="code"><pre style="margin:0; padding:0;">&amp;messageid=[MESSAGE_ID]</pre></div><br><br>If no additional request data is given the default is <span style="font-size:140%; vertical-align: middle; margin: -25% 0;">“</span>&amp;folderid=1,2,3,4<span style="font-size:140%; vertical-align: middle; margin: -25% 0;">”</span><br><br><b>Response (Top level folder, e.g. Inbox)</b><br><div class="code"><pre style="margin:0; padding:0;">&lt;folderid&gt; 
+  &lt;inbox&gt; 
+    &lt;messages&gt;
+      &lt;message&gt;
+        &lt;id&gt;6753334&lt;/id&gt;
+        &lt;subject&gt;New Accounting report&lt;/subject&gt;
+        &lt;sent&gt;1937252012&lt;/sent&gt;
+        &lt;read&gt;1&lt;/read&gt;
+        &lt;replied&gt;0&lt;/replied&gt;
+        &lt;forwarded&gt;0&lt;/forwarded&gt;
+      &lt;/message&gt; 
+    &lt;/messages&gt; 
+    &lt;folders&gt; 
+      &lt;folder&gt;
+        &lt;id&gt;1723&lt;/id&gt;
+        &lt;name&gt;folder&lt;/name&gt;
+      &lt;/folder&gt; 
+    &lt;/folders&gt; 
+  &lt;/inbox&gt; 
+&lt;/folderid&gt; </pre></div><br><br><b>Response (Sub-folder)</b><br><div class="code"><pre style="margin:0; padding:0;">&lt;subfolderid id=1724&gt; 
+  &lt;message&gt;
+    &lt;id&gt;6986557&lt;/id&gt;
+    &lt;subject&gt;New Members&lt;/subject&gt;
+    &lt;sent&gt;1303720258&lt;/sent&gt;
+    &lt;read&gt;1&lt;/read&gt;
+    &lt;replied&gt;0&lt;/replied&gt;
+    &lt;forwarded&gt;0&lt;/forwarded&gt;
+  &lt;/message&gt; 
+&lt;/subfolderid&gt; </pre></div><br> <br><b>Response (Single message)</b><br><div class="code"><pre style="margin:0; padding:0;">&lt;MessageDetails&gt; 
+  &lt;id&gt;6557986&lt;/id&gt;
+  &lt;memberid&gt;93282&lt;/memberid&gt;
+  &lt;type&gt;1&lt;/type&gt;
+  &lt;from&gt;0&lt;/from&gt;
+  &lt;to&gt;User&lt;/to&gt;
+  &lt;subject&gt;New Members&lt;/subject&gt;
+  &lt;body&gt;Good morning, 12 new members ...&lt;/body&gt;
+  &lt;read&gt;1&lt;/read&gt;
+  &lt;forwarded&gt;0&lt;/forwarded&gt;
+  &lt;replied&gt;0&lt;/replied&gt;
+  &lt;sent&gt;1303720258&lt;/sent&gt;
+  &lt;sentmessageid&gt;0&lt;/sentmessageid&gt;
+  &lt;sent_ts&gt;1303720258&lt;/sent_ts&gt;
+  &lt;memberidusername&gt;User&lt;/memberidusername&gt;
+  &lt;fromusername&gt;Club Secretary&lt;/fromusername&gt;
+  &lt;folderid&gt;1.1692&lt;/folderid&gt;
+&lt;/MessageDetails&gt;
+</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer483'));">
+                                                      Match Commentary                                                    </a>
+                                                  </div>
+                                                  <div id="answer483" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for match commentary:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=me</pre></div><br><br><b>Additional Request Data</b><br><br>A single fixture ID must be provided:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]</pre></div><br><br>To specify a youth match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;youth=1</pre></div><br><br>To specify an International match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;nat=1</pre></div><br><br>To specify an Under 20 match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;u20=1</pre></div><br><br>If the match is not found, or the match hasn't run yet, or the match data has since been removed. You will receive the applicable error message.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;event&gt;
+  &lt;id&gt;220653&lt;/id&gt;
+  &lt;fixtureid&gt;4923654&lt;/fixtureid&gt;
+  &lt;commentary&gt;Blackout Rugby Stadium is filled to the rafters with chanting, stamping fans. The [team id=2]Chiefs[/team] won't lack for support today! [player id=9447603]Younger[/player] is looking at the ref. Here we are, the big game is ON!&lt;/commentary&gt;
+  &lt;possession&gt;1&lt;/possession&gt;
+  &lt;actualtime&gt;1&lt;/actualtime&gt;
+  &lt;losttime&gt;0&lt;/losttime&gt;
+  &lt;gametime&gt;1&lt;/gametime&gt;
+  &lt;homescore&gt;0&lt;/homescore&gt;
+  &lt;guestscore&gt;0&lt;/guestscore&gt;
+  &lt;index&gt;1&lt;/index&gt;
+  &lt;half&gt;1&lt;/half&gt;
+&lt;/event&gt;
+&lt;event&gt;
+  &lt;id&gt;220654&lt;/id&gt;
+  &lt;fixtureid&gt;4923654&lt;/fixtureid&gt;
+  &lt;commentary&gt;That's an a mid-length kick out to left field by [player id=9447603]Younger[/player]. [player id=3686163]Ripper[/player] is under it for the [team id=2]Chiefs[/team], but there's a stampede of opposition forwards coming his way!&lt;/commentary&gt;
+  &lt;possession&gt;0&lt;/possession&gt;
+  &lt;actualtime&gt;7&lt;/actualtime&gt;
+  &lt;losttime&gt;0&lt;/losttime&gt;
+  &lt;gametime&gt;7&lt;/gametime&gt;
+  &lt;homescore&gt;0&lt;/homescore&gt;
+  &lt;guestscore&gt;0&lt;/guestscore&gt;
+  &lt;index&gt;2&lt;/index&gt;
+  &lt;half&gt;1&lt;/half&gt;
+&lt;/event&gt;
+&lt;event&gt;
+  &lt;id&gt;220655&lt;/id&gt;
+  &lt;fixtureid&gt;4923654&lt;/fixtureid&gt;
+  &lt;commentary&gt;It's wet out here and [player id=3686163]Ripper[/player] knows it. That ball was like a bar of soap in a prison - nobody wanted to pick it up. Knock-on.&lt;/commentary&gt;
+  &lt;possession&gt;1&lt;/possession&gt;
+  &lt;actualtime&gt;10&lt;/actualtime&gt;
+  &lt;losttime&gt;0&lt;/losttime&gt;
+  &lt;gametime&gt;10&lt;/gametime&gt;
+  &lt;homescore&gt;0&lt;/homescore&gt;
+  &lt;guestscore&gt;0&lt;/guestscore&gt;
+  &lt;index&gt;3&lt;/index&gt;
+  &lt;half&gt;1&lt;/half&gt;
+&lt;/event&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Tags</b> You will need to parse the commentary for team and player tags.<br><br><b>New Paragraphs</b> If the commentary field is empty, this signifies a new paragraph.<br><br><b>Actual Time</b> Number of actual seconds passed since the start of the match, including half time, lost time, etc.<br><br><b>Game Time</b> Number of seconds on the game clock. Starts at 0 in the first half, and 40x60 in the second half.<br><br><b>Lost Time</b> The amount of time lost due to injury, or video review, etc.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer484'));">
+                                                      Match Score                                                    </a>
+                                                  </div>
+                                                  <div id="answer484" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for live scoring information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=ls</pre></div><br><br><b>Additional Request Data</b><br><br>A single fixture ID must be provided:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]</pre></div><br><br>To specify a youth match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;youth=1</pre></div><br><br>To specify an International match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;nat=1</pre></div><br><br>To specify an Under 20 match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;u20=1</pre></div><br><br>If the match is not found, you will receive the applicable error message.<br><br><b>Response</b><br><div class="code"><pre style="margin:0; padding:0;">&lt;livescoring&gt;
+  &lt;match_has_started&gt;1&lt;/match_has_started&gt;
+  &lt;match_has_finished&gt;1&lt;/match_has_finished&gt;
+  &lt;homescore&gt;21&lt;/homescore&gt;
+  &lt;guestscore&gt;21&lt;/guestscore&gt;
+  &lt;gametime&gt;4937&lt;/gametime&gt;
+&lt;/livescoring&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Match Started/Finished</b> 1 if true, 0 if false.<br><br><b>Game Time</b> Number of seconds on the game clock. Starts at 0 in the first half, and 40x60 in the second half.<br><br><b>Before match</b> The scores will always be 0 before a match.<br><br><b>Delays</b> Sometimes a match may be delayed. In which case the scores will be 0, and "match_has_started" will be false, until the match is run.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer470'));">
+                                                      Match Summary                                                    </a>
+                                                  </div>
+                                                  <div id="answer470" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for one or more match summaries:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=ms</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve a single match summary:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]</pre></div><br><br>To retrieve multiple match summaries:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureids=[FIXTURE_ID],[FIXTURE_ID]</pre></div><br><br>To retrieve a match summary for a youth match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]&amp;youth=1</pre></div><br><br>To retrieve a match summary for an International match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]&amp;nat=1</pre></div><br><br>To retrieve a match summary for an Under 20 match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]&amp;u20=1</pre></div><br><br>If any report is not found, no information will be returned for that report, not even an empty element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;match_summary fixtureid="967"&gt;
+  &lt;home&gt;
+    &lt;points&gt;15&lt;/points&gt;
+    &lt;tries&gt;
+      &lt;player id="4578593"&gt;
+        &lt;id&gt;4578593&lt;/id&gt;
+        &lt;number&gt;1&lt;/number&gt;
+      &lt;/player&gt;
+      &lt;player id="2367334"&gt;
+        &lt;id&gt;2367334&lt;/id&gt;
+        &lt;number&gt;1&lt;/number&gt;
+      &lt;/player&gt;
+      &lt;player id="3135254"&gt;
+        &lt;id&gt;3135254&lt;/id&gt;
+        &lt;number&gt;1&lt;/number&gt;
+      &lt;/player&gt;
+    &lt;/tries&gt;
+    &lt;conversions&gt;
+      &lt;player id="3119030"&gt;
+        &lt;id&gt;3119030&lt;/id&gt;
+        &lt;number&gt;2&lt;/number&gt;
+      &lt;/player&gt;
+    &lt;/conversions&gt;
+    &lt;dropgoals&gt;&lt;/dropgoals&gt;
+    &lt;penalties&gt;
+      &lt;player id="3119030"&gt;
+        &lt;id&gt;3119030&lt;/id&gt;
+        &lt;number&gt;2&lt;/number&gt;
+      &lt;/player&gt;
+    &lt;/penalties&gt;
+    &lt;injuries&gt;&lt;/injuries&gt;
+    &lt;intensity&gt;2&lt;/intensity&gt;
+  &lt;/home&gt;
+  &lt;guest&gt;
+    &lt;points&gt;10&lt;/points&gt;
+    &lt;tries&gt;
+      &lt;player id="4601307"&gt;
+        &lt;id&gt;4601307&lt;/id&gt;
+        &lt;number&gt;1&lt;/number&gt;
+      &lt;/player&gt;
+      &lt;player id="2314920"&gt;
+        &lt;id&gt;2314920&lt;/id&gt;
+        &lt;number&gt;1&lt;/number&gt;
+      &lt;/player&gt;
+      &lt;player id="4578930"&gt;
+        &lt;id&gt;4578930&lt;/id&gt;
+        &lt;number&gt;1&lt;/number&gt;
+      &lt;/player&gt;
+      &lt;player id="2346451"&gt;
+        &lt;id&gt;2346451&lt;/id&gt;
+        &lt;number&gt;1&lt;/number&gt;
+      &lt;/player&gt;
+    &lt;/tries&gt;
+    &lt;conversions&gt;
+      &lt;player id="2314920"&gt;
+        &lt;id&gt;2314920&lt;/id&gt;
+        &lt;number&gt;4&lt;/number&gt;
+      &lt;/player&gt;
+    &lt;/conversions&gt;
+    &lt;dropgoals&gt;&lt;/dropgoals&gt;
+    &lt;penalties&gt;
+      &lt;player id="2314920"&gt;
+        &lt;id&gt;2314920&lt;/id&gt;
+        &lt;number&gt;1&lt;/number&gt;
+      &lt;/player&gt;
+    &lt;/penalties&gt;
+    &lt;injuries&gt;
+      &lt;player id="3647830"&gt;
+        &lt;id&gt;3647830&lt;/id&gt;
+        &lt;daysinjured&gt;0&lt;/daysinjured&gt;
+        &lt;replacedby&gt;3652150&lt;/replacedby&gt;
+        &lt;minutesplayed&gt;55&lt;/minutesplayed&gt;
+      &lt;/player&gt;
+    &lt;/injuries&gt;
+    &lt;intensity&gt;2&lt;/intensity&gt;
+  &lt;/guest&gt;
+  &lt;attendance&gt;
+    &lt;standing&gt;10000&lt;/standing&gt;
+    &lt;uncovered&gt;19500&lt;/uncovered&gt;
+    &lt;covered&gt;15000&lt;/covered&gt;
+    &lt;members&gt;5000&lt;/members&gt;
+    &lt;corporate&gt;500&lt;/corporate&gt;
+  &lt;/attendance&gt;
+  &lt;weather&gt;
+    &lt;id&gt;2&lt;/id&gt;
+    &lt;night&gt;1&lt;/night&gt;
+  &lt;/weather&gt;
+&lt;/match_summary&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Intensity</b> 1 = WNWIM, 2 = Normal, 3 = LTNT.<br><br><b>Tries, conversions, drop goals, and penalties.</b> Although not illustrated for drop goals in the sample output; all player information is provided in the same format for tries, conversions, drop goals, and penalties.<br><br><b>Youth match attendance</b> Attendance data is not returned for youth matches.<br><br><b>Night weather</b> If the night value is "1", you should use the night icon if you are displaying weather.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer462'));">
+                                                      Members                                                    </a>
+                                                  </div>
+                                                  <div id="answer462" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for member information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=m</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual member:<br><div class="code"><pre style="margin:0; padding:0;">&amp;memberid=[MEMBER_ID]</pre></div><br><br>To retrieve a group of members:<br><div class="code"><pre style="margin:0; padding:0;">&amp;memberids=[MEMBER_ID],[MEMBER_ID],...</pre></div><br><br>Each of the above can be requested at the same time.<br><br>If any member is not found, no information will be returned for that member, not even an empty member element.<br><br><b>Response</b><br>If a valid member key is not supplied, or the requesting member is not the owner of the member information, the following items are returned:<br><div class="code"><pre style="margin:0; padding:0;">&lt;member id="1"&gt;
+  &lt;id&gt;1&lt;/id&gt;
+  &lt;username&gt;Northern_Knight&lt;/username&gt;
+  &lt;teamid&gt;1&lt;/teamid&gt;
+  &lt;active&gt;1&lt;/active&gt;
+  &lt;lastclick&gt;1266526166&lt;/lastclick&gt;
+  &lt;dateregistered&gt;1147007591&lt;/dateregistered&gt;
+&lt;/member&gt;</pre></div><br><br>If a valid member key is given, and requesting member is the owner of the member information, the following items are returned:<br><br><div class="code"><pre style="margin:0; padding:0;">&lt;member id="2"&gt;
+  &lt;id&gt;2&lt;/id&gt;
+  &lt;username&gt;Jeremy&lt;/username&gt;
+  &lt;realname&gt;Jeremy&lt;/realname&gt;
+  &lt;email&gt;someone@somewhere.com&lt;/email&gt;
+  &lt;memberlevel&gt;7&lt;/memberlevel&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;cash&gt;0.00&lt;/cash&gt;
+  &lt;active&gt;1&lt;/active&gt;
+  &lt;lastclick&gt;1266573457&lt;/lastclick&gt;
+  &lt;dateregistered&gt;1147007678&lt;/dateregistered&gt;
+&lt;/member&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Member level</b> The security level of the member. The available levels are:<br><b>1</b> Unverified<br><b>2</b> Suspended<br><b>3</b> Free member<br><b>4</b> Premium member<br><b>5</b> Forum moderator<br><b>6</b> Game master<br><b>7</b> Developer<br><br><b>Cash</b> The member's cash balance, in BR dollars.<br><br><b>Active</b> Indicates whether or not this is an active member, currently owning a club.<br><br><b>Last click</b> (Timestamp BRT) - The date of the member's last click.<br><br><b>Date registered</b> (Timestamp BRT) - The date when the member registered for the game.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer478'));">
+                                                      Player History                                                    </a>
+                                                  </div>
+                                                  <div id="answer478" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for player history information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=ph</pre></div><br><br><b>Additional Request Data</b><br><br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]</pre></div><br><br>If no player history is available, no information will be returned, not even an empty element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;entry id="15877146"&gt;
+  &lt;playerid&gt;2306136&lt;/playerid&gt;
+  &lt;event&gt;
+    Injured during match (&lt;a href="tools.live.scoring.php#fixture
+      =5201142"&gt;5201142&lt;/a&gt;). Will recover for next match.
+  &lt;/event&gt;
+  &lt;date&gt;1276075433&lt;/date&gt;
+&lt;/entry&gt;
+&lt;entry id="15399013"&gt;
+  &lt;playerid&gt;2306136&lt;/playerid&gt;
+  &lt;event&gt;
+    Speed popped from &lt;rank value=8 /&gt; to &lt;rank value=9 /&gt;.
+  &lt;/event&gt;
+  &lt;date&gt;1273292153&lt;/date&gt;
+&lt;/entry&gt;
+...</pre></div><br><br><b>Notes:</b><br><br><b>Date</b> (Timestamp BRT) - The date of the event.<br><br><b>Tags</b> - Teams, Players, Members, and Skill Ranking Levels are provided as tags, e.g. <team id="1">, <natteam id="1">, <u20team id="1">, <player id="1">, <youthplayer id="1">, <member id="1">, <rank value="5"><br><br><b>Pops</b> - Pops are hidden for 7 days for free members. Pops are provided as normal for premium members.</rank></member></youthplayer></player></u20team></natteam></team></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer460'));">
+                                                      Players                                                    </a>
+                                                  </div>
+                                                  <div id="answer460" style="padding: 5px; display: block;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for player information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=p</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual player:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]</pre></div><br><br>To retrieve a group of players:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerids=[PLAYER_ID],[PLAYER_ID],...</pre></div><br><br>To retrieve all players from a team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]</pre></div><br><br>All of the above can be requested at the same time.<br><br>If any player is not found, no information will be returned for that player, not even an empty player element.<br><br><b>Response</b><br>If a valid member key is not supplied, or the member is not the owner of the player, the following items are returned:<br><div class="code"><pre style="margin:0; padding:0;">&lt;player id="2306148"&gt;
+&lt;id&gt;2306148&lt;/id&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;fname&gt;Rongo&lt;/fname&gt;
+  &lt;lname&gt;Tribe&lt;/lname&gt;
+  &lt;birthday&gt;06:5&lt;/birthday&gt;
+  &lt;age&gt;30&lt;/age&gt;
+  &lt;hand&gt;Right&lt;/hand&gt;
+  &lt;foot&gt;Left&lt;/foot&gt;
+  &lt;nationality&gt;NZ&lt;/nationality&gt;
+  &lt;csr&gt;6464&lt;/csr&gt;
+  &lt;salary&gt;41383&lt;/salary&gt;
+  &lt;form&gt;8&lt;/form&gt;
+  &lt;aggression&gt;5&lt;/aggression&gt;
+  &lt;discipline&gt;2&lt;/discipline&gt;
+  &lt;energy&gt;7&lt;/energy&gt;
+  &lt;leadership&gt;1&lt;/leadership&gt;
+  &lt;experience&gt;1&lt;/experience&gt;
+  &lt;weight&gt;88&lt;/weight&gt;
+  &lt;height&gt;182&lt;/height&gt;
+  &lt;injured&gt;0&lt;/injured&gt;
+  &lt;youthid&gt;0&lt;/youthid&gt;
+  &lt;jersey&gt;255&lt;/jersey&gt;
+  &lt;joined&gt;1197590177&lt;/joined&gt;
+&lt;/player&gt;</pre></div><br><br>If a valid member key is given, and member is the owner of the player, the following items are returned:<br><div class="code"><pre style="margin:0; padding:0;">&lt;player id="2306148"&gt;
+&lt;id&gt;2306148&lt;/id&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;fname&gt;Rongo&lt;/fname&gt;
+  &lt;lname&gt;Tribe&lt;/lname&gt;
+  &lt;birthday&gt;06:5&lt;/birthday&gt;
+  &lt;age&gt;30&lt;/age&gt;
+  &lt;hand&gt;Right&lt;/hand&gt;
+  &lt;foot&gt;Left&lt;/foot&gt;
+  &lt;nationality&gt;NZ&lt;/nationality&gt;
+  &lt;csr&gt;6464&lt;/csr&gt;
+  &lt;salary&gt;41383&lt;/salary&gt;
+  &lt;stamina&gt;6&lt;/stamina&gt;
+  &lt;handling&gt;7&lt;/handling&gt;
+  &lt;attack&gt;8&lt;/attack&gt;
+  &lt;defense&gt;1&lt;/defense&gt;
+  &lt;technique&gt;2&lt;/technique&gt;
+  &lt;strength&gt;3&lt;/strength&gt;
+  &lt;jumping&gt;3&lt;/jumping&gt;
+  &lt;speed&gt;7&lt;/speed&gt;
+  &lt;agility&gt;7&lt;/agility&gt;
+  &lt;kicking&gt;4&lt;/kicking&gt;
+  &lt;form&gt;8&lt;/form&gt;
+  &lt;aggression&gt;5&lt;/aggression&gt;
+  &lt;discipline&gt;2&lt;/discipline&gt;
+  &lt;energy&gt;7&lt;/energy&gt;
+  &lt;leadership&gt;1&lt;/leadership&gt;
+  &lt;experience&gt;1&lt;/experience&gt;
+  &lt;weight&gt;88&lt;/weight&gt;
+  &lt;height&gt;182&lt;/height&gt;
+  &lt;injured&gt;0&lt;/injured&gt;
+  &lt;contract&gt;0&lt;/contract&gt;
+  &lt;youthid&gt;0&lt;/youthid&gt;
+  &lt;jersey&gt;255&lt;/jersey&gt;
+  &lt;joined&gt;1197590177&lt;/joined&gt;
+  &lt;pops&gt;
+    &lt;skill&gt;stamina&lt;/skill&gt;
+    &lt;skill&gt;attack&lt;/skill&gt;
+  &lt;/pops&gt;
+&lt;/player&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Injured</b> (Timestamp BRT) - If this date is greater than the current Blackout Rugby Time, the player is currently injured.<br><br><b>Youth ID</b> - If this value is set (not equal to 0), it represents the player's ID when they were a youth player.<br><br><b>Joined</b> (Timestamp BRT) - The date in Blackout Rugby Time when the player joined their current squad.<br><br><b>Contract</b> (Timestamp BRT) - If this value is set (not equal to 0), and the date is greater than the current Blackout Rugby Time, the player is under contract.<br><br><b>Jersey</b> - If this value is set (not equal to 255), this represents the jersey number given to the player by the manager.<br><br><b>Pops</b> - The pops element holds any skills which have recently "popped". These are provided for premium managers only.<br><br><b>Energy %</b> - If the player is owned by a premium manager, the energy percentage out of 110% is provided. If not, the normal value from 1-11 is provided.<br><br><b>Birthday</b> - The player's birthday is provided in the format, <b>WW:D</b>. WW = week with a leading 0 for weeks less than 10, and D = day. <br><br><b>Youth Players</b><br><br>To retrieve a youth player:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]&amp;youth=1</pre></div><br><br>If a valid member key is given, and member is the owner of the player, the following items are returned:<br><div class="code"><pre style="margin:0; padding:0;">&lt;player id="4356278"&gt;
+  &lt;id&gt;4356278&lt;/id&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;fname&gt;Arenui&lt;/fname&gt;
+  &lt;lname&gt;Laulala&lt;/lname&gt;
+  &lt;birthday&gt;06:5&lt;/birthday&gt;
+  &lt;age&gt;18&lt;/age&gt;
+  &lt;hand&gt;Right&lt;/hand&gt;
+  &lt;foot&gt;Right&lt;/foot&gt;
+  &lt;nationality&gt;NZ&lt;/nationality&gt;
+  &lt;csr&gt;20008&lt;/csr&gt;
+  &lt;salary&gt;82897&lt;/salary&gt;
+  &lt;stamina&gt;Unknown&lt;/stamina&gt;
+  &lt;handling&gt;Medium&lt;/handling&gt;
+  &lt;attack&gt;Unknown&lt;/attack&gt;
+  &lt;defense&gt;Unknown&lt;/defense&gt;
+  &lt;technique&gt;Unknown&lt;/technique&gt;
+  &lt;strength&gt;Unknown&lt;/strength&gt;
+  &lt;jumping&gt;Unknown&lt;/jumping&gt;
+  &lt;speed&gt;Unknown&lt;/speed&gt;
+  &lt;agility&gt;Unknown&lt;/agility&gt;
+  &lt;kicking&gt;Low&lt;/kicking&gt;
+  &lt;form&gt;7&lt;/form&gt;
+  &lt;aggression&gt;2&lt;/aggression&gt;
+  &lt;discipline&gt;4&lt;/discipline&gt;
+  &lt;energy&gt;11&lt;/energy&gt;
+  &lt;leadership&gt;2&lt;/leadership&gt;
+  &lt;experience&gt;2&lt;/experience&gt;
+  &lt;weight&gt;93&lt;/weight&gt;
+  &lt;height&gt;199&lt;/height&gt;
+  &lt;jersey&gt;255&lt;/jersey&gt;
+  &lt;scouted&gt;1257990490&lt;/scouted&gt;
+  &lt;pops&gt;&lt;/pops&gt;
+  &lt;reveals&gt;
+    &lt;skill&gt;handling&lt;/skill&gt;
+  &lt;/reveals&gt;
+&lt;/player&gt;</pre></div><br><br><b>Notes:</b><br><br>Youth players do not have contract dates, joined dates, or injured dates, but they have a scouted date which represents the date they were introduced into the youth squad. All normally hidden values on the main site are also hidden in the API, such as skills and CSR.<br><br><b>Skills revealed</b> - Providing the owning member is making the call, if a skill has not been revealed, it will be returned as "Unknown". If a skill has been semi-revealed, it is returned as one of "Low", "Medium", or "High". If a skill is completely revealed, it will be returned as normal (an integer).<br><br><b>Reveals</b> - The reveals element holds any skills recently revealed for premium managers only. These represent the blue ribbons provided on the main site.<br><br><b>Scouting stars</b> - If the member key is provided, and the member is premium, the number of stars used to the scout the player will be provided if available, under the key "scouting_stars_used".<br><br><b>National and Under 20 Players</b><br><br>To retrieve a National player:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]&amp;nat=1</pre></div><br><br>To retrieve all players from a National team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;nat=1</pre></div><br><br>To retrieve an Under 20 player:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]&amp;u20=1</pre></div><br><br>To retrieve all players from an Under 20 team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;u20=1</pre></div><br><br><b>Notes:</b><br><br>Retrieving a National or U20 player will return all of the same information as the club player except for energy, injured, joined, and jersey which represent the player as part of their National or U20 team. National\U20 managers can see all skills for players in their national side.<br><br><b>Players for sale</b><br><br>Players who are currently for sale on the transfer market will show all skills and their levels.<br><br>As well as the skill levels, the following information related to the transfer is made available:<br><div class="code"><pre style="margin:0; padding:0;">&lt;forsale&gt;1&lt;/forsale&gt;
+&lt;listed&gt;1276780714&lt;/listed&gt;
+&lt;deadline&gt;1277039880&lt;/deadline&gt;
+&lt;asking&gt;2000000&lt;/asking&gt;
+&lt;price&gt;2486747&lt;/price&gt;
+&lt;bidteamid&gt;65&lt;/bidteamid&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Listed</b> (Timestamp BRT) - The date in Blackout Rugby Time when the player was placed on the transfer market.<br><br><b>Deadline</b> (Timestamp BRT) - The date in Blackout Rugby Time when the player will be transferred to the highest bidder.<br><br><b>Bidteamid</b> - The ID of the team currently leading the auction. If there are no bids, this tag will be empty.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer471'));">
+                                                      Player Statistics                                                    </a>
+                                                  </div>
+                                                  <div id="answer471" style="padding: 5px; display: block;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for player statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=ps</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual player's statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]</pre></div><br><br>To retrieve a group of players' statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerids=[PLAYER_ID],[PLAYER_ID],...</pre></div><br><br>To retrieve league statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]&amp;league=1 (Current season)
+or
+&amp;playerid=[PLAYER_ID]&amp;league=1&amp;season=[SEASON]</pre></div><br><br>To retrieve National player statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]&amp;nat=1 (Current season)
+or
+&amp;playerid=[PLAYER_ID]&amp;nat=1&amp;season=[SEASON]</pre></div><br><br>To retrieve World Cup player statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]&amp;nat=1&amp;wc=1 (Current season)
+or
+&amp;playerid=[PLAYER_ID]&amp;nat=1&amp;wc=1&amp;season=[SEASON]</pre></div><br><br>To retrieve Under 20 player statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]&amp;u20=1 (Current season)
+or
+&amp;playerid=[PLAYER_ID]&amp;u20=1&amp;season=[SEASON]</pre></div><br><br>To retrieve Under 20 World Cup player statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;playerid=[PLAYER_ID]&amp;u20=1&amp;wc=1 (Current season)
+or
+&amp;playerid=[PLAYER_ID]&amp;u20=1&amp;wc=1&amp;season=[SEASON]</pre></div><br><br>If any player statistics are not found, no information will be returned for that player, not even an empty player statistics element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;player_statistics id="3135226"&gt;
+  &lt;playerid&gt;3135226&lt;/playerid&gt;
+  &lt;tackles&gt;1239&lt;/tackles&gt;
+  &lt;metresgained&gt;18750&lt;/metresgained&gt;
+  &lt;tries&gt;196&lt;/tries&gt;
+  &lt;conversions&gt;1292&lt;/conversions&gt;
+  &lt;dropgoals&gt;66&lt;/dropgoals&gt;
+  &lt;penalties&gt;580&lt;/penalties&gt;
+  &lt;totalpoints&gt;5502&lt;/totalpoints&gt;
+  &lt;yellowcards&gt;0&lt;/yellowcards&gt;
+  &lt;redcards&gt;0&lt;/redcards&gt;
+  &lt;linebreaks&gt;256&lt;/linebreaks&gt;
+  &lt;intercepts&gt;6&lt;/intercepts&gt;
+  &lt;kicks&gt;1650&lt;/kicks&gt;
+  &lt;knockons&gt;134&lt;/knockons&gt;
+  &lt;forwardpasses&gt;66&lt;/forwardpasses&gt;
+  &lt;tryassists&gt;137&lt;/tryassists&gt;
+  &lt;beatendefenders&gt;1343&lt;/beatendefenders&gt;
+  &lt;injuries&gt;6&lt;/injuries&gt;
+  &lt;handlingerrors&gt;261&lt;/handlingerrors&gt;
+  &lt;missedtackles&gt;442&lt;/missedtackles&gt;
+  &lt;fights&gt;2&lt;/fights&gt;
+  &lt;kickingmetres&gt;92779&lt;/kickingmetres&gt;
+  &lt;leaguecaps&gt;112&lt;/leaguecaps&gt;
+  &lt;friendlycaps&gt;107&lt;/friendlycaps&gt;
+  &lt;cupcaps&gt;38&lt;/cupcaps&gt;
+  &lt;undertwentycaps&gt;21&lt;/undertwentycaps&gt;
+  &lt;nationalcaps&gt;30&lt;/nationalcaps&gt;
+  &lt;othercaps&gt;1&lt;/othercaps&gt;
+  &lt;avkickingmetres&gt;268.0&lt;/avkickingmetres&gt;
+  &lt;penaltiesconceded&gt;190&lt;/penaltiesconceded&gt;
+  &lt;kicksoutonthefull&gt;50&lt;/kicksoutonthefull&gt;
+  &lt;balltime&gt;8613&lt;/balltime&gt;
+  &lt;penaltytime&gt;4724&lt;/penaltytime&gt;
+  &lt;missedconversions&gt;332&lt;/missedconversions&gt;
+  &lt;misseddropgoals&gt;75&lt;/misseddropgoals&gt;
+  &lt;missedpenalties&gt;310&lt;/missedpenalties&gt;
+  &lt;goodupandunders&gt;311&lt;/goodupandunders&gt;
+  &lt;badupandunders&gt;124&lt;/badupandunders&gt;
+  &lt;upandunders&gt;435&lt;/upandunders&gt;
+  &lt;goodkicks&gt;1289&lt;/goodkicks&gt;
+  &lt;badkicks&gt;303&lt;/badkicks&gt;
+  &lt;turnoverswon&gt;60&lt;/turnoverswon&gt;
+  &lt;lineoutssecured&gt;0&lt;/lineoutssecured&gt;
+  &lt;lineoutsconceded&gt;0&lt;/lineoutsconceded&gt;
+  &lt;lineoutsstolen&gt;0&lt;/lineoutsstolen&gt;
+  &lt;successfullineoutthrows&gt;0&lt;/successfullineoutthrows&gt;
+  &lt;unsuccessfullineoutthrows&gt;0&lt;/unsuccessfullineoutthrows&gt;
+  &lt;worldcupcaps&gt;8&lt;/worldcupcaps&gt;
+  &lt;undertwentyworldcupcaps&gt;7&lt;/undertwentyworldcupcaps&gt;
+&lt;/player_statistics&gt;</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer477'));">
+                                                      Ranking History                                                    </a>
+                                                  </div>
+                                                  <div id="answer477" style="padding:5px; display:none;">
+                                                    <div><b>Premium</b><br>This feature will only work when the owner of the club is a premium member, and their member key is provided, unless the history for a National/U20 side is being requested in which case, the member must simply be a premium member, and does not have to be the current National/U20 manager.<br><br><b>Request</b><br>To tell the API that this is a request for ranking history information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=rkh</pre></div><br><br><b>Additional Request Data</b><br><br>To retrieve normal club rankings history:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]</pre></div><br><br>To retrieve International rankings history:<br><div class="code"><pre style="margin:0; padding:0;">&amp;nat=1&amp;iso=[COUNTRY_ISO]</pre></div><br><br>To retrieve Under 20 rankings history:<br><div class="code"><pre style="margin:0; padding:0;">&amp;u20=1&amp;iso=[COUNTRY_ISO]</pre></div><br><br>If no rankings history is available, no information will be returned, not even an empty element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;ranking id="104936"&gt;
+  &lt;id&gt;104936&lt;/id&gt;
+  &lt;regional_position&gt;34&lt;/regional_position&gt;
+  &lt;national_position&gt;346&lt;/national_position&gt;
+  &lt;world_position&gt;2776&lt;/world_position&gt;
+  &lt;points&gt;45.528&lt;/points&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;season&gt;8&lt;/season&gt;
+  &lt;round&gt;3&lt;/round&gt;
+&lt;/ranking&gt;
+&lt;ranking id="112627"&gt;
+  &lt;id&gt;112627&lt;/id&gt;
+  &lt;regional_position&gt;35&lt;/regional_position&gt;
+  &lt;national_position&gt;365&lt;/national_position&gt;
+  &lt;world_position&gt;2967&lt;/world_position&gt;
+  &lt;points&gt;44.5181&lt;/points&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;season&gt;8&lt;/season&gt;
+  &lt;round&gt;4&lt;/round&gt;
+&lt;/ranking&gt;
+&lt;ranking id="120198"&gt;
+  &lt;id&gt;120198&lt;/id&gt;
+  &lt;regional_position&gt;42&lt;/regional_position&gt;
+  &lt;national_position&gt;450&lt;/national_position&gt;
+  &lt;world_position&gt;4137&lt;/world_position&gt;
+  &lt;points&gt;41.3644&lt;/points&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;season&gt;8&lt;/season&gt;
+  &lt;round&gt;5&lt;/round&gt;
+&lt;/ranking&gt;
+...</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer476'));">
+                                                      Rankings                                                    </a>
+                                                  </div>
+                                                  <div id="answer476" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for rankings information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=rk</pre></div><br><br><b>Additional Request Data</b><br><br>To retrieve world rankings for clubs:<br>World rankings are the default, and will be returned if you don't specify a country, region, or league.<br><br>To retrieve rankings for a specific country:<br><div class="code"><pre style="margin:0; padding:0;">&amp;iso=[COUNTRY_ISO]</pre></div><br><br>To retrieve rankings for a specific region:<br><div class="code"><pre style="margin:0; padding:0;">&amp;regionid=[REGION_ID]</pre></div><br><br>To retrieve rankings for a specific league:<br><div class="code"><pre style="margin:0; padding:0;">&amp;leagueid=[LEAGUE_ID]</pre></div><br><br>To retrieve International rankings:<br><div class="code"><pre style="margin:0; padding:0;">&amp;nat=1</pre></div><br><br>To retrieve Under 20 rankings:<br><div class="code"><pre style="margin:0; padding:0;">&amp;u20=1</pre></div><br><br>By default, for all requests mentioned above, a maximum of 100 rankings will be returned at a time, starting at index 0 for the first ranking. If you want to specify a new start value, i.e. to get the next 100 rankings, you would append:<br><div class="code"><pre style="margin:0; padding:0;">&amp;start=100</pre></div><br><br>If you don't need 100 rankings, you can set this as a lower value, for example, to request only the top 20 rankings, you can use:<br><div class="code"><pre style="margin:0; padding:0;">&amp;limit=20</pre></div><br><br>If any rankings are not found, no information will be returned for that ranking, not even an empty element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;team id="1977"&gt;
+  &lt;ranking&gt;1&lt;/ranking&gt;
+  &lt;id&gt;1977&lt;/id&gt;
+  &lt;name&gt;Magratheans&lt;/name&gt;
+  &lt;country_iso&gt;NZ&lt;/country_iso&gt;
+  &lt;points&gt;87.5096&lt;/points&gt;
+&lt;/team&gt;</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer464'));">
+                                                      Regions                                                    </a>
+                                                  </div>
+                                                  <div id="answer464" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for region information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=r</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual region:<br><div class="code"><pre style="margin:0; padding:0;">&amp;regionid=[REGION_ID]</pre></div><br><br>To retrieve multiple regions:<br><div class="code"><pre style="margin:0; padding:0;">&amp;regionids=[REGION_ID],[REGION_ID],...</pre></div><br><br>To retrieve all regions in a country:<br><div class="code"><pre style="margin:0; padding:0;">&amp;country=[COUNTRY_ISO]</pre></div><br><br>If any region is not found, no information will be returned for that region, not even an empty region element.<br><br><b>Response</b><br><div class="code"><pre style="margin:0; padding:0;">&lt;region id="1"&gt;
+  &lt;id&gt;1&lt;/id&gt;
+  &lt;name&gt;Auckland&lt;/name&gt;
+  &lt;country_iso&gt;NZ&lt;/country_iso&gt;
+&lt;/region&gt;</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer469'));">
+                                                      Reporter's Summary                                                    </a>
+                                                  </div>
+                                                  <div id="answer469" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for one or more reporter summaries:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=rs</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve a single reporter's summary:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]</pre></div><br><br>To retrieve multiple reporter's summaries:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureids=[FIXTURE_ID],[FIXTURE_ID]</pre></div><br><br>To retrieve a reporter's summary for a youth match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]&amp;youth=1</pre></div><br><br>To retrieve a reporter's summary for an International match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]&amp;nat=1</pre></div><br><br>To retrieve a reporter's summary for an Under 20 match:<br><div class="code"><pre style="margin:0; padding:0;">&amp;fixtureid=[FIXTURE_ID]&amp;u20=1</pre></div><br><br>If any report is not found, no information will be returned for that report, not even an empty element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;reporters_summary fixtureid="4170913"&gt;
+  &lt;motm&gt;6707963&lt;/motm&gt;
+  &lt;home&gt;
+    &lt;scrum&gt;7&lt;/scrum&gt;
+    &lt;lineout&gt;7&lt;/lineout&gt;
+    &lt;kicking&gt;7&lt;/kicking&gt;
+    &lt;ruck&gt;7&lt;/ruck&gt;
+    &lt;maul&gt;7&lt;/maul&gt;
+    &lt;handling&gt;5&lt;/handling&gt;
+    &lt;attack&gt;6&lt;/attack&gt;
+    &lt;defense&gt;6&lt;/defense&gt;
+    &lt;stamina&gt;6&lt;/stamina&gt;
+    &lt;pickandgo&gt;7&lt;/pickandgo&gt;
+    &lt;driving&gt;6&lt;/driving&gt;
+    &lt;expansive&gt;5&lt;/expansive&gt;
+    &lt;creative&gt;5&lt;/creative&gt;
+    &lt;player id="2758786"&gt;
+      &lt;id&gt;2758786&lt;/id&gt;
+      &lt;position&gt;1&lt;/position&gt;
+      &lt;rating&gt;5&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758779"&gt;
+      &lt;id&gt;2758779&lt;/id&gt;
+      &lt;position&gt;2&lt;/position&gt;
+      &lt;rating&gt;4&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758774"&gt;
+      &lt;id&gt;2758774&lt;/id&gt;
+      &lt;position&gt;3&lt;/position&gt;
+      &lt;rating&gt;5&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758768"&gt;
+      &lt;id&gt;2758768&lt;/id&gt;
+      &lt;position&gt;4&lt;/position&gt;
+      &lt;rating&gt;4&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758759"&gt;
+      &lt;id&gt;2758759&lt;/id&gt;
+      &lt;position&gt;5&lt;/position&gt;
+      &lt;rating&gt;5&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758773"&gt;
+      &lt;id&gt;2758773&lt;/id&gt;
+      &lt;position&gt;6&lt;/position&gt;
+      &lt;rating&gt;5&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="6707845"&gt;
+      &lt;id&gt;6707845&lt;/id&gt;
+      &lt;position&gt;7&lt;/position&gt;
+      &lt;rating&gt;6&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758783"&gt;
+      &lt;id&gt;2758783&lt;/id&gt;
+      &lt;position&gt;8&lt;/position&gt;
+      &lt;rating&gt;3&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;under&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="3694520"&gt;
+      &lt;id&gt;3694520&lt;/id&gt;
+      &lt;position&gt;9&lt;/position&gt;
+      &lt;rating&gt;5&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="6707963"&gt;
+      &lt;id&gt;6707963&lt;/id&gt;
+      &lt;position&gt;10&lt;/position&gt;
+      &lt;rating&gt;6&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758763"&gt;
+      &lt;id&gt;2758763&lt;/id&gt;
+      &lt;position&gt;11&lt;/position&gt;
+      &lt;rating&gt;4&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758771"&gt;
+      &lt;id&gt;2758771&lt;/id&gt;
+      &lt;position&gt;12&lt;/position&gt;
+      &lt;rating&gt;4&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="6588697"&gt;
+      &lt;id&gt;6588697&lt;/id&gt;
+      &lt;position&gt;13&lt;/position&gt;
+      &lt;rating&gt;5&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758784"&gt;
+      &lt;id&gt;2758784&lt;/id&gt;
+      &lt;position&gt;14&lt;/position&gt;
+      &lt;rating&gt;6&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758778"&gt;
+      &lt;id&gt;2758778&lt;/id&gt;
+      &lt;position&gt;15&lt;/position&gt;
+      &lt;rating&gt;6&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2758772"&gt;
+      &lt;id&gt;2758772&lt;/id&gt;
+      &lt;position&gt;16&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2758780"&gt;
+      &lt;id&gt;2758780&lt;/id&gt;
+      &lt;position&gt;17&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2758766"&gt;
+      &lt;id&gt;2758766&lt;/id&gt;
+      &lt;position&gt;18&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2758787"&gt;
+      &lt;id&gt;2758787&lt;/id&gt;
+      &lt;position&gt;19&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2758764"&gt;
+      &lt;id&gt;2758764&lt;/id&gt;
+      &lt;position&gt;20&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2758760"&gt;
+      &lt;id&gt;2758760&lt;/id&gt;
+      &lt;position&gt;21&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2758785"&gt;
+      &lt;id&gt;2758785&lt;/id&gt;
+      &lt;position&gt;22&lt;/position&gt;
+    &lt;/player&gt;
+  &lt;/home&gt;
+  &lt;guest&gt;
+    &lt;scrum&gt;2&lt;/scrum&gt;
+    &lt;lineout&gt;4&lt;/lineout&gt;
+    &lt;kicking&gt;3&lt;/kicking&gt;
+    &lt;ruck&gt;2&lt;/ruck&gt;
+    &lt;maul&gt;4&lt;/maul&gt;
+    &lt;handling&gt;4&lt;/handling&gt;
+    &lt;attack&gt;5&lt;/attack&gt;
+    &lt;defense&gt;5&lt;/defense&gt;
+    &lt;stamina&gt;6&lt;/stamina&gt;
+    &lt;pickandgo&gt;4&lt;/pickandgo&gt;
+    &lt;driving&gt;5&lt;/driving&gt;
+    &lt;expansive&gt;5&lt;/expansive&gt;
+    &lt;creative&gt;5&lt;/creative&gt;
+    &lt;player id="2306143"&gt;
+      &lt;id&gt;2306143&lt;/id&gt;
+      &lt;position&gt;1&lt;/position&gt;
+      &lt;rating&gt;4&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;under&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="8083009"&gt;
+      &lt;id&gt;8083009&lt;/id&gt;
+      &lt;position&gt;2&lt;/position&gt;
+      &lt;rating&gt;3&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2306138"&gt;
+      &lt;id&gt;2306138&lt;/id&gt;
+      &lt;position&gt;3&lt;/position&gt;
+      &lt;rating&gt;3&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;under&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="4127280"&gt;
+      &lt;id&gt;4127280&lt;/id&gt;
+      &lt;position&gt;4&lt;/position&gt;
+      &lt;rating&gt;3&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2306145"&gt;
+      &lt;id&gt;2306145&lt;/id&gt;
+      &lt;position&gt;5&lt;/position&gt;
+      &lt;rating&gt;4&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;under&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="3327223"&gt;
+      &lt;id&gt;3327223&lt;/id&gt;
+      &lt;position&gt;6&lt;/position&gt;
+      &lt;rating&gt;4&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2306148"&gt;
+      &lt;id&gt;2306148&lt;/id&gt;
+      &lt;position&gt;7&lt;/position&gt;
+      &lt;rating&gt;3&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2306136"&gt;
+      &lt;id&gt;2306136&lt;/id&gt;
+      &lt;position&gt;8&lt;/position&gt;
+      &lt;rating&gt;5&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="6221594"&gt;
+      &lt;id&gt;6221594&lt;/id&gt;
+      &lt;position&gt;9&lt;/position&gt;
+      &lt;rating&gt;3&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2306127"&gt;
+      &lt;id&gt;2306127&lt;/id&gt;
+      &lt;position&gt;10&lt;/position&gt;
+      &lt;rating&gt;5&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="3827378"&gt;
+      &lt;id&gt;3827378&lt;/id&gt;
+      &lt;position&gt;11&lt;/position&gt;
+      &lt;rating&gt;5&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="2306119"&gt;
+      &lt;id&gt;2306119&lt;/id&gt;
+      &lt;position&gt;12&lt;/position&gt;
+      &lt;rating&gt;4&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="7228730"&gt;
+      &lt;id&gt;7228730&lt;/id&gt;
+      &lt;position&gt;13&lt;/position&gt;
+      &lt;rating&gt;3&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="4566329"&gt;
+      &lt;id&gt;4566329&lt;/id&gt;
+      &lt;position&gt;14&lt;/position&gt;
+      &lt;rating&gt;2&lt;/rating&gt;
+      &lt;potential&gt;below&lt;/potential&gt;
+      &lt;performance&gt;over&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="7272928"&gt;
+      &lt;id&gt;7272928&lt;/id&gt;
+      &lt;position&gt;15&lt;/position&gt;
+      &lt;rating&gt;3&lt;/rating&gt;
+      &lt;potential&gt;reached&lt;/potential&gt;
+      &lt;performance&gt;normal&lt;/performance&gt;
+    &lt;/player&gt;
+    &lt;player id="4106033"&gt;
+      &lt;id&gt;4106033&lt;/id&gt;
+      &lt;position&gt;16&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2306146"&gt;
+      &lt;id&gt;2306146&lt;/id&gt;
+      &lt;position&gt;17&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="4566330"&gt;
+      &lt;id&gt;4566330&lt;/id&gt;
+      &lt;position&gt;18&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="5711508"&gt;
+      &lt;id&gt;5711508&lt;/id&gt;
+      &lt;position&gt;19&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2306122"&gt;
+      &lt;id&gt;2306122&lt;/id&gt;
+      &lt;position&gt;20&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2306124"&gt;
+      &lt;id&gt;2306124&lt;/id&gt;
+      &lt;position&gt;21&lt;/position&gt;
+    &lt;/player&gt;
+    &lt;player id="2306144"&gt;
+      &lt;id&gt;2306144&lt;/id&gt;
+      &lt;position&gt;22&lt;/position&gt;
+    &lt;/player&gt;
+  &lt;/guest&gt;
+&lt;/reporters_summary&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Players on the bench</b> The player rating and performance ratings only appear for players on the bench if they came on to the field during the match. The potential indicator never appears for players on the bench.<br><br><b>Legacy ratings and potentials</b> Summaries for older fixtures may return legacy ratings and potentials, including forward/back ratings. There are identified by an "_old" flag appended to the tag label.</div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer468'));">
+                                                      Standings                                                    </a>
+                                                  </div>
+                                                  <div id="answer468" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for standings information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=s</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve standings for a senior league:<br><div class="code"><pre style="margin:0; padding:0;">&amp;leagueid=[LEAGUE_ID]</pre></div><br><br>To retrieve standings for a youth league:<br><div class="code"><pre style="margin:0; padding:0;">&amp;leagueid=[LEAGUE_ID]&amp;youth=1</pre></div><br><br>To retrieve International standings for the current season:<br><div class="code"><pre style="margin:0; padding:0;">&amp;nat=1</pre></div><br><br>To retrieve Under 20 standings for the current season:<br><div class="code"><pre style="margin:0; padding:0;">&amp;u20=1</pre></div><br><br>For International &amp; Under 20 standings, a season can be specified:<br><div class="code"><pre style="margin:0; padding:0;">nat=1&amp;season=[SEASON]
+or
+u20=1&amp;season=[SEASON]</pre></div><br><br>If any standings information is not found, no information will be returned for that standing, not even an empty element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;standing id="44"&gt;
+  &lt;id&gt;44&lt;/id&gt;
+  &lt;country_iso&gt;NZ&lt;/country_iso&gt;
+  &lt;season&gt;1&lt;/season&gt;
+  &lt;division&gt;3&lt;/division&gt;
+  &lt;league&gt;1&lt;/league&gt;
+  &lt;standing&gt;1&lt;/standing&gt;
+  &lt;teamid&gt;12&lt;/teamid&gt;
+  &lt;leagueid&gt;6&lt;/leagueid&gt;
+  &lt;played&gt;14&lt;/played&gt;
+  &lt;w&gt;13&lt;/w&gt;
+  &lt;l&gt;1&lt;/l&gt;
+  &lt;d&gt;0&lt;/d&gt;
+  &lt;for&gt;388&lt;/for&gt;
+  &lt;against&gt;160&lt;/against&gt;
+  &lt;b1&gt;7&lt;/b1&gt;
+  &lt;b2&gt;0&lt;/b2&gt;
+  &lt;points&gt;59&lt;/points&gt;
+&lt;/standing&gt;</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer479'));">
+                                                      Team History                                                    </a>
+                                                  </div>
+                                                  <div id="answer479" style="padding:5px; display:none;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for team history information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=th</pre></div><br><br><b>Additional Request Data</b><br><br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]</pre></div><br><br>If no team history is available, no information will be returned, not even an empty element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;entry id="741620"&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;event&gt;
+    Shifted to league &lt;a href="club.league.php?id=69384"&gt;V.97&lt;/a&gt;
+      as part of season 9 bot flush.
+  &lt;/event&gt;
+  &lt;date&gt;1275192138&lt;/date&gt;
+&lt;/entry&gt;
+&lt;entry id="682167"&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;event&gt;
+    Sold &lt;player id=2306134 /&gt; to &lt;team id=9879 /&gt; for $24,501.
+  &lt;/event&gt;
+  &lt;date&gt;1266531007&lt;/date&gt;
+&lt;/entry&gt;
+&lt;entry id="667945"&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;event&gt;
+    Relegated to league &lt;a href="club.league.php?id=61808"&gt;V.190&lt;/a&gt;
+      after season 7.
+  &lt;/event&gt;
+  &lt;date&gt;1265435202&lt;/date&gt;
+&lt;/entry&gt;
+...</pre></div><br><br><b>Notes:</b><br><br><b>Date</b> (Timestamp BRT) - The date of the event.<br><br><b>Tags</b> - Teams, Players, Members, and Skill Ranking Levels are provided as tags, e.g. <team id="1">, <natteam id="1">, <u20team id="1">, <player id="1">, <youthplayer id="1">, <member id="1">, <rank value="5"></rank></member></youthplayer></player></u20team></natteam></team></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer461'));">
+                                                      Teams                                                    </a>
+                                                  </div>
+                                                  <div id="answer461" style="padding: 5px; display: block;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for team information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=t</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]</pre></div><br><br>To retrieve a group of teams:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamids=[TEAM_ID],[TEAM_ID],...</pre></div><br><br>Each of the above can be requested at the same time.<br><br>To retrieve all teams within a region:<br><div class="code"><pre style="margin:0; padding:0;">&amp;regionid=[REGION_ID]</pre></div><br><br>To retrieve all teams within a league:<br><div class="code"><pre style="margin:0; padding:0;">&amp;leagueid=[LEAGUE_ID]</pre></div><br><br>If any team is not found, no information will be returned for that team, not even an empty team element.<br><br><b>Response</b><br>If a valid member key is not supplied, or the member is not the owner of the team, the following items are returned:<br><div class="code"><pre style="margin:0; padding:0;">&lt;team id="1"&gt;
+  &lt;id&gt;1&lt;/id&gt;
+  &lt;name&gt;Northern+Knights&lt;/name&gt;
+  &lt;country_iso&gt;NZ&lt;/country&gt;
+  &lt;region&gt;2&lt;/region&gt;
+  &lt;stadium&gt;Blackoutrugby.com+Park&lt;/stadium&gt;
+  &lt;bot&gt;0&lt;/bot&gt;
+  &lt;nickname_1&gt;Knights&lt;/nickname_1&gt;
+  &lt;nickname_2/&gt;
+  &lt;nickname_3/&gt;
+  &lt;ranking_points&gt;62.711&lt;/ranking_points&gt;
+  &lt;regional_rank&gt;12&lt;/regional_rank&gt;
+  &lt;national_rank&gt;110&lt;/national_rank&gt;
+  &lt;world_rank&gt;756&lt;/world_rank&gt;
+  &lt;prev_ranking_points&gt;62.711&lt;/prev_ranking_points&gt;
+  &lt;prev_regional_rank&gt;12&lt;/prev_regional_rank&gt;
+  &lt;prev_national_rank&gt;109&lt;/prev_national_rank&gt;
+  &lt;prev_world_rank&gt;756&lt;/prev_world_rank&gt;
+  &lt;leagueid&gt;123&lt;/leagueid&gt;
+  &lt;manager&gt;2&lt;/manager&gt;
+&lt;/team&gt;</pre></div><br><br>If a valid member key is given, and member is the owner of the team, the following items are returned:<br><br><div class="code"><pre style="margin:0; padding:0;">&lt;team id="2"&gt;
+  &lt;id&gt;2&lt;/id&gt;
+  &lt;name&gt;Chiefs&lt;/name&gt;
+  &lt;country_iso&gt;NZ&lt;/country&gt;
+  &lt;region&gt;2&lt;/region&gt;
+  &lt;stadium&gt;Blackout+Rugby+Stadium&lt;/stadium&gt;
+  &lt;drift&gt;#&lt;/drift&gt;
+  &lt;rush&gt;#&lt;/rush&gt;
+  &lt;manonman&gt;#&lt;/manonman&gt;
+  &lt;bot&gt;0&lt;/bot&gt;
+  &lt;contentment&gt;#&lt;/contentment&gt;
+  &lt;members&gt;####&lt;/members&gt;
+  &lt;stadium_capacity&gt;####&lt;/stadium_capacity&gt;
+  &lt;stadium_standing&gt;####&lt;/stadium_standing&gt;
+  &lt;stadium_uncovered&gt;####&lt;/stadium_uncovered&gt;
+  &lt;stadium_covered&gt;####&lt;/stadium_covered&gt;
+  &lt;stadium_members&gt;###&lt;/stadium_members&gt;
+  &lt;stadium_corporate&gt;###&lt;/stadium_corporate&gt;
+  &lt;bank_balance&gt;######&lt;/bank_balance&gt;
+  &lt;nickname_1/&gt;
+  &lt;nickname_2/&gt;
+  &lt;nickname_3/&gt;
+  &lt;ltnt_effectiveness&gt;100&lt;/ltnt_effectiveness&gt;
+  &lt;ltnt_effectiveness_youth&gt;100&lt;/ltnt_effectiveness_youth&gt;
+  &lt;ranking_points&gt;46.528&lt;/ranking_points&gt;
+  &lt;regional_rank&gt;33&lt;/regional_rank&gt;
+  &lt;national_rank&gt;327&lt;/national_rank&gt;
+  &lt;world_rank&gt;2579&lt;/world_rank&gt;
+  &lt;major_sponsor&gt;5&lt;/major_sponsor&gt;
+  &lt;minor_sponsors&gt;7&lt;/minor_sponsors&gt;
+  &lt;prev_ranking_points&gt;46.528&lt;/prev_ranking_points&gt;
+  &lt;prev_regional_rank&gt;34&lt;/prev_regional_rank&gt;
+  &lt;prev_national_rank&gt;329&lt;/prev_national_rank&gt;
+  &lt;prev_world_rank&gt;2585&lt;/prev_world_rank&gt;
+  &lt;leagueid&gt;123&lt;/leagueid&gt;
+  &lt;scouting_stars&gt;5&lt;/scouting_stars&gt;
+  &lt;manager&gt;2&lt;/manager&gt;
+&lt;/team&gt;</pre></div><br><br><b>Notes:</b><br><br><b>Previous Rankings</b> The previous ranking points and positions are provided to show the difference between the rankings before the last match, and the current rankings.<br><br><b>Bots</b> Bot teams will not return a manager tag.<br><br><b>National and Under 20 Teams</b><br><br>To retrieve a National team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;nat=1</pre></div><br>or <div class="code"><pre style="margin:0; padding:0;">&amp;country=[COUNTRY_ISO]&amp;nat=1</pre></div><br><br>To retrieve an Under 20 team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;u20=1</pre></div><br>or <div class="code"><pre style="margin:0; padding:0;">&amp;country=[COUNTRY_ISO]&amp;u20=1</pre></div><br><br>Multiple team IDs, and\or country ISO's are supported.<br><br>If a valid member key is not supplied, or the member is not the manager of the National\U20 team, the following items are returned:<br><div class="code"><pre style="margin:0; padding:0;">&lt;team id="9"&gt;
+  &lt;id&gt;9&lt;/id&gt;
+  &lt;name&gt;England&lt;/name&gt;
+  &lt;country_iso&gt;EN&lt;/country&gt;
+  &lt;stadium&gt;England+Stadium&lt;/stadium&gt;
+  &lt;nickname_1&gt;Comm+Challenge+Champs&lt;/nickname_1&gt;
+  &lt;nickname_2&gt;Barmy+Army&lt;/nickname_2&gt;
+  &lt;nickname_3&gt;Red+Roses&lt;/nickname_3&gt;
+  &lt;ranking_points&gt;86.5197&lt;/ranking_points&gt;
+  &lt;world_rank&gt;3&lt;/world_rank&gt;
+  &lt;prev_ranking_points&gt;90.1881&lt;/prev_ranking_points&gt;
+  &lt;prev_world_rank&gt;3&lt;/prev_world_rank&gt;
+  &lt;nat&gt;1&lt;/nat&gt;
+  &lt;manager&gt;608&lt;/manager&gt;
+&lt;/team&gt;</pre></div><br><br>If a valid member key is given, and member is the manager of the National\U20 team, the following items are returned:<br><br><div class="code"><pre style="margin:0; padding:0;">&lt;team id="2"&gt;
+  &lt;id&gt;2&lt;/id&gt;
+  &lt;name&gt;Pacific+Islands&lt;/name&gt;
+  &lt;country_iso&gt;PI&lt;/country&gt;
+  &lt;stadium&gt;Pacific+Islands+Stadium&lt;/stadium&gt;
+  &lt;drift&gt;6&lt;/drift&gt;
+  &lt;rush&gt;6&lt;/rush&gt;
+  &lt;manonman&gt;6&lt;/manonman&gt;
+  &lt;nickname_1&gt;The+Islanders&lt;/nickname_1&gt;
+  &lt;nickname_2/&gt;
+  &lt;nickname_3/&gt;
+  &lt;ltnt_effectiveness&gt;100&lt;/ltnt_effectiveness&gt;
+  &lt;ranking_points&gt;69.7074&lt;/ranking_points&gt;
+  &lt;world_rank&gt;15&lt;/world_rank&gt;
+  &lt;prev_ranking_points&gt;70.8777&lt;/prev_ranking_points&gt;
+  &lt;prev_world_rank&gt;14&lt;/prev_world_rank&gt;
+  &lt;nat&gt;1&lt;/nat&gt;
+  &lt;manager&gt;12324&lt;/manager&gt;
+&lt;/team&gt;</pre></div><br><br><b>Notes:</b><br><br><b>National\U20 Manager</b> The ID of the current National\U20 manager is provided in the <manager> tag.</manager></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer472'));">
+                                                      Team Statistics                                                    </a>
+                                                  </div>
+                                                  <div id="answer472" style="padding: 5px; display: block;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for team statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=ts</pre></div><br><br><b>Additional Request Data</b><br>At least one of the following is required:<br><br>To retrieve an individual team's statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]</pre></div><br><br>To retrieve a group of team's statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamids=[TEAM_ID],[TEAM_ID],...</pre></div><br><br>To retrieve National team statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;nat=1 (Current season only)</pre></div><br><br>To retrieve World Cup team statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;nat=1&amp;wc=1 (Current season)
+or
+&amp;teamid=[TEAM_ID]&amp;nat=1&amp;wc=1&amp;season=[SEASON]</pre></div><br><br>To retrieve Under 20 team statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;u20=1 (Current season only)</pre></div><br><br>To retrieve Under 20 World Cup team statistics:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAM_ID]&amp;u20=1&amp;wc=1 (Current season)
+or
+&amp;teamid=[TEAM_ID]&amp;u20=1&amp;wc=1&amp;season=[SEASON]</pre></div><br><br>If any team statistics are not found, no information will be returned for that team, not even an empty element.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;team_statistics id="1"&gt;
+  &lt;teamid&gt;1&lt;/teamid&gt;
+  &lt;tackles&gt;279&lt;/tackles&gt;
+  &lt;metresgained&gt;5037&lt;/metresgained&gt;
+  &lt;tries&gt;68&lt;/tries&gt;
+  &lt;conversions&gt;55&lt;/conversions&gt;
+  &lt;dropgoals&gt;0&lt;/dropgoals&gt;
+  &lt;penalties&gt;15&lt;/penalties&gt;
+  &lt;totalpoints&gt;495&lt;/totalpoints&gt;
+  &lt;yellowcards&gt;0&lt;/yellowcards&gt;
+  &lt;redcards&gt;0&lt;/redcards&gt;
+  &lt;linebreaks&gt;80&lt;/linebreaks&gt;
+  &lt;intercepts&gt;3&lt;/intercepts&gt;
+  &lt;kicks&gt;61&lt;/kicks&gt;
+  &lt;knockons&gt;18&lt;/knockons&gt;
+  &lt;forwardpasses&gt;9&lt;/forwardpasses&gt;
+  &lt;phases&gt;284&lt;/phases&gt;
+  &lt;sevenplusphases&gt;2&lt;/sevenplusphases&gt;
+  &lt;turnovers&gt;26&lt;/turnovers&gt;
+  &lt;possession&gt;59.00&lt;/possession&gt;
+  &lt;territory&gt;1.00&lt;/territory&gt;
+  &lt;minutesintwentytwo&gt;1&lt;/minutesintwentytwo&gt;
+  &lt;lineoutswon&gt;78&lt;/lineoutswon&gt;
+  &lt;lineoutslost&gt;66&lt;/lineoutslost&gt;
+  &lt;lineoutsagainstthrow&gt;10&lt;/lineoutsagainstthrow&gt;
+  &lt;scrumswon&gt;43&lt;/scrumswon&gt;
+  &lt;scrumslost&gt;29&lt;/scrumslost&gt;
+  &lt;scrumsagainstputin&gt;15&lt;/scrumsagainstputin&gt;
+  &lt;injuries&gt;4&lt;/injuries&gt;
+  &lt;handlingerrors&gt;37&lt;/handlingerrors&gt;
+  &lt;missedtackles&gt;194&lt;/missedtackles&gt;
+  &lt;fights&gt;0&lt;/fights&gt;
+  &lt;kickingmetres&gt;2461&lt;/kickingmetres&gt;
+  &lt;ruckswon&gt;308&lt;/ruckswon&gt;
+  &lt;maulswon&gt;35&lt;/maulswon&gt;
+  &lt;matchesplayed&gt;7&lt;/matchesplayed&gt;
+  &lt;avminutesintwentytwo&gt;0.28&lt;/avminutesintwentytwo&gt;
+  &lt;avkickingmetres&gt;351.57&lt;/avkickingmetres&gt;
+  &lt;penaltiesconceded&gt;38&lt;/penaltiesconceded&gt;
+  &lt;kicksoutonthefull&gt;1&lt;/kicksoutonthefull&gt;
+  &lt;balltime&gt;2125&lt;/balltime&gt;
+  &lt;penaltytime&gt;1362&lt;/penaltytime&gt;
+  &lt;missedconversions&gt;13&lt;/missedconversions&gt;
+  &lt;misseddropgoals&gt;0&lt;/misseddropgoals&gt;
+  &lt;missedpenalties&gt;9&lt;/missedpenalties&gt;
+  &lt;goodupandunders&gt;5&lt;/goodupandunders&gt;
+  &lt;badupandunders&gt;3&lt;/badupandunders&gt;
+  &lt;upandunders&gt;8&lt;/upandunders&gt;
+  &lt;goodkicks&gt;43&lt;/goodkicks&gt;
+  &lt;badkicks&gt;14&lt;/badkicks&gt;
+  &lt;penaltieswon&gt;61&lt;/penaltieswon&gt;
+  &lt;turnoversconceded&gt;23&lt;/turnoversconceded&gt;
+&lt;/team_statistics&gt;</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer474'));">
+                                                      Training Instructions                                                    </a>
+                                                  </div>
+                                                  <div id="answer474" style="padding: 5px; display: block;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for training instructions:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=ti</pre></div><br><br><b>Additional Request Data</b><br><br>No extra request information is required. All that is required is a valid member id and key.<br><br>If a valid and active member is found, the training instructions for their team will be returned.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;training_instructions teamid="2"&gt;
+  &lt;team_training&gt;
+    &lt;teamid&gt;2&lt;/teamid&gt;
+    &lt;s1&gt;stamina&lt;/s1&gt;
+    &lt;s2&gt;none&lt;/s2&gt;
+    &lt;s3&gt;none&lt;/s3&gt;
+    &lt;s4&gt;none&lt;/s4&gt;
+  &lt;/team_training&gt;
+  &lt;individual_training&gt;
+    &lt;instruction id="607562"&gt;
+      &lt;id&gt;607562&lt;/id&gt;
+      &lt;playerid&gt;2306138&lt;/playerid&gt;
+      &lt;trainerid&gt;107912&lt;/trainerid&gt;
+      &lt;skill&gt;defense&lt;/skill&gt;
+      &lt;sessions&gt;1&lt;/sessions&gt;
+      &lt;teamid&gt;2&lt;/teamid&gt;
+      &lt;player_name&gt;Fareani+Aho&lt;/player_name&gt;
+      &lt;trainer_name&gt;Levi+Hordern&lt;/trainer_name&gt;
+    &lt;/instruction&gt;
+    &lt;instruction id="780987"&gt;
+      &lt;id&gt;780987&lt;/id&gt;
+      &lt;playerid&gt;2306127&lt;/playerid&gt;
+      &lt;trainerid&gt;107912&lt;/trainerid&gt;
+      &lt;skill&gt;technique&lt;/skill&gt;
+      &lt;sessions&gt;3&lt;/sessions&gt;
+      &lt;teamid&gt;2&lt;/teamid&gt;
+      &lt;player_name&gt;Chet+Filing&lt;/player_name&gt;
+      &lt;trainer_name&gt;Levi+Hordern&lt;/trainer_name&gt;
+    &lt;/instruction&gt;
+    &lt;instruction id="772205"&gt;
+      &lt;id&gt;772205&lt;/id&gt;
+      &lt;playerid&gt;4127280&lt;/playerid&gt;
+      &lt;trainerid&gt;130397&lt;/trainerid&gt;
+      &lt;skill&gt;attack&lt;/skill&gt;
+      &lt;sessions&gt;1&lt;/sessions&gt;
+      &lt;teamid&gt;2&lt;/teamid&gt;
+      &lt;player_name&gt;Jerry+Bell&lt;/player_name&gt;
+      &lt;trainer_name&gt;Franklin+Spink&lt;/trainer_name&gt;
+    &lt;/instruction&gt;
+  &lt;/individual_training&gt;
+  &lt;youth_team_training&gt;
+    &lt;teamid&gt;2&lt;/teamid&gt;
+    &lt;s1&gt;stamina&lt;/s1&gt;
+    &lt;s2&gt;none&lt;/s2&gt;
+    &lt;s3&gt;none&lt;/s3&gt;
+    &lt;s4&gt;none&lt;/s4&gt;
+  &lt;/youth_team_training&gt;
+&lt;/training_instructions&gt;</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer475'));">
+                                                      Training Reports                                                    </a>
+                                                  </div>
+                                                  <div id="answer475" style="padding: 5px; display: block;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for a training report:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=tr</pre></div><br><br><b>Additional Request Data</b><br><br>No extra request information is required. All that is required is a valid member id and key.<br><br>If a valid and active member is found, a training report for their team will be returned.<br><br>By default, the latest available training report is returned. Optionally, you can specify a season &amp; round: <div class="code"><pre style="margin:0; padding:0;">&amp;r=tr&amp;season=8&amp;round=6</pre></div><br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;training_report teamid="2" season="8" round="9"&gt;
+  &lt;id&gt;630901&lt;/id&gt;
+  &lt;teamid&gt;2&lt;/teamid&gt;
+  &lt;season&gt;8&lt;/season&gt;
+  &lt;round&gt;8&lt;/round&gt;
+  &lt;team_training&gt;
+    &lt;skills&gt;
+    	&lt;skill session="1"&gt;stamina&lt;/skill&gt;
+    	&lt;skill session="2"&gt;attack&lt;/skill&gt;
+    	&lt;skill session="3"&gt;defense&lt;/skill&gt;
+    &lt;/skills&gt;
+    &lt;players&gt;
+      &lt;player id="2306119"&gt;
+        &lt;id&gt;2306119&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;
+        	&lt;skill&gt;stamina&lt;/skill&gt;
+        	&lt;skill&gt;attack&lt;/skill&gt;
+        &lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;10185&lt;/old&gt;
+          &lt;new&gt;10205&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306120"&gt;
+        &lt;id&gt;2306120&lt;/id&gt;
+        &lt;drops&gt;
+        	&lt;skill&gt;handling&lt;/skill&gt;
+        &lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;9115&lt;/old&gt;
+          &lt;new&gt;9178&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306122"&gt;
+        &lt;id&gt;2306122&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;9157&lt;/old&gt;
+          &lt;new&gt;9053&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306124"&gt;
+        &lt;id&gt;2306124&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;8009&lt;/old&gt;
+          &lt;new&gt;8043&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306125"&gt;
+        &lt;id&gt;2306125&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;14137&lt;/old&gt;
+          &lt;new&gt;14204&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306127"&gt;
+        &lt;id&gt;2306127&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;21223&lt;/old&gt;
+          &lt;new&gt;21312&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306131"&gt;
+        &lt;id&gt;2306131&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;13739&lt;/old&gt;
+          &lt;new&gt;13775&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306133"&gt;
+        &lt;id&gt;2306133&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;13164&lt;/old&gt;
+          &lt;new&gt;13203&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306136"&gt;
+        &lt;id&gt;2306136&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;22409&lt;/old&gt;
+          &lt;new&gt;22574&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306138"&gt;
+        &lt;id&gt;2306138&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;3209&lt;/old&gt;
+          &lt;new&gt;2947&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306140"&gt;
+        &lt;id&gt;2306140&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;11777&lt;/old&gt;
+          &lt;new&gt;11869&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306143"&gt;
+        &lt;id&gt;2306143&lt;/id&gt;
+        &lt;drops&gt;
+        	&lt;skill&gt;handling&lt;/skill&gt;
+        &lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;3999&lt;/old&gt;
+          &lt;new&gt;3823&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306144"&gt;
+        &lt;id&gt;2306144&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+        &lt;old&gt;24383&lt;/old&gt;
+        &lt;new&gt;24560&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306145"&gt;
+        &lt;id&gt;2306145&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;13922&lt;/old&gt;
+          &lt;new&gt;13948&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306146"&gt;
+        &lt;id&gt;2306146&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;12844&lt;/old&gt;
+          &lt;new&gt;12890&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306147"&gt;
+        &lt;id&gt;2306147&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;5126&lt;/old&gt;
+          &lt;new&gt;4936&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="2306148"&gt;
+        &lt;id&gt;2306148&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;7259&lt;/old&gt;
+          &lt;new&gt;7279&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="3327223"&gt;
+        &lt;id&gt;3327223&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;17188&lt;/old&gt;
+          &lt;new&gt;17350&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="3686163"&gt;
+        &lt;id&gt;3686163&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;7899&lt;/old&gt;
+          &lt;new&gt;7914&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="3827378"&gt;
+        &lt;id&gt;3827378&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;15808&lt;/old&gt;
+          &lt;new&gt;15918&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="4106033"&gt;
+        &lt;id&gt;4106033&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;7476&lt;/old&gt;
+          &lt;new&gt;7481&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="4127280"&gt;
+        &lt;id&gt;4127280&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;3204&lt;/old&gt;
+          &lt;new&gt;3238&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="4566329"&gt;
+        &lt;id&gt;4566329&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;8973&lt;/old&gt;
+          &lt;new&gt;9000&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="4566330"&gt;
+        &lt;id&gt;4566330&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;7519&lt;/old&gt;
+          &lt;new&gt;7563&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="4846283"&gt;
+        &lt;id&gt;4846283&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;5483&lt;/old&gt;
+          &lt;new&gt;5523&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="5711508"&gt;
+        &lt;id&gt;5711508&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;5335&lt;/old&gt;
+          &lt;new&gt;5348&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="6221594"&gt;
+        &lt;id&gt;6221594&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;5982&lt;/old&gt;
+          &lt;new&gt;5984&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="7228730"&gt;
+        &lt;id&gt;7228730&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+        &lt;old&gt;10347&lt;/old&gt;
+        &lt;new&gt;10388&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="7272928"&gt;
+        &lt;id&gt;7272928&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;8182&lt;/old&gt;
+          &lt;new&gt;8196&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="8083009"&gt;
+        &lt;id&gt;8083009&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+        &lt;old&gt;12475&lt;/old&gt;
+        &lt;new&gt;12478&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="8083010"&gt;
+        &lt;id&gt;8083010&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;10881&lt;/old&gt;
+          &lt;new&gt;10911&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+      &lt;player id="8117028"&gt;
+        &lt;id&gt;8117028&lt;/id&gt;
+        &lt;drops&gt;&lt;/drops&gt;
+        &lt;pops&gt;&lt;/pops&gt;
+        &lt;csr&gt;
+          &lt;old&gt;9823&lt;/old&gt;
+          &lt;new&gt;9859&lt;/new&gt;
+        &lt;/csr&gt;
+      &lt;/player&gt;
+    &lt;/players&gt;
+  &lt;/team_training&gt;
+  &lt;individual_training&gt;
+    &lt;player id="2306127"&gt;
+      &lt;id&gt;2306127&lt;/id&gt;
+      &lt;skills&gt;
+        &lt;skill label="technique"&gt;
+          &lt;skill&gt;technique&lt;/skill&gt;
+          &lt;sessions&gt;3&lt;/sessions&gt;
+          &lt;pops&gt;
+          	&lt;skill&gt;technique&lt;/skill&gt;
+          &lt;/pops&gt;
+          &lt;trainer_name&gt;Levi+Hordern&lt;/trainer_name&gt;
+          &lt;trainer_level&gt;1&lt;/trainer_level&gt;
+          &lt;trainer_type&gt;defense&lt;/trainer_type&gt;
+      	&lt;/skill&gt;
+        &lt;skill label="defense"&gt;
+          &lt;skill&gt;defense&lt;/skill&gt;
+          &lt;sessions&gt;1&lt;/sessions&gt;
+          &lt;pops&gt;&lt;/pops&gt;
+          &lt;trainer_name&gt;Levi+Hordern&lt;/trainer_name&gt;
+          &lt;trainer_level&gt;1&lt;/trainer_level&gt;
+          &lt;trainer_type&gt;defense&lt;/trainer_type&gt;
+        &lt;/skill&gt;
+      &lt;/skills&gt;
+      &lt;csr&gt;
+        &lt;old&gt;21312&lt;/old&gt;
+        &lt;new&gt;21314&lt;/new&gt;
+      &lt;/csr&gt;
+      &lt;energy&gt;
+        &lt;old&gt;9&lt;/old&gt;
+        &lt;new&gt;8&lt;/new&gt;
+      &lt;/energy&gt;
+    &lt;/player&gt;
+    &lt;player id="2306138"&gt;
+      &lt;id&gt;2306138&lt;/id&gt;
+      &lt;skills&gt;
+        &lt;skill label="defense"&gt;
+          &lt;skill&gt;defense&lt;/skill&gt;
+          &lt;sessions&gt;1&lt;/sessions&gt;
+          &lt;pops&gt;&lt;/pops&gt;
+          &lt;trainer_name&gt;Levi+Hordern&lt;/trainer_name&gt;
+          &lt;trainer_level&gt;1&lt;/trainer_level&gt;
+          &lt;trainer_type&gt;defense&lt;/trainer_type&gt;
+        &lt;/skill&gt;
+      &lt;/skills&gt;
+      &lt;csr&gt;
+        &lt;old&gt;2947&lt;/old&gt;
+        &lt;new&gt;2960&lt;/new&gt;
+      &lt;/csr&gt;
+      &lt;energy&gt;
+        &lt;old&gt;9&lt;/old&gt;
+        &lt;new&gt;9&lt;/new&gt;
+      &lt;/energy&gt;
+    &lt;/player&gt;
+  &lt;/individual_training&gt;
+&lt;/training_report&gt;</pre></div></div>                                                  </div>
+                                                </div>
+                                                                                            
+                                                <div>
+                                                  <div>
+                                                    <a href="javascript: expand(document.getElementById('answer482'));">
+                                                      Transfer Market                                                    </a>
+                                                  </div>
+                                                  <div id="answer482" style="padding: 5px; display: block;">
+                                                    <div><b>Request</b><br>To tell the API that this is a request for transfer market information:<br><div class="code"><pre style="margin:0; padding:0;">&amp;r=tm</pre></div><br><br>By default, all auctions are returned, sorted by nearest deadline first.<br><br><b>Additional Request Data</b><br>All of the following requests are optional.<br><br>To request a specific sort type:<br><div class="code"><pre style="margin:0; padding:0;">&amp;sortby=[SORT_BY]</pre></div><br>[SORT_BY] can be any of: "name", "price", "deadline", "nationality", "age", or "ranking".<br><br>To request a specific sort order:<br><div class="code"><pre style="margin:0; padding:0;">&amp;sortorder=[SORT_ORDER]</pre></div><br>[SORT_ORDER] can be either: "asc", or "desc".<br><br>To offset your results:<br><div class="code"><pre style="margin:0; padding:0;">&amp;offset=[OFFSET]</pre></div><br>For example, an offset of 0, will start your results at the first auction in the result set. And an offset of 10 will start your results at the 11th auction.<br><br>To limit your results:<br><div class="code"><pre style="margin:0; padding:0;">&amp;limit=[LIMIT]</pre></div><br>For example, a limit of 10, will return a maximum of 10 results.<br><br>The offset and limit can, and should be used where possible to reduce the amount of auctions returned at once. For example, &amp;offset=0&amp;limit=10 would return the first 10 auctions, and &amp;offset=10&amp;limit=10 would return auctions 11-20.<br><br>To get players from a certain team:<br><div class="code"><pre style="margin:0; padding:0;">&amp;teamid=[TEAMID]</pre></div><br>NOTE: You cannot use any search parameters when getting players from a given team.<br><br><b>Searching</b><br><br>Any and all of the following search criteria can be given:<br><br>To search by price:<br><div class="code"><pre style="margin:0; padding:0;">&amp;priceMin=[PRICE_INTEGER]
+and/or
+&amp;priceMax=[PRICE_INTEGER]</pre></div><br><br>To search by age:<br><div class="code"><pre style="margin:0; padding:0;">&amp;ageMin=[AGE_INTEGER]
+and/or
+&amp;ageMax=[AGE_INTEGER]</pre></div><br><br>To search by CSR:<br><div class="code"><pre style="margin:0; padding:0;">&amp;csrMin=[CSR_INTEGER]
+and/or
+&amp;csrMax=[CSR_INTEGER]</pre></div><br><br>To search by Nationality:<br><div class="code"><pre style="margin:0; padding:0;">&amp;nationality=[COUNTRY_ISO]</pre></div><br><br>To search by player attribute:<br><br>First, you must specify an attribute:<br><div class="code"><pre style="margin:0; padding:0;">&amp;skill[X]=[ATTRIBUTE]</pre></div><br>[X] Must be an integer. It can be any integer, e.g. &amp;skill1=<br><br>[ATTRIBUTE] can be any of the following: "stamina", "handling", "defense", "attack", "technique", "strength", "jumping", "speed", "agility", "kicking", "form", "height", "weight", "salary", "discipline", "aggression", "leadership", or "experience".<br><br>As well as the specified attribute, you must specify either a minimum, or a  maximum, or both.<br><div class="code"><pre style="margin:0; padding:0;">&amp;skill[X]min=[MIN_INTEGER]
+and/or
+&amp;skill[X]max=[MAX_INTEGER]</pre></div><br>[X] Must be the same integer as used for setting the attribute. E.g. &amp;skill1=stamina&amp;skill1min=10<br><br>For any attribute with a skill level, you should use the integer level, I.E. Non-existant = 1, Despicable = 2, Horrible = 3, etc.<br><br>For height, weight, and salary, you should use the applicable integer.<br><br>If any there are no auctions, no information will be returned.<br><br><b>Response</b><br><br><div class="code"><pre style="margin:0; padding:0;">&lt;auction id="237556"&gt;
+  &lt;playerid&gt;9443796&lt;/playerid&gt;
+  &lt;deadline&gt;1280467444&lt;/deadline&gt;
+&lt;/auction&gt;
+&lt;auction id="237558"&gt;
+  &lt;playerid&gt;3113692&lt;/playerid&gt;
+  &lt;deadline&gt;1280467560&lt;/deadline&gt;
+&lt;/auction&gt;
+&lt;auction id="237559"&gt;
+  &lt;playerid&gt;9443803&lt;/playerid&gt;
+  &lt;deadline&gt;1280467620&lt;/deadline&gt;
+&lt;/auction&gt;
+...</pre></div><br><br><b>Notes</b><br><br>For further information about an auction, you should request the player using the player ID.</div>                                                  </div>
+                                                </div>
+                                                                                                                                    </div>
+                                        </div>

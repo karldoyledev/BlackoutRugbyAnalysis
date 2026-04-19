@@ -1,0 +1,2129 @@
+Getting Started
+Introduction
+The Blackout Rugby API (Application Programming Interface) uses the RESTful architecture to provide game information such as team data, player data, and fixture data to 3rd party software applications. Developers can also update and manipulate game data via the API. Anyone can gain access to the API, and use it to develop any type of 3rd party software application. If you're not a developer, you can stop reading now.
+Getting Access
+To get started with the API, you need to activate your developer account. Go to your Account page, and click "Activate API Developer Account".
+
+Once you’ve got a developer ID (also found on your Account page), you can start making requests. Requests are made by sending a GET query to the API, which will respond in XML.
+
+Developer's also have access to the API Developer's lounge in the clubrooms. We encourage you to join this lounge to stay up to date with the latest changes. This is where you should request features, report bugs, etc.
+
+The default base URL for requests is:
+http://classic-api.blackoutrugby.com
+
+You can make requests from your browser to test the API and view XML responses. We recommend Firefox for this.
+
+You can also make use of SSL:
+https://classic-api.blackoutrugby.com
+
+We recommend using SSL when sending write data to the API, especially with log-ins and any other sensitive requests.
+
+All requests are handled by our load balancer with auto-scaling capacity, and will make use of caching where possible. However, we ask that you also use caching in your own applications to minimise the load on our servers and to keep the API speedy for everyone using it as well as the people using our web site.
+Your First Request
+Copy and paste the following URL to the address bar in a new browser window/tab:
+http://classic-api.blackoutrugby.com/?d=[DEV_ID]&dk=[DEV_KEY]
+&r=m&memberid=[MEMBER_ID]
+
+
+Replace the bracketed sections with the required developer information from your account page, and grab your member ID from your member lobby.
+
+Replace everything in the bracketed text, including the brackets. So your final URL should look something like this:
+http://classic-api.blackoutrugby.com/?d=0&dk=abcdefghijk
+&r=m&memberid=0
+
+
+Load the URL, and you've just made your first request! You should see the XML data representing your public account information. If you go on to add your member key (also found on the account page), you will see some extra private information as well.
+JSON (New)
+Due to JSON's ease of use and relatively smaller response size (therefore faster performance), it is being rolled out in all new APIs and will eventually be added to all current APIs as well.
+
+By default all APIs will respond in XML, but if you add the following to your request to a supporting API it will respond in JSON:
+&json=1
+
+
+In a future version of the API, JSON will become the default, requiring XML to be specified if needed.
+
+All JSON responses will contain an item called "status", this can be tested for "Ok" representing a successful response, or "Failed" for an error. Here's an example of an error:
+{
+	status: "Failed",
+	error: "Player is not for sale",
+	brt: "2013-11-13T22:09:31+12:00"
+}
+
+
+"brt" is Blackout Rugby Time formatted to ISO 8601.
+
+Continuing on from "Your First Request", try the following request to see what a full JSON response looks like (Best viewed with a JSON viewer installed in your browser, such as JSONView):
+http://classic-api.blackoutrugby.com/?d=[DEV_ID]&dk=[DEV_KEY]
+&r=m&memberid=[MEMBER_ID]&json=1
+Requesting with JSON (New)
+As we expand the API to accept requests which actually change things in the game, there is a need for more flexibility.
+
+For example, sending in a group of training instructions would be much better suited to something like arrays, which are able to describe data in a multidimensional way as opposed the basic http requests which are limited to a single list.
+
+This is where JSON really starts to shine, with it's ability to hold and transport multi-dimensional data quite easily.
+
+Due to this, the API now supports the ability to make requests in JSON for all current APIs.
+
+Simply construct your request as a JSON object, with the same keys and values normally sent to the API via GET and POST, and send it to the server as a single POST key named "json".
+
+For example, you would construct your JSON request as an array in your language of choice. Here's an example in PHP:
+$request = array(
+	"d" => "[DEV_ID]",
+	"dk" => "[DEV_KEY]",
+	"r" => "m",
+	"memberid" => [MEMBER_ID]
+);
+
+
+Then you would encode the request as JSON:
+$request = json_encode($request);
+
+This function, json_encode is provided by default in PHP. There should be something similar in most languages.
+
+This results in a JSON object like this:
+{
+	d: "[DEV_ID]",
+	dk: "[DEV_KEY]",
+	r: "m",
+	memberid: [MEMBER_ID]
+}
+
+
+As a flat string:
+{"d":"[DEV_ID]","dk":"[DEV_KEY]","r":"m","memberid":[MEMBER_ID]}
+
+
+Encode this string for sending over HTTP:
+$request = urlencode($request);
+
+Again, urlencode is built into PHP. Most languages will come with functions or libraries bundled in for handling this.
+
+Then you simply send this as either GET or POST to the API under the "json" key:
+http://classic-api.blackoutrugby.com/?json=%7B%22d%22%...
+
+
+Important: This JSON data should preferably by sent using POST since this handles large amounts of data. Whereas sending within the URL (as above) will limit you to 2000 characters.
+
+For information on sending encrypted data within this JSON request, see the JSON section under "Security".
+Debugging
+To tell the API to return back to you exactly what it's seeing, including any unencrypted strings, you can add the following flag to your request (it doesn't matter where... URI, POST, JSON):
+debug=1
+
+
+This will come in very handy when testing your setup.
+Versioning
+The API provides a latest version as well as well as several previous versions based on the date they were saved.
+
+To use the latest version of the API, use the normal base URL:
+
+api.blackoutrugby.com/...
+
+
+To use a previous version of the API, use a URL like this:
+
+api.blackoutrugby.com/2011-08-13/...
+
+
+You can find the available versions by checking the different API reference dates provided in the documentation below.
+
+Why use a versioned API?
+To prevent changes in the API from breaking your application, you should use a specific version of the API. Then when you want to upgrade to a newer version, you can test your app with other versions whenever you're ready.
+
+Please note we do not plan on keeping all versions forever. We will warn you at least 21 days in advance via the developer's lounge before removing old versions of the API.
+Charges
+Access to the API is free. The only scenarios in which we would charge for API access is if the developer was charging for their product, or if usage became so high that we had to charge users to offset our hosting costs.
+
+If a developer decides to make a commercial product using our API, we would come to a mutually beneficial deal for both parties and charge the developer directly.
+
+If we were to charge for high usage to offset hosting costs, we would charge users directly from within Blackout Rugby via a low price "API subscription". However, we do not envisage this happening for a very long time, if ever.
+Official Third Party Applications
+If you want your application to become an official Blackout Rugby third party application. Please send us a request to support@blackoutrugby.com. This should include any information required so that we can review your application. We reserve the right to also request your source code.
+
+If you are accepted, you should use the following image somewhere on your site/application. You can resize it to whatever size you need:
+http://www.blackoutrugby.com/resources/official.third.party.ap...
+Bulk Downloads/Updates
+The API is designed to handle smaller distributed requests over time rather than bulk downloads. This allows the system to scale gracefully when traffic increases. Bulk downloads cause spikes in traffic, and can have negative impacts on the overall service. When designing your application, please keep this in mind.
+
+The most ideal use of the API when running lengthy scripts is as follows:
+
+1. During 0-120 seconds, wait 3 seconds between requests
+2. 120-240 seconds, wait 1 second between requests
+3. After than you can run each request without waiting.
+
+This prevents the system from getting overwhelmed too quickly, allowing it to scale gracefully - especially during low peak when we have minimal servers running. If possible, please only run intensive scripts during peak hours when we have plenty of servers running. This is between 12am and 10am Blackout Rugby Time (BRT).
+
+Please do not run concurrent requests.
+Security
+Developer ID
+To receive an informational response from the API, you must always provide your developer ID and Key for example:
+http://classic-api.blackoutrugby.com/?d=[DEVELOPER_ID]&dk=[DEVELOPER_KEY]
+
+
+This is all that is needed to to get an informational response from the API while testing (from a browser for example). However, you should never use this method from within an application, otherwise you risk exposing your developer key to someone who uses your application, especially if it is a desktop application or browser extension.
+
+You must protect your developer key at all times.
+
+From within your application, you must encrypt the actual request string in a closed source application before sending it to the API.
+Encrypted Requests
+In addition to your developer ID, you are provided with a developer key, and an IV (Initialisation Vector). These are used with AES encryption to encrypt your request string.
+
+So how do you use AES? First of all, let’s jump straight to the final product, and then work towards it. The GET requests from your application to the API should look something like this:
+http://classic-api.blackoutrugby.com/?d=[DEV_ID]&er=[ENCRYPTED_REQUEST]
+
+
+and if you're adding POST data as well, you would still call the URL above including "er=", and you would also provide an encrypted request string as your POST data:
+
+&er=[ENCRYPTED_POST_DATA]
+
+
+You use the same techniques to encrypt your POST data, as you do for your GET data.
+
+To generate the encrypted request string, you first create your string which is simple enough, e.g. “r=p&playerid=[PLAYER_ID]” (see the API reference). Once you have created your request string. You encrypt it using AES in CBC mode with zero padding, and finally you encode it to base64. We encode to base64 so that the string can be safely sent over HTTP.
+
+This task will obviously be different depending on which programming language you’re using. Regardless of which language you use, you must ensure you use “Zero” padding (Bytes set to 0). AES requires the byte length of your unencrypted string to be a multiple of 8, so if the length of your string in terms of bytes is not exactly a multiple of 8, e.g. 16, 24, or 32 characters long (which it rarely will be), your AES library will pad your string to make it big enough. This task is usually done by the AES library or object which you use, all you have to do is specify the type of padding. However, if your library or object does not do this for you, it is fairly easy to code.
+
+Please see the AES Sample Code section for some sample code for several popular programming languages.
+Encrypting JSON
+When sending encrypted requests via JSON, you should:
+
+1. create your JSON request object as shown in the Getting Started section called "Requesting with JSON".
+2. Encrypt this string just as it is, without adding a "json=" key or anything like that. Just encrypt the raw JSON string.
+3. Place that encrypted string within another JSON object, coupled with your developer ID:
+{
+	"er":"6FJQWybNd61Qt+PRz+9uQcuLDsBhJ9==",
+	"d":1
+}
+
+
+4. Encode (for URLs) and send this JSON object as normal, preferably via POST:
+POST: json=%7B%22d%22%...
+Member ID
+Using a developer ID alone, you can gain access to public information such as fixtures and public player data. However, to access sensitive information such as player skills, you will need to provide a member ID and a member key.
+
+The member ID and member key are provided on every member’s “My Account” page on the Blackout Rugby website, in a format ready to be added to any request URL. You will need to ask your users to copy and paste their access key into your application. We ask that if you are storing these keys in a central location (for a web application as opposed to on a user’s PC for a desktop application), that you take the proper precautions to protect these keys.
+
+The key provided to users looks like
+m=[MEMBER_ID]&mk=[MEMBER_KEY]
+
+
+This should normally be encrypted as part of the encrypted request string, but it can also be added straight onto the base URL with a developer ID and key when testing, for example:
+...rugby.com/?d=[DEV_ID]&dk=[DEV_KEY]&m=[MEMBER_ID]&mk=[MEMBER_KEY]
+
+
+The member access key is based on the user’s password. So if the user changes their password, they will need to re-enter their access key into your application.
+Writes
+Write Access
+Most APIs that allow you to manipulate data are now available to all API developers. However, certain APIs such as registration require special access. For now, we are only allowing official Blackout Rugby applications developed by us or internal staff members to access these. If you really need these features, you should contact us at theteam@blackoutrugby.com.
+Writing to the API
+A write to the API is a request which updates data in some way, such as updating a lineup, sending in-game mail, or setting some training. All writes to the API require a POST request to be made.
+
+When writing to the API, you should send your POST request to a URL which includes only the developer ID:
+http://classic-api.blackoutrugby.com/?d=[DEVELOPER_ID]
+
+
+All other data (including your developer key) should be encrypted, and sent with the POST data:
+POST
+er=[ENCRYPTED_REQUEST]
+
+
+When testing, you can send unencrypted values via POST:
+POST
+dk=[DEVELOPER_KEY]&r=[REQUEST_TYPE]&...
+AES Sample Code
+PHP
+C#
+using System;
+using System.Security.Cryptography;
+using System.Text;
+using System.IO;
+
+// Create an unencrypted request as an array of bytes
+byte[] request = UTF8Encoding.UTF8.GetBytes("[REQUEST_STRING]");
+
+// Set the dev ID
+string devID = "[DEVELOPER_ID]";
+
+// Set the key and IV as arrays of bytes
+byte[] key = UTF8Encoding.UTF8.GetBytes("[DEVELOPER_KEY]");
+byte[] iv = UTF8Encoding.UTF8.GetBytes("[DEVELOPER]");
+
+// Create an instance of the AES Encryptor
+AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
+
+// Set the key and IV
+aes.Key = key;
+aes.IV = iv;
+
+// Set the mode of the AES Encryptor
+aes.Mode = CipherMode.CBC;
+
+// Set the padding mode of the AES Encryptor
+aes.Padding = PaddingMode.Zeros;
+
+// Get the transformer from the AES Encryptor
+ICryptoTransform cTransform = aes.CreateEncryptor();
+
+// Use the transformer to encrypt our request
+byte[] result = 
+  cTransform.TransformFinalBlock(request, 0, request.Length);
+
+// Release resources held by AES Encryptor
+aes.Clear();
+
+// Encode to base64
+string encryptedRequest = 
+  Convert.ToBase64String(result, 0, result.Length);
+
+// Send request to API
+string baseURL = "http://classic-api.blackoutrugby.com/";
+string requestString = "?d="+devID+"&er="+encryptedRequest;
+string response = getWebResponse(baseURL+requestString);
+
+// NOTE: getWebResponse() is a fictitious method
+// You will need to write your own code for web requests
+Visual C++
+Visual Basic
+Java
+Python
+Request Sample Code
+PHP
+PHP via JSON
+Delphi
+Error Handling
+Error Handling
+When developing your application, you will need to ensure your application can handle any errors. All errors are provided in a standard element in XML, or an error child in JSON with the status "Failed". If you request the base URL with no arguments: http://classic-api.blackoutrugby.com you will receive the error: “Developer ID is not set”.
+
+An example of good error handling is to tell the user if their credentials are incorrect. If you make the following request to the API:
+http://classic-api.blackoutrugby.com/?d=[DEV_ID]&m=[MEMBER_ID]&mk=[MEMBER_KEY]
+
+And if the user’s credentials are correct, you will receive the error message “No data requested”, so you can tell the user that their credentials are successful. However, if the user’s credentials are incorrect, you will receive the error message “Member key is incorrect”, and your application should tell the user to try again.
+
+There are many error messages which you will likely encounter, and we will not provide every error message here in the documentation. You should simply attempt error provoking scenarios when testing, and ensure your application does not break when encountering an error.
+Error Reporting
+API based error messages will not have a location and line attached, however, PHP based errors will. So if you see an error message including the code location information, please let us know via the bugs lounge so that we can fix it.
+API Reference (Latest)
+Account
+Supports JSON.
+
+Request type (POST)
+&r=acc
+
+JSON
+{
+	r: "acc"
+}
+
+
+NOTE: Account updates are not available to all API developers. For more info please see "Write Access".
+
+Additional Request Data (POST)
+
+The user's API key must be present for all calls to this API.
+
+Using the account API, you can update a user's username, password, or email address. Only one item can be updated per request.
+
+To update the username
+&username=[NEW_USERNAME]
+
+JSON
+{
+	username: [NEW_USERNAME]
+}
+
+
+To update the password
+&password=[NEW_PASSWORD]
+
+JSON
+{
+	password: [NEW_PASSWORD]
+}
+
+This should be the raw password, un-hashed.
+
+NOTE: The user's API key is based on the user's password, so if you change the password, you must use the new API key for any future API calls.
+
+To update the email address
+&email=[NEW_EMAIL_ADDRESS]
+
+JSON
+{
+	email: [NEW_EMAIL_ADDRESS]
+}
+
+
+You can also suspend and unsuspend a user, as long as the user has not already been suspended for another reason. This allows the user to close their own account if they wish to.
+
+To suspend a user
+&suspend=1
+
+{
+	suspend: 1
+}
+
+This will suspend the user account for 2 weeks. After 2 weeks the account will be locked and reset, and will be unrecoverable.
+
+To lock a user (WHEN TESTING ONLY, BE VERY CAREFUL)
+&suspend=1&asap=1
+
+JSON
+{
+	suspend: 1,
+	asap: 1
+}
+
+This will suspend and lock the account immediately and is unrecoverable. Note, this can only be done to accounts which were registered less than an hour ago.
+
+To unsuspend a user
+&unsuspend=1
+
+JSON
+{
+	unsuspend: 1
+}
+Bidding
+Supports JSON.
+
+Request type (POST)
+&r=tm
+
+
+The user's API key must be present for the following calls to this API.
+
+To bid on a player
+&playerid=[PLAYER_ID]&biddingteamid=[BIDDING_TEAM_ID]&bid=[AMOUNT]
+
+JSON
+{
+  playerid: [PLAYER_ID],
+  biddingteamid: [BIDDING_TEAM_ID],
+  bid: [AMOUNT]
+}
+
+
+Note: you can find the minimum next bid in the response from the player API.
+
+Please ensure you provide sufficient confirmations to the user, including the full price they've entered, with commas.
+
+For example, this is good:
+Quote:
+Are you sure you would like to make this bid?
+
+$55,000 for Jonah Lomu
+Don't do this:
+Quote:
+Are you sure you would like to make this bid?
+
+$55000
+To make it an auto-bid, add:
+&autobid=1
+
+JSON
+{
+  autobid: true
+}
+
+NOTE: Auto-bids will only work for premium managers.
+Bid History
+Supports JSON.
+
+Request
+&r=bh
+
+
+To retrieve using a player ID
+(Player must be currently for sale):
+&playerid=[MEMBER_ID]
+
+
+To retrieve using an auction ID
+(Get this from the Transfer Market API):
+&auctionid=[AUCTION_ID]
+
+
+XML Response
+<bid id="2990885">
+	<id>2990885</id>
+	<teamid>8232</teamid>
+	<memberid>58451</memberid>
+	<bid>5000</bid>
+	<date>2013-11-13T21:14:20+12:00</date>
+	<revert>0</revert>
+	<autobid_race>0</autobid_race>
+	<auctionid>607986</auctionid>
+</bid>
+<bid id="2990924">
+	<id>2990924</id>
+	<teamid>6733</teamid>
+	<memberid>129642</memberid>
+	<bid>15000</bid>
+	<date>2013-11-13T22:37:05+12:00</date>
+	<revert>0</revert>
+	<autobid_race>0</autobid_race>
+	<auctionid>607986</auctionid>
+</bid>
+
+
+JSON response
+{
+	status: "Ok",
+	bids: {
+		2990885: {
+			id: "2990885",
+			teamid: "8232",
+			memberid: "58451",
+			bid: "5000",
+			date: "2013-11-13T21:14:20+12:00",
+			revert: "0",
+			autobid_race: "0",
+			auctionid: "607986"
+		},
+		2990924: {
+			id: "2990924",
+			teamid: "6733",
+			memberid: "129642",
+			bid: "15000",
+			date: "2013-11-13T22:37:05+12:00",
+			revert: "0",
+			autobid_race: "0",
+			auctionid: "607986"
+		}
+	},
+	brt: "2013-11-13T23:48:35+12:00"
+}
+
+
+Notes:
+
+Revert will be "1" if an entry is the result of a Game Master reverting the auction to a previous state.
+
+Autobid Race will be "1" if an entry is the result of a race between two auto-bids. For example, if there is already an auto-bid in place, and a new member creates a competing auto-bid forcing the bid value to resolve to the next bid after the lesser of the two auto-bids.
+Countries
+Supports JSON.
+
+Request
+To tell the API that this is a request for country information:
+&r=c
+
+
+By default, all countries are returned.
+
+Additional Request Data
+
+To retrieve an individual country:
+&country_iso=[COUNTRY_ISO]
+
+
+To retrieve multiple countries:
+&country_isos=[COUNTRY_ISO],[COUNTRY_ISO],...
+
+
+By default, it is the "game" countries that are returned. These are the countries in which teams can exist. If you would like to get a list of all "real" countries, i.e. for registration please add the following flag:
+&real=1
+
+
+If any country is not found, no information will be returned for that country, not even an empty country element.
+
+Response for game countries
+<country iso="EN">
+  <country_iso>EN</country_iso>
+  <name>England</name>
+  <time_offset>-12</time_offset>
+  <timezone>Europe%2FLondon</timezone>
+</country>
+
+
+JSON response
+{
+	status: "Ok",
+	countries: {
+		AR: {
+			name: "Argentina",
+			timezone: "America/Buenos_Aires",
+			country_iso: "AR",
+			time_offset: "-15"
+		},
+	}
+}
+
+
+Response for real countries
+<country iso="GB">
+  <country_iso>GB</country_iso>
+  <name>UNITED KINGDOM</name>
+  <printable_name>United Kingdom</printable_name>
+</country>
+
+
+JSON response
+{
+	status: "Ok",
+	countries: {
+	AD: {
+		name: "ANDORRA",
+		printable_name: "Andorra",
+		country_iso: "AD"
+	}
+}
+
+
+Notes:
+
+Time offset The offset from Blackout Rugby Time in hours.
+
+Timezone The PHP timezone identifier.
+
+Available country ISOs:
+
+AR Argentina
+AU Australia
+BE Belgium
+BR Brazil
+CA Canada
+CL Chile
+HR Croatia
+CZ Czech Republic
+EN England
+FR France
+GE Georgia
+DE Germany
+HK Hong Kong
+IE Ireland
+IT Italy
+CI Ivory Coast
+JP Japan
+KE Kenya
+NA Namibia
+NL Netherlands
+NZ New Zealand
+PI Pacific Islands
+PL Poland
+PT Portugal
+RO Romania
+RU Russia
+SL Scotland
+ZA South Africa
+KR South Korea
+ES Spain
+US United States
+UY Uruguay
+WA Wales
+ZW Zimbabwe
+
+For a full list of real countries, please call the API
+Date and Time
+Date Converter
+Divisions
+Facilities
+Finances
+Fixtures
+Fixture Statistics
+Friendly Competition Fixtures (Reads)
+Friendly Competition Fixtures (Writes)
+Friendly Competition List
+Friendly Competition Trophies (Reads)
+Friendly Competition Trophies (Writes)
+Leagues
+Lineups (Reads)
+Lineups (Writes)
+Login
+Mail (Reads)
+Mail (Writes)
+Match Commentary
+Match Score
+Match Summary
+Members
+National News
+Player History
+Supports JSON.
+
+Request
+To tell the API that this is a request for player history information:
+&r=ph
+
+
+Additional Request Data
+
+&playerid=[PLAYER_ID]
+
+
+If no player history is available, no information will be returned, not even an empty element.
+
+Response
+<entry id="15877146">
+  <playerid>2306136</playerid>
+  <event>
+    Injured during match (<a href="tools.live.scoring.php#fixture
+      =5201142">5201142</a>). Will recover for next match.
+  </event>
+  <date>1276075433</date>
+</entry>
+<entry id="15399013">
+  <playerid>2306136</playerid>
+  <event>
+    Speed popped from <rank value=8 /> to <rank value=9 />.
+  </event>
+  <date>1273292153</date>
+</entry>
+...
+
+
+JSON Response
+{
+	status: "Ok",
+	playerid: 8083010,
+	entries: [
+		{
+			id: "37101612",
+			date: "2014-02-27T23:00:31+12:00",
+			event: "Aged from 30 to 31."
+		},
+		{
+			id: "35588840",
+			date: "2013-11-07T23:00:29+12:00",
+			event: "Aged from 29 to 30."
+		},
+		...
+	},
+}
+
+
+Notes:
+
+Date (Timestamp BRT) - The date of the event.
+
+Tags - Teams, Players, Members, and Skill Ranking Levels are provided as tags, e.g. , , , , , ,
+
+Pops - Pops are hidden for 7 days for free members. Pops are provided as normal for premium members.
+
+Privacy - Certain private information such as pops is hidden for public requests. To see pops, you must provide the owner's member key.
+Players
+Supports JSON.
+
+Request
+To tell the API that this is a request for player information:
+&r=p
+
+
+Additional Request Data
+At least one of the following is required:
+
+To retrieve an individual player:
+&playerid=[PLAYER_ID]
+
+
+To retrieve a group of players:
+&playerids=[PLAYER_ID],[PLAYER_ID],...
+
+
+To retrieve all players from a team:
+&teamid=[TEAM_ID]
+
+or
+&teamids=[TEAM_ID],[TEAM_ID],...
+
+There is a limit of 10 teams per call.
+
+All of the above can be requested at the same time.
+
+If any player is not found, no information will be returned for that player, not even an empty player element.
+
+Response
+If a valid member key is not supplied, or the member is not the owner of the player, the following items are returned:
+<player id="2306148">
+<id>2306148</id>
+  <teamid>2</teamid>
+  <fname>Rongo</fname>
+  <lname>Tribe</lname>
+  <birthday>06:5</birthday>
+  <age>30</age>
+  <hand>Right</hand>
+  <foot>Left</foot>
+  <nationality>NZ</nationality>
+  <csr>6464</csr>
+  <salary>41383</salary>
+  <form>8</form>
+  <aggression>5</aggression>
+  <discipline>2</discipline>
+  <energy>7</energy>
+  <leadership>1</leadership>
+  <experience>1</experience>
+  <weight>88</weight>
+  <height>182</height>
+  <injured>0</injured>
+  <youthid>0</youthid>
+  <jersey>255</jersey>
+  <joined>1197590177</joined>
+</player>
+
+
+JSON Response
+{
+	status: "Ok",
+	players: {
+		4127280: {
+			id: "4127280",
+			teamid: "2",
+			fname: "Emmett",
+			lname: "Morin",
+			age: "33",
+			birthday: "11:5",
+			hand: "Right",
+			foot: "Right",
+			nationality: "EN",
+			salary: "147323",
+			form: 8,
+			aggression: 2,
+			discipline: 4,
+			leadership: 5,
+			experience: 6,
+			weight: "123",
+			height: "194",
+			injured: "2013-11-30T15:20:31+12:00",
+			youthid: "2119126",
+			joined: "2008-11-22T20:05:01+12:00",
+			dualnationality: "NZ",
+			nat: "NZ",
+			name: "Emmett Morin",
+			csr: "85560",
+			energy: "390"
+		},
+	},
+	brt: "2013-11-29T02:06:44+12:00"
+}
+
+
+If a valid member key is given, and member is the owner of the player, the following items are returned:
+<player id="2306148">
+<id>2306148</id>
+  <teamid>2</teamid>
+  <fname>Rongo</fname>
+  <lname>Tribe</lname>
+  <birthday>06:5</birthday>
+  <age>30</age>
+  <hand>Right</hand>
+  <foot>Left</foot>
+  <nationality>NZ</nationality>
+  <csr>6464</csr>
+  <salary>41383</salary>
+  <stamina>6</stamina>
+  <handling>7</handling>
+  <attack>8</attack>
+  <defense>1</defense>
+  <technique>2</technique>
+  <strength>3</strength>
+  <jumping>3</jumping>
+  <speed>7</speed>
+  <agility>7</agility>
+  <kicking>4</kicking>
+  <form>8</form>
+  <aggression>5</aggression>
+  <discipline>2</discipline>
+  <energy>7</energy>
+  <leadership>1</leadership>
+  <experience>1</experience>
+  <weight>88</weight>
+  <height>182</height>
+  <injured>0</injured>
+  <contract>0</contract>
+  <youthid>0</youthid>
+  <jersey>255</jersey>
+  <joined>1197590177</joined>
+  <pops>
+    <skill>stamina</skill>
+    <skill>attack</skill>
+  </pops>
+</player>
+
+
+Notes:
+
+Injured (Timestamp BRT) - If this date is greater than the current Blackout Rugby Time, the player is currently injured.
+
+Youth ID - If this value is set (not equal to 0), it represents the player's ID when they were a youth player.
+
+Joined (Timestamp BRT) - The date in Blackout Rugby Time when the player joined their current squad.
+
+Contract (Timestamp BRT) - If this value is set (not equal to 0), and the date is greater than the current Blackout Rugby Time, the player is under contract.
+
+Jersey - If this value is set (not equal to 255), this represents the jersey number given to the player by the manager.
+
+Pops - The pops element holds any skills which have recently "popped". These are provided for premium managers only.
+
+Energy % - If the player is owned by a premium manager, the energy percentage out of 110% is provided. If not, the normal value from 1-11 is provided.
+
+Birthday - The player's birthday is provided in the format, WW:D. WW = week with a leading 0 for weeks less than 10, and D = day.
+
+National/U20 involvement - If the player is currently part of a national or U20 side, this will be shown as nat: "NZ", or u20: "NZ" for example.
+- if the player has been capped at international level this will be indicated by
+<capped_for>ES</capped_for>
+
+
+Youth Players
+
+To retrieve a youth player:
+&playerid=[PLAYER_ID]&youth=1
+
+
+If a valid member key is given, and member is the owner of the player, the following items are returned:
+<player id="4356278">
+  <id>4356278</id>
+  <teamid>2</teamid>
+  <fname>Arenui</fname>
+  <lname>Laulala</lname>
+  <birthday>06:5</birthday>
+  <age>18</age>
+  <hand>Right</hand>
+  <foot>Right</foot>
+  <nationality>NZ</nationality>
+  <csr>20008</csr>
+  <salary>82897</salary>
+  <stamina>Unknown</stamina>
+  <handling>Medium</handling>
+  <attack>Unknown</attack>
+  <defense>Unknown</defense>
+  <technique>Unknown</technique>
+  <strength>Unknown</strength>
+  <jumping>Unknown</jumping>
+  <speed>Unknown</speed>
+  <agility>Unknown</agility>
+  <kicking>Low</kicking>
+  <form>7</form>
+  <aggression>2</aggression>
+  <discipline>4</discipline>
+  <energy>11</energy>
+  <leadership>2</leadership>
+  <experience>2</experience>
+  <weight>93</weight>
+  <height>199</height>
+  <jersey>255</jersey>
+  <scouted>1257990490</scouted>
+  <pops></pops>
+  <reveals>
+    <skill>handling</skill>
+  </reveals>
+</player>
+
+
+Notes:
+
+Youth players do not have contract dates, joined dates, or injured dates, but they have a scouted date which represents the date they were introduced into the youth squad. All normally hidden values on the main site are also hidden in the API, such as skills and CSR.
+
+Skills revealed - Providing the owning member is making the call, if a skill has not been revealed, it will be returned as "Unknown". If a skill has been semi-revealed, it is returned as one of "Low", "Medium", or "High". If a skill is completely revealed, it will be returned as normal (an integer).
+
+Reveals - The reveals element holds any skills recently revealed for premium managers only. These represent the blue ribbons provided on the main site.
+
+Scouting stars - If a member key is provided, and the member is premium, the number of stars used to the scout the player will be provided if available, under the key "scouting_stars_used".
+
+National and Under 20 Players
+
+To retrieve a National player:
+&playerid=[PLAYER_ID]&nat=1
+
+
+To retrieve all players from a National team:
+&teamid=[TEAM_ID]&nat=1
+
+
+To retrieve an Under 20 player:
+&playerid=[PLAYER_ID]&u20=1
+
+
+To retrieve all players from an Under 20 team:
+&teamid=[TEAM_ID]&u20=1
+
+
+Notes:
+
+Retrieving a National or U20 player will return all of the same information as the club player except for energy, injured, joined, and jersey which represent the player as part of their National or U20 team. National\U20 managers can see all skills for players in their national side.
+
+Players for sale
+
+Players who are currently for sale on the transfer market will show all skills and their levels.
+
+As well as the skill levels, the following information related to the transfer is made available:
+<forsale>1</forsale>
+<listed>1276780714</listed>
+<deadline>1277039880</deadline>
+<asking>2000000</asking>
+<price>2486747</price>
+<bidteamid>65</bidteamid>
+<nextbid>2536000</nextbid>
+<canbid>1</canbid>
+
+
+Notes:
+
+Listed (Timestamp BRT) - The date in Blackout Rugby Time when the player was placed on the transfer market.
+
+Deadline (Timestamp BRT) - The date in Blackout Rugby Time when the player will be transferred to the highest bidder.
+
+Bidteamid - The ID of the team currently leading the auction. If there are no bids, this tag will be empty.
+
+Nextbid - The minimum value (and suggested value) of the next bid based on the current price.
+
+Canbid - Only appears if the member API key is present. 1 if the user can bid. 0 if the user has been linked to the owner via IP address or cookie.
+Player Statistics
+Ranking History
+Rankings
+Regions
+Registration
+Reporter's Summary
+Search
+Shortcuts
+Staff
+Standings
+Team History
+Teams
+Team Statistics
+Training Instructions
+Training Reports
+Transfer Market
+Transfer Market Watchlist
+Trophy Cabinet
+Validation
+Verification
+API Reference (2011-08-13)
+Countries
+Date and Time
+Divisions
+Finances
+Fixtures
+Fixture Statistics
+Leagues
+Lineups
+Mail
+Match Commentary
+Match Score
+Match Summary
+Members
+Player History
+Players
+Request
+To tell the API that this is a request for player information:
+&r=p
+
+
+Additional Request Data
+At least one of the following is required:
+
+To retrieve an individual player:
+&playerid=[PLAYER_ID]
+
+
+To retrieve a group of players:
+&playerids=[PLAYER_ID],[PLAYER_ID],...
+
+
+To retrieve all players from a team:
+&teamid=[TEAM_ID]
+
+
+All of the above can be requested at the same time.
+
+If any player is not found, no information will be returned for that player, not even an empty player element.
+
+Response
+If a valid member key is not supplied, or the member is not the owner of the player, the following items are returned:
+<player id="2306148">
+<id>2306148</id>
+  <teamid>2</teamid>
+  <fname>Rongo</fname>
+  <lname>Tribe</lname>
+  <birthday>06:5</birthday>
+  <age>30</age>
+  <hand>Right</hand>
+  <foot>Left</foot>
+  <nationality>NZ</nationality>
+  <csr>6464</csr>
+  <salary>41383</salary>
+  <form>8</form>
+  <aggression>5</aggression>
+  <discipline>2</discipline>
+  <energy>7</energy>
+  <leadership>1</leadership>
+  <experience>1</experience>
+  <weight>88</weight>
+  <height>182</height>
+  <injured>0</injured>
+  <youthid>0</youthid>
+  <jersey>255</jersey>
+  <joined>1197590177</joined>
+</player>
+
+
+If a valid member key is given, and member is the owner of the player, the following items are returned:
+<player id="2306148">
+<id>2306148</id>
+  <teamid>2</teamid>
+  <fname>Rongo</fname>
+  <lname>Tribe</lname>
+  <birthday>06:5</birthday>
+  <age>30</age>
+  <hand>Right</hand>
+  <foot>Left</foot>
+  <nationality>NZ</nationality>
+  <csr>6464</csr>
+  <salary>41383</salary>
+  <stamina>6</stamina>
+  <handling>7</handling>
+  <attack>8</attack>
+  <defense>1</defense>
+  <technique>2</technique>
+  <strength>3</strength>
+  <jumping>3</jumping>
+  <speed>7</speed>
+  <agility>7</agility>
+  <kicking>4</kicking>
+  <form>8</form>
+  <aggression>5</aggression>
+  <discipline>2</discipline>
+  <energy>7</energy>
+  <leadership>1</leadership>
+  <experience>1</experience>
+  <weight>88</weight>
+  <height>182</height>
+  <injured>0</injured>
+  <contract>0</contract>
+  <youthid>0</youthid>
+  <jersey>255</jersey>
+  <joined>1197590177</joined>
+  <pops>
+    <skill>stamina</skill>
+    <skill>attack</skill>
+  </pops>
+</player>
+
+
+Notes:
+
+Injured (Timestamp BRT) - If this date is greater than the current Blackout Rugby Time, the player is currently injured.
+
+Youth ID - If this value is set (not equal to 0), it represents the player's ID when they were a youth player.
+
+Joined (Timestamp BRT) - The date in Blackout Rugby Time when the player joined their current squad.
+
+Contract (Timestamp BRT) - If this value is set (not equal to 0), and the date is greater than the current Blackout Rugby Time, the player is under contract.
+
+Jersey - If this value is set (not equal to 255), this represents the jersey number given to the player by the manager.
+
+Pops - The pops element holds any skills which have recently "popped". These are provided for premium managers only.
+
+Energy % - If the player is owned by a premium manager, the energy percentage out of 110% is provided. If not, the normal value from 1-11 is provided.
+
+Birthday - The player's birthday is provided in the format, WW:D. WW = week with a leading 0 for weeks less than 10, and D = day.
+
+Youth Players
+
+To retrieve a youth player:
+&playerid=[PLAYER_ID]&youth=1
+
+
+If a valid member key is given, and member is the owner of the player, the following items are returned:
+<player id="4356278">
+  <id>4356278</id>
+  <teamid>2</teamid>
+  <fname>Arenui</fname>
+  <lname>Laulala</lname>
+  <birthday>06:5</birthday>
+  <age>18</age>
+  <hand>Right</hand>
+  <foot>Right</foot>
+  <nationality>NZ</nationality>
+  <csr>20008</csr>
+  <salary>82897</salary>
+  <stamina>Unknown</stamina>
+  <handling>Medium</handling>
+  <attack>Unknown</attack>
+  <defense>Unknown</defense>
+  <technique>Unknown</technique>
+  <strength>Unknown</strength>
+  <jumping>Unknown</jumping>
+  <speed>Unknown</speed>
+  <agility>Unknown</agility>
+  <kicking>Low</kicking>
+  <form>7</form>
+  <aggression>2</aggression>
+  <discipline>4</discipline>
+  <energy>11</energy>
+  <leadership>2</leadership>
+  <experience>2</experience>
+  <weight>93</weight>
+  <height>199</height>
+  <jersey>255</jersey>
+  <scouted>1257990490</scouted>
+  <pops></pops>
+  <reveals>
+    <skill>handling</skill>
+  </reveals>
+</player>
+
+
+Notes:
+
+Youth players do not have contract dates, joined dates, or injured dates, but they have a scouted date which represents the date they were introduced into the youth squad. All normally hidden values on the main site are also hidden in the API, such as skills and CSR.
+
+Skills revealed - Providing the owning member is making the call, if a skill has not been revealed, it will be returned as "Unknown". If a skill has been semi-revealed, it is returned as one of "Low", "Medium", or "High". If a skill is completely revealed, it will be returned as normal (an integer).
+
+Reveals - The reveals element holds any skills recently revealed for premium managers only. These represent the blue ribbons provided on the main site.
+
+Scouting stars - If the member key is provided, and the member is premium, the number of stars used to the scout the player will be provided if available, under the key "scouting_stars_used".
+
+National and Under 20 Players
+
+To retrieve a National player:
+&playerid=[PLAYER_ID]&nat=1
+
+
+To retrieve all players from a National team:
+&teamid=[TEAM_ID]&nat=1
+
+
+To retrieve an Under 20 player:
+&playerid=[PLAYER_ID]&u20=1
+
+
+To retrieve all players from an Under 20 team:
+&teamid=[TEAM_ID]&u20=1
+
+
+Notes:
+
+Retrieving a National or U20 player will return all of the same information as the club player except for energy, injured, joined, and jersey which represent the player as part of their National or U20 team. National\U20 managers can see all skills for players in their national side.
+
+Players for sale
+
+Players who are currently for sale on the transfer market will show all skills and their levels.
+
+As well as the skill levels, the following information related to the transfer is made available:
+<forsale>1</forsale>
+<listed>1276780714</listed>
+<deadline>1277039880</deadline>
+<asking>2000000</asking>
+<price>2486747</price>
+<bidteamid>65</bidteamid>
+
+
+Notes:
+
+Listed (Timestamp BRT) - The date in Blackout Rugby Time when the player was placed on the transfer market.
+
+Deadline (Timestamp BRT) - The date in Blackout Rugby Time when the player will be transferred to the highest bidder.
+
+Bidteamid - The ID of the team currently leading the auction. If there are no bids, this tag will be empty.
+Player Statistics
+Request
+To tell the API that this is a request for player statistics:
+&r=ps
+
+
+Additional Request Data
+At least one of the following is required:
+
+To retrieve an individual player's statistics:
+&playerid=[PLAYER_ID]
+
+
+To retrieve a group of players' statistics:
+&playerids=[PLAYER_ID],[PLAYER_ID],...
+
+
+To retrieve league statistics:
+&playerid=[PLAYER_ID]&league=1 (Current season)
+or
+&playerid=[PLAYER_ID]&league=1&season=[SEASON]
+
+
+To retrieve National player statistics:
+&playerid=[PLAYER_ID]&nat=1 (Current season)
+or
+&playerid=[PLAYER_ID]&nat=1&season=[SEASON]
+
+
+To retrieve World Cup player statistics:
+&playerid=[PLAYER_ID]&nat=1&wc=1 (Current season)
+or
+&playerid=[PLAYER_ID]&nat=1&wc=1&season=[SEASON]
+
+
+To retrieve Under 20 player statistics:
+&playerid=[PLAYER_ID]&u20=1 (Current season)
+or
+&playerid=[PLAYER_ID]&u20=1&season=[SEASON]
+
+
+To retrieve Under 20 World Cup player statistics:
+&playerid=[PLAYER_ID]&u20=1&wc=1 (Current season)
+or
+&playerid=[PLAYER_ID]&u20=1&wc=1&season=[SEASON]
+
+
+If any player statistics are not found, no information will be returned for that player, not even an empty player statistics element.
+
+Response
+
+<player_statistics id="3135226">
+  <playerid>3135226</playerid>
+  <tackles>1239</tackles>
+  <metresgained>18750</metresgained>
+  <tries>196</tries>
+  <conversions>1292</conversions>
+  <dropgoals>66</dropgoals>
+  <penalties>580</penalties>
+  <totalpoints>5502</totalpoints>
+  <yellowcards>0</yellowcards>
+  <redcards>0</redcards>
+  <linebreaks>256</linebreaks>
+  <intercepts>6</intercepts>
+  <kicks>1650</kicks>
+  <knockons>134</knockons>
+  <forwardpasses>66</forwardpasses>
+  <tryassists>137</tryassists>
+  <beatendefenders>1343</beatendefenders>
+  <injuries>6</injuries>
+  <handlingerrors>261</handlingerrors>
+  <missedtackles>442</missedtackles>
+  <fights>2</fights>
+  <kickingmetres>92779</kickingmetres>
+  <leaguecaps>112</leaguecaps>
+  <friendlycaps>107</friendlycaps>
+  <cupcaps>38</cupcaps>
+  <undertwentycaps>21</undertwentycaps>
+  <nationalcaps>30</nationalcaps>
+  <othercaps>1</othercaps>
+  <avkickingmetres>268.0</avkickingmetres>
+  <penaltiesconceded>190</penaltiesconceded>
+  <kicksoutonthefull>50</kicksoutonthefull>
+  <balltime>8613</balltime>
+  <penaltytime>4724</penaltytime>
+  <missedconversions>332</missedconversions>
+  <misseddropgoals>75</misseddropgoals>
+  <missedpenalties>310</missedpenalties>
+  <goodupandunders>311</goodupandunders>
+  <badupandunders>124</badupandunders>
+  <upandunders>435</upandunders>
+  <goodkicks>1289</goodkicks>
+  <badkicks>303</badkicks>
+  <turnoverswon>60</turnoverswon>
+  <lineoutssecured>0</lineoutssecured>
+  <lineoutsconceded>0</lineoutsconceded>
+  <lineoutsstolen>0</lineoutsstolen>
+  <successfullineoutthrows>0</successfullineoutthrows>
+  <unsuccessfullineoutthrows>0</unsuccessfullineoutthrows>
+  <worldcupcaps>8</worldcupcaps>
+  <undertwentyworldcupcaps>7</undertwentyworldcupcaps>
+</player_statistics>
+Ranking History
+Rankings
+Regions
+Reporter's Summary
+Standings
+Team History
+Teams
+Request
+To tell the API that this is a request for team information:
+&r=t
+
+
+Additional Request Data
+At least one of the following is required:
+
+To retrieve an individual team:
+&teamid=[TEAM_ID]
+
+
+To retrieve a group of teams:
+&teamids=[TEAM_ID],[TEAM_ID],...
+
+
+Each of the above can be requested at the same time.
+
+To retrieve all teams within a region:
+&regionid=[REGION_ID]
+
+
+To retrieve all teams within a league:
+&leagueid=[LEAGUE_ID]
+
+
+If any team is not found, no information will be returned for that team, not even an empty team element.
+
+Response
+If a valid member key is not supplied, or the member is not the owner of the team, the following items are returned:
+<team id="1">
+  <id>1</id>
+  <name>Northern+Knights</name>
+  <country_iso>NZ</country>
+  <region>2</region>
+  <stadium>Blackoutrugby.com+Park</stadium>
+  <bot>0</bot>
+  <nickname_1>Knights</nickname_1>
+  <nickname_2/>
+  <nickname_3/>
+  <ranking_points>62.711</ranking_points>
+  <regional_rank>12</regional_rank>
+  <national_rank>110</national_rank>
+  <world_rank>756</world_rank>
+  <prev_ranking_points>62.711</prev_ranking_points>
+  <prev_regional_rank>12</prev_regional_rank>
+  <prev_national_rank>109</prev_national_rank>
+  <prev_world_rank>756</prev_world_rank>
+  <leagueid>123</leagueid>
+  <manager>2</manager>
+</team>
+
+
+If a valid member key is given, and member is the owner of the team, the following items are returned:
+
+<team id="2">
+  <id>2</id>
+  <name>Chiefs</name>
+  <country_iso>NZ</country>
+  <region>2</region>
+  <stadium>Blackout+Rugby+Stadium</stadium>
+  <drift>#</drift>
+  <rush>#</rush>
+  <manonman>#</manonman>
+  <bot>0</bot>
+  <contentment>#</contentment>
+  <members>####</members>
+  <stadium_capacity>####</stadium_capacity>
+  <stadium_standing>####</stadium_standing>
+  <stadium_uncovered>####</stadium_uncovered>
+  <stadium_covered>####</stadium_covered>
+  <stadium_members>###</stadium_members>
+  <stadium_corporate>###</stadium_corporate>
+  <bank_balance>######</bank_balance>
+  <nickname_1/>
+  <nickname_2/>
+  <nickname_3/>
+  <ltnt_effectiveness>100</ltnt_effectiveness>
+  <ltnt_effectiveness_youth>100</ltnt_effectiveness_youth>
+  <ranking_points>46.528</ranking_points>
+  <regional_rank>33</regional_rank>
+  <national_rank>327</national_rank>
+  <world_rank>2579</world_rank>
+  <major_sponsor>5</major_sponsor>
+  <minor_sponsors>7</minor_sponsors>
+  <prev_ranking_points>46.528</prev_ranking_points>
+  <prev_regional_rank>34</prev_regional_rank>
+  <prev_national_rank>329</prev_national_rank>
+  <prev_world_rank>2585</prev_world_rank>
+  <leagueid>123</leagueid>
+  <scouting_stars>5</scouting_stars>
+  <manager>2</manager>
+</team>
+
+
+Notes:
+
+Previous Rankings The previous ranking points and positions are provided to show the difference between the rankings before the last match, and the current rankings.
+
+Bots Bot teams will not return a manager tag.
+
+National and Under 20 Teams
+
+To retrieve a National team:
+&teamid=[TEAM_ID]&nat=1
+
+or
+&country=[COUNTRY_ISO]&nat=1
+
+
+To retrieve an Under 20 team:
+&teamid=[TEAM_ID]&u20=1
+
+or
+&country=[COUNTRY_ISO]&u20=1
+
+
+Multiple team IDs, and\or country ISO's are supported.
+
+If a valid member key is not supplied, or the member is not the manager of the National\U20 team, the following items are returned:
+<team id="9">
+  <id>9</id>
+  <name>England</name>
+  <country_iso>EN</country>
+  <stadium>England+Stadium</stadium>
+  <nickname_1>Comm+Challenge+Champs</nickname_1>
+  <nickname_2>Barmy+Army</nickname_2>
+  <nickname_3>Red+Roses</nickname_3>
+  <ranking_points>86.5197</ranking_points>
+  <world_rank>3</world_rank>
+  <prev_ranking_points>90.1881</prev_ranking_points>
+  <prev_world_rank>3</prev_world_rank>
+  <nat>1</nat>
+  <manager>608</manager>
+</team>
+
+
+If a valid member key is given, and member is the manager of the National\U20 team, the following items are returned:
+
+<team id="2">
+  <id>2</id>
+  <name>Pacific+Islands</name>
+  <country_iso>PI</country>
+  <stadium>Pacific+Islands+Stadium</stadium>
+  <drift>6</drift>
+  <rush>6</rush>
+  <manonman>6</manonman>
+  <nickname_1>The+Islanders</nickname_1>
+  <nickname_2/>
+  <nickname_3/>
+  <ltnt_effectiveness>100</ltnt_effectiveness>
+  <ranking_points>69.7074</ranking_points>
+  <world_rank>15</world_rank>
+  <prev_ranking_points>70.8777</prev_ranking_points>
+  <prev_world_rank>14</prev_world_rank>
+  <nat>1</nat>
+  <manager>12324</manager>
+</team>
+
+
+Notes:
+
+National\U20 Manager The ID of the current National\U20 manager is provided in the tag.
+Team Statistics
+Request
+To tell the API that this is a request for team statistics:
+&r=ts
+
+
+Additional Request Data
+At least one of the following is required:
+
+To retrieve an individual team's statistics:
+&teamid=[TEAM_ID]
+
+
+To retrieve a group of team's statistics:
+&teamids=[TEAM_ID],[TEAM_ID],...
+
+
+To retrieve National team statistics:
+&teamid=[TEAM_ID]&nat=1 (Current season only)
+
+
+To retrieve World Cup team statistics:
+&teamid=[TEAM_ID]&nat=1&wc=1 (Current season)
+or
+&teamid=[TEAM_ID]&nat=1&wc=1&season=[SEASON]
+
+
+To retrieve Under 20 team statistics:
+&teamid=[TEAM_ID]&u20=1 (Current season only)
+
+
+To retrieve Under 20 World Cup team statistics:
+&teamid=[TEAM_ID]&u20=1&wc=1 (Current season)
+or
+&teamid=[TEAM_ID]&u20=1&wc=1&season=[SEASON]
+
+
+If any team statistics are not found, no information will be returned for that team, not even an empty element.
+
+Response
+
+<team_statistics id="1">
+  <teamid>1</teamid>
+  <tackles>279</tackles>
+  <metresgained>5037</metresgained>
+  <tries>68</tries>
+  <conversions>55</conversions>
+  <dropgoals>0</dropgoals>
+  <penalties>15</penalties>
+  <totalpoints>495</totalpoints>
+  <yellowcards>0</yellowcards>
+  <redcards>0</redcards>
+  <linebreaks>80</linebreaks>
+  <intercepts>3</intercepts>
+  <kicks>61</kicks>
+  <knockons>18</knockons>
+  <forwardpasses>9</forwardpasses>
+  <phases>284</phases>
+  <sevenplusphases>2</sevenplusphases>
+  <turnovers>26</turnovers>
+  <possession>59.00</possession>
+  <territory>1.00</territory>
+  <minutesintwentytwo>1</minutesintwentytwo>
+  <lineoutswon>78</lineoutswon>
+  <lineoutslost>66</lineoutslost>
+  <lineoutsagainstthrow>10</lineoutsagainstthrow>
+  <scrumswon>43</scrumswon>
+  <scrumslost>29</scrumslost>
+  <scrumsagainstputin>15</scrumsagainstputin>
+  <injuries>4</injuries>
+  <handlingerrors>37</handlingerrors>
+  <missedtackles>194</missedtackles>
+  <fights>0</fights>
+  <kickingmetres>2461</kickingmetres>
+  <ruckswon>308</ruckswon>
+  <maulswon>35</maulswon>
+  <matchesplayed>7</matchesplayed>
+  <avminutesintwentytwo>0.28</avminutesintwentytwo>
+  <avkickingmetres>351.57</avkickingmetres>
+  <penaltiesconceded>38</penaltiesconceded>
+  <kicksoutonthefull>1</kicksoutonthefull>
+  <balltime>2125</balltime>
+  <penaltytime>1362</penaltytime>
+  <missedconversions>13</missedconversions>
+  <misseddropgoals>0</misseddropgoals>
+  <missedpenalties>9</missedpenalties>
+  <goodupandunders>5</goodupandunders>
+  <badupandunders>3</badupandunders>
+  <upandunders>8</upandunders>
+  <goodkicks>43</goodkicks>
+  <badkicks>14</badkicks>
+  <penaltieswon>61</penaltieswon>
+  <turnoversconceded>23</turnoversconceded>
+</team_statistics>
+Training Instructions
+Request
+To tell the API that this is a request for training instructions:
+&r=ti
+
+
+Additional Request Data
+
+No extra request information is required. All that is required is a valid member id and key.
+
+If a valid and active member is found, the training instructions for their team will be returned.
+
+Response
+
+<training_instructions teamid="2">
+  <team_training>
+    <teamid>2</teamid>
+    <s1>stamina</s1>
+    <s2>none</s2>
+    <s3>none</s3>
+    <s4>none</s4>
+  </team_training>
+  <individual_training>
+    <instruction id="607562">
+      <id>607562</id>
+      <playerid>2306138</playerid>
+      <trainerid>107912</trainerid>
+      <skill>defense</skill>
+      <sessions>1</sessions>
+      <teamid>2</teamid>
+      <player_name>Fareani+Aho</player_name>
+      <trainer_name>Levi+Hordern</trainer_name>
+    </instruction>
+    <instruction id="780987">
+      <id>780987</id>
+      <playerid>2306127</playerid>
+      <trainerid>107912</trainerid>
+      <skill>technique</skill>
+      <sessions>3</sessions>
+      <teamid>2</teamid>
+      <player_name>Chet+Filing</player_name>
+      <trainer_name>Levi+Hordern</trainer_name>
+    </instruction>
+    <instruction id="772205">
+      <id>772205</id>
+      <playerid>4127280</playerid>
+      <trainerid>130397</trainerid>
+      <skill>attack</skill>
+      <sessions>1</sessions>
+      <teamid>2</teamid>
+      <player_name>Jerry+Bell</player_name>
+      <trainer_name>Franklin+Spink</trainer_name>
+    </instruction>
+  </individual_training>
+  <youth_team_training>
+    <teamid>2</teamid>
+    <s1>stamina</s1>
+    <s2>none</s2>
+    <s3>none</s3>
+    <s4>none</s4>
+  </youth_team_training>
+</training_instructions>
+Training Reports
+Request
+To tell the API that this is a request for a training report:
+&r=tr
+
+
+Additional Request Data
+
+No extra request information is required. All that is required is a valid member id and key.
+
+If a valid and active member is found, a training report for their team will be returned.
+
+By default, the latest available training report is returned. Optionally, you can specify a season & round:
+&r=tr&season=8&round=6
+
+
+Response
+
+<training_report teamid="2" season="8" round="9">
+  <id>630901</id>
+  <teamid>2</teamid>
+  <season>8</season>
+  <round>8</round>
+  <team_training>
+    <skills>
+    	<skill session="1">stamina</skill>
+    	<skill session="2">attack</skill>
+    	<skill session="3">defense</skill>
+    </skills>
+    <players>
+      <player id="2306119">
+        <id>2306119</id>
+        <drops></drops>
+        <pops>
+        	<skill>stamina</skill>
+        	<skill>attack</skill>
+        </pops>
+        <csr>
+          <old>10185</old>
+          <new>10205</new>
+        </csr>
+      </player>
+      <player id="2306120">
+        <id>2306120</id>
+        <drops>
+        	<skill>handling</skill>
+        </drops>
+        <pops></pops>
+        <csr>
+          <old>9115</old>
+          <new>9178</new>
+        </csr>
+      </player>
+      <player id="2306122">
+        <id>2306122</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>9157</old>
+          <new>9053</new>
+        </csr>
+      </player>
+      <player id="2306124">
+        <id>2306124</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>8009</old>
+          <new>8043</new>
+        </csr>
+      </player>
+      <player id="2306125">
+        <id>2306125</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>14137</old>
+          <new>14204</new>
+        </csr>
+      </player>
+      <player id="2306127">
+        <id>2306127</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>21223</old>
+          <new>21312</new>
+        </csr>
+      </player>
+      <player id="2306131">
+        <id>2306131</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>13739</old>
+          <new>13775</new>
+        </csr>
+      </player>
+      <player id="2306133">
+        <id>2306133</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>13164</old>
+          <new>13203</new>
+        </csr>
+      </player>
+      <player id="2306136">
+        <id>2306136</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>22409</old>
+          <new>22574</new>
+        </csr>
+      </player>
+      <player id="2306138">
+        <id>2306138</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>3209</old>
+          <new>2947</new>
+        </csr>
+      </player>
+      <player id="2306140">
+        <id>2306140</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>11777</old>
+          <new>11869</new>
+        </csr>
+      </player>
+      <player id="2306143">
+        <id>2306143</id>
+        <drops>
+        	<skill>handling</skill>
+        </drops>
+        <pops></pops>
+        <csr>
+          <old>3999</old>
+          <new>3823</new>
+        </csr>
+      </player>
+      <player id="2306144">
+        <id>2306144</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+        <old>24383</old>
+        <new>24560</new>
+        </csr>
+      </player>
+      <player id="2306145">
+        <id>2306145</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>13922</old>
+          <new>13948</new>
+        </csr>
+      </player>
+      <player id="2306146">
+        <id>2306146</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>12844</old>
+          <new>12890</new>
+        </csr>
+      </player>
+      <player id="2306147">
+        <id>2306147</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>5126</old>
+          <new>4936</new>
+        </csr>
+      </player>
+      <player id="2306148">
+        <id>2306148</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>7259</old>
+          <new>7279</new>
+        </csr>
+      </player>
+      <player id="3327223">
+        <id>3327223</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>17188</old>
+          <new>17350</new>
+        </csr>
+      </player>
+      <player id="3686163">
+        <id>3686163</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>7899</old>
+          <new>7914</new>
+        </csr>
+      </player>
+      <player id="3827378">
+        <id>3827378</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>15808</old>
+          <new>15918</new>
+        </csr>
+      </player>
+      <player id="4106033">
+        <id>4106033</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>7476</old>
+          <new>7481</new>
+        </csr>
+      </player>
+      <player id="4127280">
+        <id>4127280</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>3204</old>
+          <new>3238</new>
+        </csr>
+      </player>
+      <player id="4566329">
+        <id>4566329</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>8973</old>
+          <new>9000</new>
+        </csr>
+      </player>
+      <player id="4566330">
+        <id>4566330</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>7519</old>
+          <new>7563</new>
+        </csr>
+      </player>
+      <player id="4846283">
+        <id>4846283</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>5483</old>
+          <new>5523</new>
+        </csr>
+      </player>
+      <player id="5711508">
+        <id>5711508</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>5335</old>
+          <new>5348</new>
+        </csr>
+      </player>
+      <player id="6221594">
+        <id>6221594</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>5982</old>
+          <new>5984</new>
+        </csr>
+      </player>
+      <player id="7228730">
+        <id>7228730</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+        <old>10347</old>
+        <new>10388</new>
+        </csr>
+      </player>
+      <player id="7272928">
+        <id>7272928</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>8182</old>
+          <new>8196</new>
+        </csr>
+      </player>
+      <player id="8083009">
+        <id>8083009</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+        <old>12475</old>
+        <new>12478</new>
+        </csr>
+      </player>
+      <player id="8083010">
+        <id>8083010</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>10881</old>
+          <new>10911</new>
+        </csr>
+      </player>
+      <player id="8117028">
+        <id>8117028</id>
+        <drops></drops>
+        <pops></pops>
+        <csr>
+          <old>9823</old>
+          <new>9859</new>
+        </csr>
+      </player>
+    </players>
+  </team_training>
+  <individual_training>
+    <player id="2306127">
+      <id>2306127</id>
+      <skills>
+        <skill label="technique">
+          <skill>technique</skill>
+          <sessions>3</sessions>
+          <pops>
+          	<skill>technique</skill>
+          </pops>
+          <trainer_name>Levi+Hordern</trainer_name>
+          <trainer_level>1</trainer_level>
+          <trainer_type>defense</trainer_type>
+      	</skill>
+        <skill label="defense">
+          <skill>defense</skill>
+          <sessions>1</sessions>
+          <pops></pops>
+          <trainer_name>Levi+Hordern</trainer_name>
+          <trainer_level>1</trainer_level>
+          <trainer_type>defense</trainer_type>
+        </skill>
+      </skills>
+      <csr>
+        <old>21312</old>
+        <new>21314</new>
+      </csr>
+      <energy>
+        <old>9</old>
+        <new>8</new>
+      </energy>
+    </player>
+    <player id="2306138">
+      <id>2306138</id>
+      <skills>
+        <skill label="defense">
+          <skill>defense</skill>
+          <sessions>1</sessions>
+          <pops></pops>
+          <trainer_name>Levi+Hordern</trainer_name>
+          <trainer_level>1</trainer_level>
+          <trainer_type>defense</trainer_type>
+        </skill>
+      </skills>
+      <csr>
+        <old>2947</old>
+        <new>2960</new>
+      </csr>
+      <energy>
+        <old>9</old>
+        <new>9</new>
+      </energy>
+    </player>
+  </individual_training>
+</training_report>
+Transfer Market
+Request
+To tell the API that this is a request for transfer market information:
+&r=tm
+
+
+By default, all auctions are returned, sorted by nearest deadline first.
+
+Additional Request Data
+All of the following requests are optional.
+
+To request a specific sort type:
+&sortby=[SORT_BY]
+
+[SORT_BY] can be any of: "name", "price", "deadline", "nationality", "age", or "ranking".
+
+To request a specific sort order:
+&sortorder=[SORT_ORDER]
+
+[SORT_ORDER] can be either: "asc", or "desc".
+
+To offset your results:
+&offset=[OFFSET]
+
+For example, an offset of 0, will start your results at the first auction in the result set. And an offset of 10 will start your results at the 11th auction.
+
+To limit your results:
+&limit=[LIMIT]
+
+For example, a limit of 10, will return a maximum of 10 results.
+
+The offset and limit can, and should be used where possible to reduce the amount of auctions returned at once. For example, &offset=0&limit=10 would return the first 10 auctions, and &offset=10&limit=10 would return auctions 11-20.
+
+To get players from a certain team:
+&teamid=[TEAMID]
+
+NOTE: You cannot use any search parameters when getting players from a given team.
+
+Searching
+
+Any and all of the following search criteria can be given:
+
+To search by price:
+&priceMin=[PRICE_INTEGER]
+and/or
+&priceMax=[PRICE_INTEGER]
+
+
+To search by age:
+&ageMin=[AGE_INTEGER]
+and/or
+&ageMax=[AGE_INTEGER]
+
+
+To search by CSR:
+&csrMin=[CSR_INTEGER]
+and/or
+&csrMax=[CSR_INTEGER]
+
+
+To search by Nationality:
+&nationality=[COUNTRY_ISO]
+
+
+To search by player attribute:
+
+First, you must specify an attribute:
+&skill[X]=[ATTRIBUTE]
+
+[X] Must be an integer. It can be any integer, e.g. &skill1=
+
+[ATTRIBUTE] can be any of the following: "stamina", "handling", "defense", "attack", "technique", "strength", "jumping", "speed", "agility", "kicking", "form", "height", "weight", "salary", "discipline", "aggression", "leadership", or "experience".
+
+As well as the specified attribute, you must specify either a minimum, or a maximum, or both.
+&skill[X]min=[MIN_INTEGER]
+and/or
+&skill[X]max=[MAX_INTEGER]
+
+[X] Must be the same integer as used for setting the attribute. E.g. &skill1=stamina&skill1min=10
+
+For any attribute with a skill level, you should use the integer level, I.E. Non-existant = 1, Despicable = 2, Horrible = 3, etc.
+
+For height, weight, and salary, you should use the applicable integer.
+
+If any there are no auctions, no information will be returned.
+
+Response
+
+<auction id="237556">
+  <playerid>9443796</playerid>
+  <deadline>1280467444</deadline>
+</auction>
+<auction id="237558">
+  <playerid>3113692</playerid>
+  <deadline>1280467560</deadline>
+</auction>
+<auction id="237559">
+  <playerid>9443803</playerid>
+  <deadline>1280467620</deadline>
+</auction>
+...
+
+
+Notes
+
+For further information about an auction, you should request the player using the player ID

@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.cache
+*.pdb
+*.tmp
+BlackoutRugbyDashboard/bin/
+BlackoutRugbyDashboard/obj/
+BlackoutRugbyDashboard/Data/Snapshots/

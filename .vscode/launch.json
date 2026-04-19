@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Blackout Rugby Dashboard",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-blackout-dashboard",
+      "program": "${workspaceFolder}/BlackoutRugbyDashboard/bin/debugger/Debug/net8.0/BlackoutRugbyDashboard.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/BlackoutRugbyDashboard",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:0"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "launchBrowser": {
+        "enabled": false
+      }
+    },
+    {
+      "name": "Attach to Blackout Rugby Dashboard",
+      "type": "coreclr",
+      "request": "attach"
+    }
+  ]
+}

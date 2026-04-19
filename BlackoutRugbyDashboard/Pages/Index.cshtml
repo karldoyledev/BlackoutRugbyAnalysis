@@ -1,0 +1,494 @@
+﻿@page
+@model IndexModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Team Dashboard";
+    var dashboard = Model.Dashboard;
+    var comparison = Model.LatestComparison;
+}
+
+<section class="hero-panel">
+    <div>
+        <p class="eyebrow">Blackout Rugby</p>
+        <h1>Team dashboard with live squad stats and snapshot-based player changes.</h1>
+        <p class="hero-copy">
+            Load your current squad, rank players quickly, and capture post-match snapshots so you can track who improved,
+            lost energy, or added production since the last saved game state.
+        </p>
+    </div>
+    <div class="hero-note">
+        <strong>How to use it</strong>
+        <span>1. Enter the API endpoint and your team ID.</span>
+        <span>2. Add member credentials if you want owner-only fields.</span>
+        <span>3. Load the dashboard, then capture a snapshot after each match.</span>
+    </div>
+</section>
+
+<section class="control-panel">
+    <form method="post" class="dashboard-form">
+        <div class="field-grid">
+            <label>
+                <span>API endpoint</span>
+                <input asp-for="Input.BaseEndpoint" class="form-control" placeholder="https://example.com/api.php" />
+                <small asp-validation-for="Input.BaseEndpoint" class="text-danger"></small>
+            </label>
+            <label>
+                <span>Team ID</span>
+                <input asp-for="Input.TeamId" class="form-control" placeholder="2" />
+                <small asp-validation-for="Input.TeamId" class="text-danger"></small>
+            </label>
+            <label>
+                <span>Member ID</span>
+                <input asp-for="Input.MemberId" class="form-control" placeholder="Optional" />
+                <small asp-validation-for="Input.MemberId" class="text-danger"></small>
+            </label>
+            <label>
+                <span>Member key</span>
+                <input asp-for="Input.MemberKey" class="form-control" placeholder="Optional" />
+                <small asp-validation-for="Input.MemberKey" class="text-danger"></small>
+            </label>
+        </div>
+        <div class="button-row">
+            <button type="submit" asp-page-handler="Load" class="btn btn-primary action-button">Load live dashboard</button>
+            <button type="submit" asp-page-handler="Capture" class="btn btn-outline-light action-button secondary-button">Capture post-match snapshot</button>
+        </div>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="status-banner">@Model.StatusMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="error-banner">@Model.ErrorMessage</div>
+    }
+</section>
+
+@if (dashboard is not null)
+{
+    var topScorer = dashboard.Players.OrderByDescending(player => player.TotalPoints).FirstOrDefault();
+    var topTackler = dashboard.Players.OrderByDescending(player => player.Tackles).FirstOrDefault();
+    var topMetres = dashboard.Players.OrderByDescending(player => player.MetresGained).FirstOrDefault();
+    var chartPlayers = dashboard.Players.Take(8).ToList();
+    var productionLabels = JsonSerializer.Serialize(chartPlayers.Select(player => player.Name));
+    var pointsData = JsonSerializer.Serialize(chartPlayers.Select(player => player.TotalPoints));
+    var tacklesData = JsonSerializer.Serialize(chartPlayers.Select(player => player.Tackles));
+    var metresData = JsonSerializer.Serialize(chartPlayers.Select(player => player.MetresGained));
+    var energyRadarLabels = JsonSerializer.Serialize(chartPlayers.Take(5).Select(player => player.Name));
+    var energyRadarData = JsonSerializer.Serialize(chartPlayers.Take(5).Select(player => player.Energy));
+    var formRadarData = JsonSerializer.Serialize(chartPlayers.Take(5).Select(player => player.Form));
+
+    <section class="summary-grid">
+        <article class="summary-card">
+            <span>Squad</span>
+            <strong>@dashboard.TeamName</strong>
+            <small>@dashboard.PlayerCount players</small>
+        </article>
+        <article class="summary-card accent-card">
+            <span>Total points</span>
+            <strong>@dashboard.TotalPoints</strong>
+            <small>@dashboard.TotalTries tries across the group</small>
+        </article>
+        <article class="summary-card">
+            <span>Total tackles</span>
+            <strong>@dashboard.TotalTackles</strong>
+            <small>@dashboard.TotalMetres metres gained</small>
+        </article>
+        <article class="summary-card">
+            <span>Squad averages</span>
+            <strong>@dashboard.AverageCsr.ToString("N0") CSR</strong>
+            <small>@dashboard.AverageAge.ToString("N1") age, @dashboard.AverageEnergy.ToString("N1") energy</small>
+        </article>
+    </section>
+
+    <section class="insight-grid">
+        <article class="insight-card">
+            <h2>Quick leaders</h2>
+            <div class="leader-row">
+                <span>Top scorer</span>
+                <strong>@(topScorer?.Name ?? "N/A")</strong>
+                <small>@(topScorer?.TotalPoints ?? 0) points</small>
+            </div>
+            <div class="leader-row">
+                <span>Top tackler</span>
+                <strong>@(topTackler?.Name ?? "N/A")</strong>
+                <small>@(topTackler?.Tackles ?? 0) tackles</small>
+            </div>
+            <div class="leader-row">
+                <span>Most metres</span>
+                <strong>@(topMetres?.Name ?? "N/A")</strong>
+                <small>@(topMetres?.MetresGained ?? 0) metres</small>
+            </div>
+        </article>
+
+        <article class="insight-card">
+            <h2>Snapshot tracking</h2>
+            @if (comparison is null)
+            {
+                <p>Capture at least two snapshots to see per-player match-to-match deltas.</p>
+            }
+            else
+            {
+                <p>Latest comparison: @comparison.PreviousCapturedAtUtc.ToLocalTime().ToString("g") to @comparison.CurrentCapturedAtUtc.ToLocalTime().ToString("g")</p>
+                <p>@comparison.PlayerChanges.Count player rows changed or were added/removed.</p>
+            }
+        </article>
+    </section>
+
+    <section class="chart-grid">
+        <article class="chart-panel">
+            <div class="section-heading">
+                <h2>Squad production</h2>
+                <p>Top players by points, tackles, and metres gained.</p>
+            </div>
+            <div class="chart-frame tall-chart">
+                <canvas id="productionChart"></canvas>
+            </div>
+        </article>
+
+        <article class="chart-panel">
+            <div class="section-heading">
+                <h2>Condition radar</h2>
+                <p>Quick comparison of energy and form for your current core group.</p>
+            </div>
+            <div class="chart-frame">
+                <canvas id="conditionChart"></canvas>
+            </div>
+        </article>
+    </section>
+
+    <section class="table-panel">
+        <div class="section-heading">
+            <h2>Player group breakdown</h2>
+            <p>Sorted by total points, with live squad details merged into cumulative player statistics.</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Age</th>
+                        <th>CSR</th>
+                        <th>Form</th>
+                        <th>Energy</th>
+                        <th>Salary</th>
+                        <th>Points</th>
+                        <th>Tries</th>
+                        <th>Tackles</th>
+                        <th>Metres</th>
+                        <th>Total caps</th>
+                        <th>Recent pops</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var player in dashboard.Players.OrderByDescending(player => player.TotalPoints).ThenByDescending(player => player.Tackles))
+                {
+                    <tr>
+                        <td>
+                            <strong>@player.Name</strong>
+                            <div class="muted-row">#@player.Id</div>
+                        </td>
+                        <td>@player.Age</td>
+                        <td>@player.Csr.ToString("N0")</td>
+                        <td>@player.Form</td>
+                        <td>@player.Energy</td>
+                        <td>@player.Salary.ToString("N0")</td>
+                        <td>@player.TotalPoints</td>
+                        <td>@player.Tries</td>
+                        <td>@player.Tackles</td>
+                        <td>@player.MetresGained</td>
+                        <td>@player.TotalCaps</td>
+                        <td>@(player.RecentPops.Count == 0 ? "-" : string.Join(", ", player.RecentPops))</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@if (comparison is not null)
+{
+    var changeLabels = JsonSerializer.Serialize(comparison.PlayerChanges.Take(8).Select(change => change.Name));
+    var csrDeltaData = JsonSerializer.Serialize(comparison.PlayerChanges.Take(8).Select(change => change.DeltaCsr));
+    var pointsDeltaData = JsonSerializer.Serialize(comparison.PlayerChanges.Take(8).Select(change => change.DeltaTotalPoints));
+    var energyDeltaData = JsonSerializer.Serialize(comparison.PlayerChanges.Take(8).Select(change => change.DeltaEnergy));
+
+    <section class="chart-grid">
+        <article class="chart-panel full-width-panel">
+            <div class="section-heading">
+                <h2>Latest snapshot deltas</h2>
+                <p>Change across the last two saved snapshots, useful for tracking post-match gains and drops.</p>
+            </div>
+            <div class="chart-frame">
+                <canvas id="changesChart"></canvas>
+            </div>
+        </article>
+    </section>
+
+    <section class="table-panel">
+        <div class="section-heading">
+            <h2>Latest player changes</h2>
+            <p>Differences between the latest two saved snapshots. Capture after each match to turn this into a per-game trend log.</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table dashboard-table compact-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Status</th>
+                        <th>CSR</th>
+                        <th>Energy</th>
+                        <th>Points</th>
+                        <th>Tries</th>
+                        <th>Tackles</th>
+                        <th>Metres</th>
+                        <th>Caps</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var change in comparison.PlayerChanges.OrderByDescending(change => Math.Abs(change.DeltaTotalPoints) + Math.Abs(change.DeltaTries) + Math.Abs(change.DeltaTackles)))
+                {
+                    <tr>
+                        <td>@change.Name</td>
+                        <td>
+                            @if (change.IsNewPlayer)
+                            {
+                                <span class="pill success-pill">New</span>
+                            }
+                            else if (change.IsRemovedPlayer)
+                            {
+                                <span class="pill warning-pill">Removed</span>
+                            }
+                            else
+                            {
+                                <span class="pill neutral-pill">Tracked</span>
+                            }
+                        </td>
+                        <td>@change.DeltaCsr.ToSignedString()</td>
+                        <td>@change.DeltaEnergy.ToSignedString()</td>
+                        <td>@change.DeltaTotalPoints.ToSignedString()</td>
+                        <td>@change.DeltaTries.ToSignedString()</td>
+                        <td>@change.DeltaTackles.ToSignedString()</td>
+                        <td>@change.DeltaMetresGained.ToSignedString()</td>
+                        <td>@change.DeltaTotalCaps.ToSignedString()</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @if (dashboard is not null || comparison is not null)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    }
+
+    @if (dashboard is not null)
+    {
+        var chartPlayers = dashboard.Players.Take(8).ToList();
+        var productionLabels = JsonSerializer.Serialize(chartPlayers.Select(player => player.Name));
+        var pointsData = JsonSerializer.Serialize(chartPlayers.Select(player => player.TotalPoints));
+        var tacklesData = JsonSerializer.Serialize(chartPlayers.Select(player => player.Tackles));
+        var metresData = JsonSerializer.Serialize(chartPlayers.Select(player => player.MetresGained));
+        var energyRadarLabels = JsonSerializer.Serialize(chartPlayers.Take(5).Select(player => player.Name));
+        var energyRadarData = JsonSerializer.Serialize(chartPlayers.Take(5).Select(player => player.Energy));
+        var formRadarData = JsonSerializer.Serialize(chartPlayers.Take(5).Select(player => player.Form));
+
+        <script>
+            const productionCanvas = document.getElementById('productionChart');
+            if (productionCanvas) {
+                new Chart(productionCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: @Html.Raw(productionLabels),
+                        datasets: [
+                            {
+                                label: 'Points',
+                                data: @Html.Raw(pointsData),
+                                backgroundColor: 'rgba(216, 111, 45, 0.82)',
+                                borderRadius: 10
+                            },
+                            {
+                                label: 'Tackles',
+                                data: @Html.Raw(tacklesData),
+                                backgroundColor: 'rgba(37, 96, 107, 0.82)',
+                                borderRadius: 10
+                            },
+                            {
+                                label: 'Metres',
+                                data: @Html.Raw(metresData),
+                                backgroundColor: 'rgba(244, 185, 66, 0.82)',
+                                borderRadius: 10
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    usePointStyle: true
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: '#415159'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#415159'
+                                },
+                                grid: {
+                                    color: 'rgba(17, 33, 43, 0.08)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const conditionCanvas = document.getElementById('conditionChart');
+            if (conditionCanvas) {
+                new Chart(conditionCanvas, {
+                    type: 'radar',
+                    data: {
+                        labels: @Html.Raw(energyRadarLabels),
+                        datasets: [
+                            {
+                                label: 'Energy',
+                                data: @Html.Raw(energyRadarData),
+                                borderColor: 'rgba(216, 111, 45, 1)',
+                                backgroundColor: 'rgba(216, 111, 45, 0.2)',
+                                pointBackgroundColor: 'rgba(216, 111, 45, 1)'
+                            },
+                            {
+                                label: 'Form',
+                                data: @Html.Raw(formRadarData),
+                                borderColor: 'rgba(37, 96, 107, 1)',
+                                backgroundColor: 'rgba(37, 96, 107, 0.16)',
+                                pointBackgroundColor: 'rgba(37, 96, 107, 1)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                suggestedMax: 11,
+                                pointLabels: {
+                                    color: '#415159'
+                                },
+                                angleLines: {
+                                    color: 'rgba(17, 33, 43, 0.08)'
+                                },
+                                grid: {
+                                    color: 'rgba(17, 33, 43, 0.08)'
+                                },
+                                ticks: {
+                                    backdropColor: 'transparent',
+                                    color: '#415159'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        </script>
+    }
+
+    @if (comparison is not null)
+    {
+        var chartChanges = comparison.PlayerChanges.Take(8).ToList();
+        var changeLabels = JsonSerializer.Serialize(chartChanges.Select(change => change.Name));
+        var csrDeltaData = JsonSerializer.Serialize(chartChanges.Select(change => change.DeltaCsr));
+        var pointsDeltaData = JsonSerializer.Serialize(chartChanges.Select(change => change.DeltaTotalPoints));
+        var energyDeltaData = JsonSerializer.Serialize(chartChanges.Select(change => change.DeltaEnergy));
+
+        <script>
+            const changesCanvas = document.getElementById('changesChart');
+            if (changesCanvas) {
+                new Chart(changesCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: @Html.Raw(changeLabels),
+                        datasets: [
+                            {
+                                label: 'CSR delta',
+                                data: @Html.Raw(csrDeltaData),
+                                borderColor: 'rgba(216, 111, 45, 1)',
+                                backgroundColor: 'rgba(216, 111, 45, 0.14)',
+                                tension: 0.3,
+                                fill: true
+                            },
+                            {
+                                label: 'Points delta',
+                                data: @Html.Raw(pointsDeltaData),
+                                borderColor: 'rgba(45, 138, 88, 1)',
+                                backgroundColor: 'rgba(45, 138, 88, 0.12)',
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Energy delta',
+                                data: @Html.Raw(energyDeltaData),
+                                borderColor: 'rgba(37, 96, 107, 1)',
+                                backgroundColor: 'rgba(37, 96, 107, 0.12)',
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    usePointStyle: true
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: '#415159'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#415159'
+                                },
+                                grid: {
+                                    color: 'rgba(17, 33, 43, 0.08)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        </script>
+    }
+}
