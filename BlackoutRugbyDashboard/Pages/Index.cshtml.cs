@@ -10,6 +10,7 @@ public class IndexModel : PageModel
 {
     private readonly TeamDashboardService _dashboardService;
     private readonly SnapshotStore _snapshotStore;
+    private readonly DashboardDefaultsOptions _dashboardDefaults;
     private readonly ILogger<IndexModel> _logger;
 
     public IndexModel(
@@ -21,14 +22,8 @@ public class IndexModel : PageModel
         _dashboardService = dashboardService;
         _snapshotStore = snapshotStore;
         _logger = logger;
-        var defaults = dashboardDefaults.Value;
-        Input = new TeamDashboardRequest
-        {
-            BaseEndpoint = defaults.BaseEndpoint,
-            TeamId = defaults.TeamId,
-            MemberId = defaults.MemberId,
-            MemberKey = defaults.MemberKey
-        };
+        _dashboardDefaults = dashboardDefaults.Value;
+        Input = CreateRequestFromDefaults();
     }
 
     [BindProperty]
@@ -44,6 +39,7 @@ public class IndexModel : PageModel
 
     public void OnGet()
     {
+        Input = CreateRequestFromDefaults();
     }
 
     public async Task<IActionResult> OnPostLoadAsync()
@@ -58,7 +54,10 @@ public class IndexModel : PageModel
 
     private async Task<IActionResult> LoadDashboardAsync(bool captureSnapshot)
     {
-        if (!ModelState.IsValid)
+        ApplyDefaultsIfMissing();
+        ModelState.Clear();
+
+        if (!TryValidateModel(Input, nameof(Input)))
         {
             return Page();
         }
@@ -86,5 +85,39 @@ public class IndexModel : PageModel
         }
 
         return Page();
+    }
+
+    private TeamDashboardRequest CreateRequestFromDefaults()
+    {
+        return new TeamDashboardRequest
+        {
+            BaseEndpoint = _dashboardDefaults.BaseEndpoint,
+            TeamId = _dashboardDefaults.TeamId,
+            MemberId = _dashboardDefaults.MemberId,
+            MemberKey = _dashboardDefaults.MemberKey
+        };
+    }
+
+    private void ApplyDefaultsIfMissing()
+    {
+        if (string.IsNullOrWhiteSpace(Input.BaseEndpoint))
+        {
+            Input.BaseEndpoint = _dashboardDefaults.BaseEndpoint;
+        }
+
+        if (Input.TeamId <= 0)
+        {
+            Input.TeamId = _dashboardDefaults.TeamId;
+        }
+
+        if (!Input.MemberId.HasValue && _dashboardDefaults.MemberId.HasValue)
+        {
+            Input.MemberId = _dashboardDefaults.MemberId;
+        }
+
+        if (string.IsNullOrWhiteSpace(Input.MemberKey) && !string.IsNullOrWhiteSpace(_dashboardDefaults.MemberKey))
+        {
+            Input.MemberKey = _dashboardDefaults.MemberKey;
+        }
     }
 }
