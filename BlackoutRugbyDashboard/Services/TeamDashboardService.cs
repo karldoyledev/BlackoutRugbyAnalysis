@@ -57,7 +57,7 @@ public class TeamDashboardService
             };
         }
 
-        var statsByPlayerId = await LoadPlayerStatisticsAsync(client, players.Select(player => player.Id)).ConfigureAwait(false);
+        var statsByPlayerId = await LoadPlayerStatisticsAsync(client, players.Select(player => player.Id), request.Season).ConfigureAwait(false);
         var teamInfo = ParseTeam(await teamTask.ConfigureAwait(false));
 
         var dashboardPlayers = players
@@ -77,8 +77,51 @@ public class TeamDashboardService
                     Tackles = stats?.Tackles ?? 0,
                     MetresGained = stats?.MetresGained ?? 0,
                     Tries = stats?.Tries ?? 0,
+                    Conversions = stats?.Conversions ?? 0,
+                    DropGoals = stats?.DropGoals ?? 0,
+                    Penalties = stats?.Penalties ?? 0,
                     TotalPoints = stats?.TotalPoints ?? 0,
+                    YellowCards = stats?.YellowCards ?? 0,
+                    RedCards = stats?.RedCards ?? 0,
+                    Linebreaks = stats?.Linebreaks ?? 0,
+                    Intercepts = stats?.Intercepts ?? 0,
+                    Kicks = stats?.Kicks ?? 0,
+                    KnockOns = stats?.KnockOns ?? 0,
+                    ForwardPasses = stats?.ForwardPasses ?? 0,
+                    TryAssists = stats?.TryAssists ?? 0,
+                    BeatenDefenders = stats?.BeatenDefenders ?? 0,
+                    Injuries = stats?.Injuries ?? 0,
+                    HandlingErrors = stats?.HandlingErrors ?? 0,
+                    MissedTackles = stats?.MissedTackles ?? 0,
+                    Fights = stats?.Fights ?? 0,
+                    KickingMetres = stats?.KickingMetres ?? 0,
+                    MissedConversions = stats?.MissedConversions ?? 0,
+                    MissedDropGoals = stats?.MissedDropGoals ?? 0,
+                    MissedPenalties = stats?.MissedPenalties ?? 0,
+                    GoodUpAndUnders = stats?.GoodUpAndUnders ?? 0,
+                    BadUpAndUnders = stats?.BadUpAndUnders ?? 0,
+                    UpAndUnders = stats?.UpAndUnders ?? 0,
+                    GoodKicks = stats?.GoodKicks ?? 0,
+                    BadKicks = stats?.BadKicks ?? 0,
+                    TurnoversWon = stats?.TurnoversWon ?? 0,
+                    LineoutsSecured = stats?.LineoutsSecured ?? 0,
+                    LineoutsConceded = stats?.LineoutsConceded ?? 0,
+                    LineoutsStolen = stats?.LineoutsStolen ?? 0,
+                    SuccessfulLineoutThrows = stats?.SuccessfulLineoutThrows ?? 0,
+                    UnsuccessfulLineoutThrows = stats?.UnsuccessfulLineoutThrows ?? 0,
+                    PenaltiesConceded = stats?.PenaltiesConceded ?? 0,
+                    KicksOutOnTheFull = stats?.KicksOutOnTheFull ?? 0,
+                    BallTime = stats?.BallTime ?? 0,
+                    PenaltyTime = stats?.PenaltyTime ?? 0,
                     TotalCaps = stats?.TotalCaps ?? 0,
+                    LeagueCaps = stats?.LeagueCaps ?? 0,
+                    FriendlyCaps = stats?.FriendlyCaps ?? 0,
+                    CupCaps = stats?.CupCaps ?? 0,
+                    UnderTwentyCaps = stats?.UnderTwentyCaps ?? 0,
+                    NationalCaps = stats?.NationalCaps ?? 0,
+                    WorldCupCaps = stats?.WorldCupCaps ?? 0,
+                    UnderTwentyWorldCupCaps = stats?.UnderTwentyWorldCupCaps ?? 0,
+                    OtherCaps = stats?.OtherCaps ?? 0,
                     RecentPops = player.RecentPops
                 };
             })
@@ -105,7 +148,7 @@ public class TeamDashboardService
         };
     }
 
-    private async Task<Dictionary<int, PlayerStats>> LoadPlayerStatisticsAsync(BlackoutRugbyApiClient client, IEnumerable<int> playerIds)
+    private async Task<Dictionary<int, PlayerStats>> LoadPlayerStatisticsAsync(BlackoutRugbyApiClient client, IEnumerable<int> playerIds, int season)
     {
         var semaphore = new SemaphoreSlim(6);
         var tasks = playerIds.Select(async playerId =>
@@ -113,7 +156,7 @@ public class TeamDashboardService
             await semaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                var xml = await client.GetPlayerStatisticsAsync(playerId).ConfigureAwait(false);
+                var xml = await client.GetPlayerStatisticsAsync(playerId, season: season).ConfigureAwait(false);
                 return ParsePlayerStatistics(playerId, xml);
             }
             catch (Exception exception)
@@ -180,20 +223,66 @@ public class TeamDashboardService
             return null;
         }
 
+        var leagueCaps = ReadInt(element, "leaguecaps");
+        var friendlyCaps = ReadInt(element, "friendlycaps");
+        var cupCaps = ReadInt(element, "cupcaps");
+        var underTwentyCaps = ReadInt(element, "undertwentycaps");
+        var nationalCaps = ReadInt(element, "nationalcaps");
+        var worldCupCaps = ReadInt(element, "worldcupcaps");
+        var underTwentyWorldCupCaps = ReadInt(element, "undertwentyworldcupcaps");
+        var otherCaps = ReadInt(element, "othercaps");
+        var totalCaps = leagueCaps + friendlyCaps + cupCaps + underTwentyCaps + nationalCaps + worldCupCaps + underTwentyWorldCupCaps + otherCaps;
+
         return new PlayerStats(
             playerId,
             ReadInt(element, "tackles"),
             ReadInt(element, "metresgained"),
             ReadInt(element, "tries"),
+            ReadInt(element, "conversions"),
+            ReadInt(element, "dropgoals"),
+            ReadInt(element, "penalties"),
             ReadInt(element, "totalpoints"),
-            ReadInt(element, "leaguecaps")
-                + ReadInt(element, "friendlycaps")
-                + ReadInt(element, "cupcaps")
-                + ReadInt(element, "undertwentycaps")
-                + ReadInt(element, "nationalcaps")
-                + ReadInt(element, "worldcupcaps")
-                + ReadInt(element, "undertwentyworldcupcaps")
-                + ReadInt(element, "othercaps"));
+            ReadInt(element, "yellowcards"),
+            ReadInt(element, "redcards"),
+            ReadInt(element, "linebreaks"),
+            ReadInt(element, "intercepts"),
+            ReadInt(element, "kicks"),
+            ReadInt(element, "knockons"),
+            ReadInt(element, "forwardpasses"),
+            ReadInt(element, "tryassists"),
+            ReadInt(element, "beatendefenders"),
+            ReadInt(element, "injuries"),
+            ReadInt(element, "handlingerrors"),
+            ReadInt(element, "missedtackles"),
+            ReadInt(element, "fights"),
+            ReadInt(element, "kickingmetres"),
+            ReadInt(element, "missedconversions"),
+            ReadInt(element, "misseddropgoals"),
+            ReadInt(element, "missedpenalties"),
+            ReadInt(element, "goodupandunders"),
+            ReadInt(element, "badupandunders"),
+            ReadInt(element, "upandunders"),
+            ReadInt(element, "goodkicks"),
+            ReadInt(element, "badkicks"),
+            ReadInt(element, "turnoverswon"),
+            ReadInt(element, "lineoutssecured"),
+            ReadInt(element, "lineoutsconceded"),
+            ReadInt(element, "lineoutsstolen"),
+            ReadInt(element, "successfullineoutthrows"),
+            ReadInt(element, "unsuccessfullineoutthrows"),
+            ReadInt(element, "penaltiesconceded"),
+            ReadInt(element, "kicksoutonthefull"),
+            ReadInt(element, "balltime"),
+            ReadInt(element, "penaltytime"),
+            totalCaps,
+            leagueCaps,
+            friendlyCaps,
+            cupCaps,
+            underTwentyCaps,
+            nationalCaps,
+            worldCupCaps,
+            underTwentyWorldCupCaps,
+            otherCaps);
     }
 
     private static XDocument? TryParse(string xml)
@@ -228,9 +317,22 @@ public class TeamDashboardService
     private static int ReadInt(XElement element, string name)
     {
         var rawValue = ReadString(element, name);
-        if (int.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return 0;
+        }
+
+        // Try parsing with thousands separators (both . and , formats)
+        if (int.TryParse(rawValue, NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var result))
         {
             return result;
+        }
+
+        // Try parsing with comma as thousands separator (European format)
+        var cleanedValue = rawValue.Replace(",", "").Replace(".", "");
+        if (int.TryParse(cleanedValue, out var cleanedResult))
+        {
+            return cleanedResult;
         }
 
         return 0;
@@ -261,5 +363,54 @@ public class TeamDashboardService
 
     private sealed record PlayerInfo(int Id, string Name, int Age, int Csr, int Salary, int Form, int Energy, IReadOnlyList<string> RecentPops);
 
-    private sealed record PlayerStats(int PlayerId, int Tackles, int MetresGained, int Tries, int TotalPoints, int TotalCaps);
+    private sealed record PlayerStats(
+        int PlayerId,
+        int Tackles,
+        int MetresGained,
+        int Tries,
+        int Conversions,
+        int DropGoals,
+        int Penalties,
+        int TotalPoints,
+        int YellowCards,
+        int RedCards,
+        int Linebreaks,
+        int Intercepts,
+        int Kicks,
+        int KnockOns,
+        int ForwardPasses,
+        int TryAssists,
+        int BeatenDefenders,
+        int Injuries,
+        int HandlingErrors,
+        int MissedTackles,
+        int Fights,
+        int KickingMetres,
+        int MissedConversions,
+        int MissedDropGoals,
+        int MissedPenalties,
+        int GoodUpAndUnders,
+        int BadUpAndUnders,
+        int UpAndUnders,
+        int GoodKicks,
+        int BadKicks,
+        int TurnoversWon,
+        int LineoutsSecured,
+        int LineoutsConceded,
+        int LineoutsStolen,
+        int SuccessfulLineoutThrows,
+        int UnsuccessfulLineoutThrows,
+        int PenaltiesConceded,
+        int KicksOutOnTheFull,
+        int BallTime,
+        int PenaltyTime,
+        int TotalCaps,
+        int LeagueCaps,
+        int FriendlyCaps,
+        int CupCaps,
+        int UnderTwentyCaps,
+        int NationalCaps,
+        int WorldCupCaps,
+        int UnderTwentyWorldCupCaps,
+        int OtherCaps);
 }

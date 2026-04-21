@@ -19,6 +19,9 @@ public class TeamDashboardRequest : IValidatableObject
     [Display(Name = "Member key")]
     public string? MemberKey { get; set; }
 
+    [Display(Name = "Season")]
+    public int Season { get; set; } = 60;
+
     public bool HasCredentials => MemberId.HasValue && !string.IsNullOrWhiteSpace(MemberKey);
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

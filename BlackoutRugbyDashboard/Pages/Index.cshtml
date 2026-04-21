@@ -7,23 +7,6 @@
     var comparison = Model.LatestComparison;
 }
 
-<section class="hero-panel">
-    <div>
-        <p class="eyebrow">Blackout Rugby</p>
-        <h1>Team dashboard with live squad stats and snapshot-based player changes.</h1>
-        <p class="hero-copy">
-            Load your current squad, rank players quickly, and capture post-match snapshots so you can track who improved,
-            lost energy, or added production since the last saved game state.
-        </p>
-    </div>
-    <div class="hero-note">
-        <strong>How to use it</strong>
-        <span>1. Enter the API endpoint and your team ID.</span>
-        <span>2. Add member credentials if you want owner-only fields.</span>
-        <span>3. Load the dashboard, then capture a snapshot after each match.</span>
-    </div>
-</section>
-
 <section class="control-panel">
     <form method="post" class="dashboard-form">
         <div class="field-grid">
@@ -46,6 +29,33 @@
                 <span>Member key</span>
                 <input asp-for="Input.MemberKey" class="form-control" placeholder="Optional" />
                 <small asp-validation-for="Input.MemberKey" class="text-danger"></small>
+            </label>
+            <label>
+                <span>Season</span>
+                <select asp-for="Input.Season" id="seasonSelector" class="form-control">
+                    <option value="60">Season 60</option>
+                    <option value="61">Season 61</option>
+                    <option value="62">Season 62</option>
+                    <option value="63">Season 63</option>
+                    <option value="64">Season 64</option>
+                    <option value="65">Season 65</option>
+                    <option value="66">Season 66</option>
+                    <option value="67">Season 67</option>
+                    <option value="68">Season 68</option>
+                    <option value="69">Season 69</option>
+                    <option value="70">Season 70</option>
+                    <option value="71">Season 71</option>
+                    <option value="72">Season 72</option>
+                    <option value="73">Season 73</option>
+                    <option value="74">Season 74</option>
+                    <option value="75">Season 75</option>
+                    <option value="76">Season 76</option>
+                    <option value="77">Season 77</option>
+                    <option value="78">Season 78</option>
+                    <option value="79">Season 79</option>
+                    <option value="80">Season 80</option>
+                </select>
+                <small asp-validation-for="Input.Season" class="text-danger"></small>
             </label>
         </div>
         <div class="button-row">
@@ -154,6 +164,100 @@
             </div>
             <div class="chart-frame">
                 <canvas id="conditionChart"></canvas>
+            </div>
+        </article>
+    </section>
+
+    <section class="chart-grid">
+        <article class="chart-panel full-width-panel">
+            <div class="section-heading">
+                <h2>Member stats comparison</h2>
+                <p>View all squad members ranked by a specific stat.</p>
+                <div style="margin-top: 12px;">
+                    <label for="statSelector" style="display: inline-block; margin-right: 12px; font-weight: 500;">Select stat:</label>
+                    <select id="statSelector" class="form-control" style="display: inline-block; width: auto; max-width: 250px;">
+                        <!-- General Stats -->
+                        <optgroup label="General">
+                            <option value="totalPoints">Total Points</option>
+                            <option value="csr">CSR Rating</option>
+                            <option value="energy">Energy</option>
+                            <option value="form">Form</option>
+                            <option value="salary">Salary</option>
+                            <option value="age">Age</option>
+                        </optgroup>
+                        <!-- Match Performance -->
+                        <optgroup label="Match Performance">
+                            <option value="tackles">Tackles</option>
+                            <option value="metresGained">Metres Gained</option>
+                            <option value="tries">Tries</option>
+                            <option value="conversions">Conversions</option>
+                            <option value="dropGoals">Drop Goals</option>
+                            <option value="penalties">Penalties</option>
+                            <option value="kickingMetres">Kicking Metres</option>
+                        </optgroup>
+                        <!-- Offensive -->
+                        <optgroup label="Offensive">
+                            <option value="linebreaks">Linebreaks</option>
+                            <option value="beatenDefenders">Beaten Defenders</option>
+                            <option value="tryAssists">Try Assists</option>
+                            <option value="forwardPasses">Forward Passes</option>
+                            <option value="kicksOutOnTheFull">Kicks Out On Full</option>
+                            <option value="kicks">Kicks</option>
+                        </optgroup>
+                        <!-- Defensive -->
+                        <optgroup label="Defensive">
+                            <option value="missedTackles">Missed Tackles</option>
+                            <option value="intercepts">Intercepts</option>
+                            <option value="turnoversWon">Turnovers Won</option>
+                            <option value="penaltiesConceded">Penalties Conceded</option>
+                        </optgroup>
+                        <!-- Set Pieces -->
+                        <optgroup label="Set Pieces">
+                            <option value="successfulLineoutThrows">Successful Lineout Throws</option>
+                            <option value="unsuccessfulLineoutThrows">Unsuccessful Lineout Throws</option>
+                            <option value="lineoutsSecured">Lineouts Secured</option>
+                            <option value="lineoutsConceded">Lineouts Conceded</option>
+                            <option value="lineoutsStolen">Lineouts Stolen</option>
+                        </optgroup>
+                        <!-- Disciplinary -->
+                        <optgroup label="Disciplinary">
+                            <option value="yellowCards">Yellow Cards</option>
+                            <option value="redCards">Red Cards</option>
+                            <option value="fights">Fights</option>
+                            <option value="injuries">Injuries</option>
+                        </optgroup>
+                        <!-- Other Stats -->
+                        <optgroup label="Other Stats">
+                            <option value="knockOns">Knock Ons</option>
+                            <option value="handlingErrors">Handling Errors</option>
+                            <option value="missedConversions">Missed Conversions</option>
+                            <option value="missedDropGoals">Missed Drop Goals</option>
+                            <option value="missedPenalties">Missed Penalties</option>
+                            <option value="goodUpAndUnders">Good Up And Unders</option>
+                            <option value="badUpAndUnders">Bad Up And Unders</option>
+                            <option value="upAndUnders">Up And Unders</option>
+                            <option value="goodKicks">Good Kicks</option>
+                            <option value="badKicks">Bad Kicks</option>
+                            <option value="ballTime">Ball Time</option>
+                            <option value="penaltyTime">Penalty Time</option>
+                        </optgroup>
+                        <!-- Caps -->
+                        <optgroup label="Caps">
+                            <option value="totalCaps">Total Caps</option>
+                            <option value="leagueCaps">League Caps</option>
+                            <option value="friendlyCaps">Friendly Caps</option>
+                            <option value="cupCaps">Cup Caps</option>
+                            <option value="nationalCaps">National Caps</option>
+                            <option value="underTwentyCaps">Under-20 Caps</option>
+                            <option value="worldCupCaps">World Cup Caps</option>
+                            <option value="underTwentyWorldCupCaps">U20 World Cup Caps</option>
+                            <option value="otherCaps">Other Caps</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-frame tall-chart">
+                <canvas id="statsComparisonChart"></canvas>
             </div>
         </article>
     </section>
@@ -415,6 +519,154 @@
                     }
                 });
             }
+
+            // Stats comparison chart with dropdown
+            let statsComparisonChart = null;
+            const statsComparisonCanvas = document.getElementById('statsComparisonChart');
+            const statSelector = document.getElementById('statSelector');
+
+            const statsData = {
+                // General
+                totalPoints: { label: 'Total Points', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.TotalPoints).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.TotalPoints).Select(p => p.TotalPoints))), color: 'rgba(216, 111, 45, 0.82)' },
+                csr: { label: 'CSR Rating', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Csr).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Csr).Select(p => p.Csr))), color: 'rgba(138, 45, 88, 0.82)' },
+                energy: { label: 'Energy', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Energy).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Energy).Select(p => p.Energy))), color: 'rgba(88, 138, 45, 0.82)' },
+                form: { label: 'Form', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Form).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Form).Select(p => p.Form))), color: 'rgba(45, 88, 138, 0.82)' },
+                salary: { label: 'Salary', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Salary).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Salary).Select(p => p.Salary))), color: 'rgba(216, 45, 111, 0.82)' },
+                age: { label: 'Age', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Age).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Age).Select(p => p.Age))), color: 'rgba(111, 216, 45, 0.82)' },
+                // Match Performance
+                tackles: { label: 'Tackles', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Tackles).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Tackles).Select(p => p.Tackles))), color: 'rgba(37, 96, 107, 0.82)' },
+                metresGained: { label: 'Metres Gained', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MetresGained).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MetresGained).Select(p => p.MetresGained))), color: 'rgba(244, 185, 66, 0.82)' },
+                tries: { label: 'Tries', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Tries).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Tries).Select(p => p.Tries))), color: 'rgba(45, 138, 88, 0.82)' },
+                conversions: { label: 'Conversions', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Conversions).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Conversions).Select(p => p.Conversions))), color: 'rgba(138, 88, 138, 0.82)' },
+                dropGoals: { label: 'Drop Goals', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.DropGoals).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.DropGoals).Select(p => p.DropGoals))), color: 'rgba(216, 138, 45, 0.82)' },
+                penalties: { label: 'Penalties', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Penalties).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Penalties).Select(p => p.Penalties))), color: 'rgba(45, 216, 111, 0.82)' },
+                kickingMetres: { label: 'Kicking Metres', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.KickingMetres).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.KickingMetres).Select(p => p.KickingMetres))), color: 'rgba(111, 138, 216, 0.82)' },
+                // Offensive
+                linebreaks: { label: 'Linebreaks', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Linebreaks).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Linebreaks).Select(p => p.Linebreaks))), color: 'rgba(216, 111, 138, 0.82)' },
+                beatenDefenders: { label: 'Beaten Defenders', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.BeatenDefenders).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.BeatenDefenders).Select(p => p.BeatenDefenders))), color: 'rgba(138, 216, 45, 0.82)' },
+                tryAssists: { label: 'Try Assists', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.TryAssists).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.TryAssists).Select(p => p.TryAssists))), color: 'rgba(45, 138, 216, 0.82)' },
+                forwardPasses: { label: 'Forward Passes', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.ForwardPasses).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.ForwardPasses).Select(p => p.ForwardPasses))), color: 'rgba(216, 45, 45, 0.82)' },
+                kicksOutOnTheFull: { label: 'Kicks Out On Full', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.KicksOutOnTheFull).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.KicksOutOnTheFull).Select(p => p.KicksOutOnTheFull))), color: 'rgba(111, 45, 216, 0.82)' },
+                kicks: { label: 'Kicks', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Kicks).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Kicks).Select(p => p.Kicks))), color: 'rgba(45, 216, 216, 0.82)' },
+                // Defensive
+                missedTackles: { label: 'Missed Tackles', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MissedTackles).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MissedTackles).Select(p => p.MissedTackles))), color: 'rgba(216, 216, 45, 0.82)' },
+                intercepts: { label: 'Intercepts', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Intercepts).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Intercepts).Select(p => p.Intercepts))), color: 'rgba(45, 111, 216, 0.82)' },
+                turnoversWon: { label: 'Turnovers Won', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.TurnoversWon).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.TurnoversWon).Select(p => p.TurnoversWon))), color: 'rgba(216, 45, 138, 0.82)' },
+                penaltiesConceded: { label: 'Penalties Conceded', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.PenaltiesConceded).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.PenaltiesConceded).Select(p => p.PenaltiesConceded))), color: 'rgba(138, 45, 216, 0.82)' },
+                // Set Pieces
+                successfulLineoutThrows: { label: 'Successful Lineout Throws', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.SuccessfulLineoutThrows).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.SuccessfulLineoutThrows).Select(p => p.SuccessfulLineoutThrows))), color: 'rgba(45, 216, 138, 0.82)' },
+                unsuccessfulLineoutThrows: { label: 'Unsuccessful Lineout Throws', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.UnsuccessfulLineoutThrows).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.UnsuccessfulLineoutThrows).Select(p => p.UnsuccessfulLineoutThrows))), color: 'rgba(216, 138, 111, 0.82)' },
+                lineoutsSecured: { label: 'Lineouts Secured', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.LineoutsSecured).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.LineoutsSecured).Select(p => p.LineoutsSecured))), color: 'rgba(138, 216, 111, 0.82)' },
+                lineoutsConceded: { label: 'Lineouts Conceded', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.LineoutsConceded).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.LineoutsConceded).Select(p => p.LineoutsConceded))), color: 'rgba(111, 138, 45, 0.82)' },
+                lineoutsStolen: { label: 'Lineouts Stolen', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.LineoutsStolen).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.LineoutsStolen).Select(p => p.LineoutsStolen))), color: 'rgba(45, 45, 216, 0.82)' },
+                // Disciplinary
+                yellowCards: { label: 'Yellow Cards', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.YellowCards).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.YellowCards).Select(p => p.YellowCards))), color: 'rgba(216, 216, 111, 0.82)' },
+                redCards: { label: 'Red Cards', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.RedCards).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.RedCards).Select(p => p.RedCards))), color: 'rgba(216, 111, 111, 0.82)' },
+                fights: { label: 'Fights', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Fights).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Fights).Select(p => p.Fights))), color: 'rgba(111, 45, 45, 0.82)' },
+                injuries: { label: 'Injuries', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Injuries).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.Injuries).Select(p => p.Injuries))), color: 'rgba(111, 111, 45, 0.82)' },
+                // Other Stats
+                knockOns: { label: 'Knock Ons', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.KnockOns).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.KnockOns).Select(p => p.KnockOns))), color: 'rgba(45, 138, 138, 0.82)' },
+                handlingErrors: { label: 'Handling Errors', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.HandlingErrors).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.HandlingErrors).Select(p => p.HandlingErrors))), color: 'rgba(138, 138, 216, 0.82)' },
+                missedConversions: { label: 'Missed Conversions', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MissedConversions).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MissedConversions).Select(p => p.MissedConversions))), color: 'rgba(216, 138, 216, 0.82)' },
+                missedDropGoals: { label: 'Missed Drop Goals', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MissedDropGoals).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MissedDropGoals).Select(p => p.MissedDropGoals))), color: 'rgba(138, 216, 138, 0.82)' },
+                missedPenalties: { label: 'Missed Penalties', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MissedPenalties).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.MissedPenalties).Select(p => p.MissedPenalties))), color: 'rgba(216, 111, 216, 0.82)' },
+                goodUpAndUnders: { label: 'Good Up And Unders', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.GoodUpAndUnders).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.GoodUpAndUnders).Select(p => p.GoodUpAndUnders))), color: 'rgba(111, 216, 111, 0.82)' },
+                badUpAndUnders: { label: 'Bad Up And Unders', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.BadUpAndUnders).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.BadUpAndUnders).Select(p => p.BadUpAndUnders))), color: 'rgba(45, 111, 45, 0.82)' },
+                upAndUnders: { label: 'Up And Unders', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.UpAndUnders).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.UpAndUnders).Select(p => p.UpAndUnders))), color: 'rgba(111, 45, 138, 0.82)' },
+                goodKicks: { label: 'Good Kicks', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.GoodKicks).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.GoodKicks).Select(p => p.GoodKicks))), color: 'rgba(138, 111, 45, 0.82)' },
+                badKicks: { label: 'Bad Kicks', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.BadKicks).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.BadKicks).Select(p => p.BadKicks))), color: 'rgba(45, 138, 45, 0.82)' },
+                ballTime: { label: 'Ball Time', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.BallTime).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.BallTime).Select(p => p.BallTime))), color: 'rgba(138, 45, 138, 0.82)' },
+                penaltyTime: { label: 'Penalty Time', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.PenaltyTime).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.PenaltyTime).Select(p => p.PenaltyTime))), color: 'rgba(45, 45, 138, 0.82)' },
+                // Caps
+                totalCaps: { label: 'Total Caps', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.TotalCaps).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.TotalCaps).Select(p => p.TotalCaps))), color: 'rgba(138, 88, 45, 0.82)' },
+                leagueCaps: { label: 'League Caps', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.LeagueCaps).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.LeagueCaps).Select(p => p.LeagueCaps))), color: 'rgba(111, 111, 111, 0.82)' },
+                friendlyCaps: { label: 'Friendly Caps', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.FriendlyCaps).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.FriendlyCaps).Select(p => p.FriendlyCaps))), color: 'rgba(166, 111, 45, 0.82)' },
+                cupCaps: { label: 'Cup Caps', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.CupCaps).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.CupCaps).Select(p => p.CupCaps))), color: 'rgba(45, 166, 111, 0.82)' },
+                nationalCaps: { label: 'National Caps', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.NationalCaps).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.NationalCaps).Select(p => p.NationalCaps))), color: 'rgba(111, 45, 166, 0.82)' },
+                underTwentyCaps: { label: 'Under-20 Caps', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.UnderTwentyCaps).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.UnderTwentyCaps).Select(p => p.UnderTwentyCaps))), color: 'rgba(166, 45, 111, 0.82)' },
+                worldCupCaps: { label: 'World Cup Caps', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.WorldCupCaps).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.WorldCupCaps).Select(p => p.WorldCupCaps))), color: 'rgba(45, 111, 166, 0.82)' },
+                underTwentyWorldCupCaps: { label: 'U20 World Cup Caps', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.UnderTwentyWorldCupCaps).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.UnderTwentyWorldCupCaps).Select(p => p.UnderTwentyWorldCupCaps))), color: 'rgba(111, 166, 45, 0.82)' },
+                otherCaps: { label: 'Other Caps', names: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.OtherCaps).Select(p => p.Name))), data: @Html.Raw(JsonSerializer.Serialize(dashboard.Players.OrderByDescending(p => p.OtherCaps).Select(p => p.OtherCaps))), color: 'rgba(166, 111, 111, 0.82)' }
+            };
+
+            function updateStatsChart() {
+                const selectedStat = statSelector.value;
+                const stat = statsData[selectedStat];
+
+                if (statsComparisonChart) {
+                    statsComparisonChart.destroy();
+                }
+
+                statsComparisonChart = new Chart(statsComparisonCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: stat.names,
+                        datasets: [
+                            {
+                                label: stat.label,
+                                data: stat.data,
+                                backgroundColor: stat.color,
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#415159'
+                                },
+                                grid: {
+                                    color: 'rgba(17, 33, 43, 0.08)'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#415159'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (statsComparisonCanvas && statSelector) {
+                updateStatsChart();
+                statSelector.addEventListener('change', updateStatsChart);
+            }
+
+            // Handle season changes
+            const seasonSelector = document.getElementById('seasonSelector');
+            if (seasonSelector) {
+                seasonSelector.addEventListener('change', function() {
+                    // Find the form and set the season value, then submit
+                    const form = document.querySelector('.dashboard-form');
+                    if (form) {
+                        form.submit();
+                    }
+                });
+            }
+
+            // Auto-load dashboard on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.querySelector('.dashboard-form');
+                const loadButton = form?.querySelector('button[asp-page-handler="Load"]');
+                if (form && loadButton) {
+                    loadButton.click();
+                }
+            });
         </script>
     }
 
