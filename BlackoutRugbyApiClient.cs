@@ -17,6 +17,12 @@ namespace BlackoutRugby.Api
         public int? MemberId { get; }
 
         public string? MemberKey { get; }
+
+        public int? DeveloperId { get; set; }
+
+        public string? DeveloperKey { get; set; }
+
+        public string? DeveloperIV { get; set; }
     }
 
     public class BlackoutRugbyApiClient
@@ -370,6 +376,16 @@ namespace BlackoutRugby.Api
             {
                 ["r"] = requestCode
             };
+
+            if (_credentials?.DeveloperId is int developerId)
+            {
+                queryParameters["d"] = developerId.ToString();
+            }
+
+            if (!string.IsNullOrWhiteSpace(_credentials?.DeveloperKey))
+            {
+                queryParameters["dk"] = _credentials.DeveloperKey;
+            }
 
             if (_credentials?.MemberId is int memberId)
             {

@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
 builder.Services.Configure<DashboardDefaultsOptions>(builder.Configuration.GetSection("DashboardDefaults"));
+builder.Services.Configure<DeveloperOptions>(builder.Configuration.GetSection("Developer"));
 builder.Services.AddSingleton<BlackoutRugbyDashboard.Services.SnapshotStore>();
 builder.Services.AddScoped<BlackoutRugbyDashboard.Services.TeamDashboardService>();
 

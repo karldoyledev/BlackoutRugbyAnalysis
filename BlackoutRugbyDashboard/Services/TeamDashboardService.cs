@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Xml.Linq;
 using BlackoutRugby.Api;
 using BlackoutRugbyDashboard.Models;
+using Microsoft.Extensions.Options;
 
 namespace BlackoutRugbyDashboard.Services;
 
@@ -9,11 +10,13 @@ public class TeamDashboardService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<TeamDashboardService> _logger;
+    private readonly DeveloperOptions _developerOptions;
 
-    public TeamDashboardService(IHttpClientFactory httpClientFactory, ILogger<TeamDashboardService> logger)
+    public TeamDashboardService(IHttpClientFactory httpClientFactory, ILogger<TeamDashboardService> logger, IOptions<DeveloperOptions> developerOptions)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _developerOptions = developerOptions.Value;
     }
 
     public async Task<TeamDashboardViewModel> BuildDashboardAsync(TeamDashboardRequest request)
@@ -21,6 +24,22 @@ public class TeamDashboardService
         var credentials = request.HasCredentials
             ? new BlackoutRugbyApiCredentials(request.MemberId, request.MemberKey)
             : null;
+
+        if (credentials != null)
+        {
+            credentials.DeveloperId = _developerOptions.DeveloperId;
+            credentials.DeveloperKey = _developerOptions.DeveloperKey;
+            credentials.DeveloperIV = _developerOptions.DeveloperIV;
+        }
+        else
+        {
+            credentials = new BlackoutRugbyApiCredentials(null, null)
+            {
+                DeveloperId = _developerOptions.DeveloperId,
+                DeveloperKey = _developerOptions.DeveloperKey,
+                DeveloperIV = _developerOptions.DeveloperIV
+            };
+        }
 
         var client = new BlackoutRugbyApiClient(_httpClientFactory.CreateClient(), request.BaseEndpoint, credentials);
         var teamTask = client.GetTeamsAsync(teamId: request.TeamId);
