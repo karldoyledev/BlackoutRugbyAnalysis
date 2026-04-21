@@ -1,0 +1,992 @@
+{
+  "endpoints": {
+    "countries": {
+      "code": "c",
+      "category": "Data Retrieval",
+      "description": "Retrieve country information from the Blackout Rugby system",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "country_iso",
+          "type": "text",
+          "label": "Country ISO Code",
+          "placeholder": "e.g., NZ, AU, SA",
+          "required": false,
+          "default": "",
+          "description": "Individual country ISO code",
+          "options": ["AR", "AU", "BE", "BR", "CA", "CL", "HR", "CZ", "EN", "FR", "GE", "DE", "HK", "IE", "IT", "CI", "JP", "KE", "NA", "NL", "NZ", "PI", "PL", "PT", "RO", "RU", "SL", "ZA", "KR", "ES", "US", "UY", "WA", "ZW"]
+        },
+        {
+          "name": "country_isos",
+          "type": "text",
+          "label": "Multiple Country ISO Codes",
+          "placeholder": "e.g., NZ,AU,SA (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple countries (comma-separated ISO codes)"
+        },
+        {
+          "name": "real",
+          "type": "checkbox",
+          "label": "Real Countries Only",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Return real world countries (1) vs game countries (0, default)"
+        }
+      ]
+    },
+    "divisions": {
+      "code": "d",
+      "category": "Data Retrieval",
+      "description": "Retrieve division information",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "divisionid",
+          "type": "number",
+          "label": "Division ID",
+          "placeholder": "e.g., 123",
+          "required": false,
+          "default": "",
+          "description": "Individual division ID"
+        },
+        {
+          "name": "divisionids",
+          "type": "text",
+          "label": "Multiple Division IDs",
+          "placeholder": "e.g., 123,124,125 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple divisions (comma-separated IDs)"
+        },
+        {
+          "name": "season",
+          "type": "number",
+          "label": "Season Number",
+          "placeholder": "e.g., 10",
+          "required": false,
+          "default": "",
+          "description": "Season number"
+        },
+        {
+          "name": "country_iso",
+          "type": "text",
+          "label": "Country ISO Code",
+          "placeholder": "e.g., NZ",
+          "required": false,
+          "default": "",
+          "description": "Country ISO code for divisions"
+        },
+        {
+          "name": "division",
+          "type": "number",
+          "label": "Division Number",
+          "placeholder": "e.g., 1",
+          "required": false,
+          "default": "",
+          "description": "Division number within country"
+        }
+      ]
+    },
+    "finances": {
+      "code": "fi",
+      "category": "Data Retrieval",
+      "description": "Retrieve team financial information (member key required)",
+      "authentication": "Member key required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "season",
+          "type": "number",
+          "label": "Season Number",
+          "placeholder": "e.g., 10",
+          "required": true,
+          "default": "",
+          "description": "Season number"
+        },
+        {
+          "name": "round",
+          "type": "number",
+          "label": "Round Number",
+          "placeholder": "e.g., 1",
+          "required": true,
+          "default": "",
+          "description": "Round number"
+        }
+      ]
+    },
+    "fixtures": {
+      "code": "fix",
+      "category": "Data Retrieval",
+      "description": "Retrieve fixture/match information",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "fixtureid",
+          "type": "number",
+          "label": "Fixture ID",
+          "placeholder": "e.g., 12345",
+          "required": false,
+          "default": "",
+          "description": "Individual fixture ID"
+        },
+        {
+          "name": "fixtureids",
+          "type": "text",
+          "label": "Multiple Fixture IDs",
+          "placeholder": "e.g., 12345,12346,12347 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple fixture IDs (comma-separated)"
+        },
+        {
+          "name": "teamid",
+          "type": "number",
+          "label": "Team ID",
+          "placeholder": "e.g., 45047",
+          "required": false,
+          "default": "",
+          "description": "Get all fixtures for a specific team"
+        },
+        {
+          "name": "last",
+          "type": "number",
+          "label": "Last N Fixtures",
+          "placeholder": "e.g., 10",
+          "required": false,
+          "default": "",
+          "description": "Number of most recent fixtures for team"
+        },
+        {
+          "name": "future",
+          "type": "number",
+          "label": "Future Fixtures for Team",
+          "placeholder": "e.g., 45047",
+          "required": false,
+          "default": "",
+          "description": "Upcoming fixtures for specified team ID"
+        },
+        {
+          "name": "past",
+          "type": "number",
+          "label": "Past Fixtures for Team",
+          "placeholder": "e.g., 45047",
+          "required": false,
+          "default": "",
+          "description": "Past fixtures for specified team ID"
+        },
+        {
+          "name": "latest",
+          "type": "number",
+          "label": "Latest Match in League",
+          "placeholder": "e.g., 123",
+          "required": false,
+          "default": "",
+          "description": "Latest match in specified league ID"
+        },
+        {
+          "name": "leagueid",
+          "type": "number",
+          "label": "League ID",
+          "placeholder": "e.g., 123",
+          "required": false,
+          "default": "",
+          "description": "All fixtures for a league"
+        },
+        {
+          "name": "season",
+          "type": "number",
+          "label": "Season Number",
+          "placeholder": "e.g., 10",
+          "required": false,
+          "default": "",
+          "description": "Season number"
+        },
+        {
+          "name": "round",
+          "type": "number",
+          "label": "Round Number",
+          "placeholder": "e.g., 1",
+          "required": false,
+          "default": "",
+          "description": "Round number"
+        },
+        {
+          "name": "roundrobin",
+          "type": "checkbox",
+          "label": "Round-robin Fixtures",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Filter for round-robin fixtures"
+        },
+        {
+          "name": "friendlycompid",
+          "type": "number",
+          "label": "Friendly Competition ID",
+          "placeholder": "e.g., 456",
+          "required": false,
+          "default": "",
+          "description": "Friendly competition ID"
+        },
+        {
+          "name": "youth",
+          "type": "checkbox",
+          "label": "Youth Fixtures",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include youth fixtures"
+        },
+        {
+          "name": "nat",
+          "type": "checkbox",
+          "label": "National Team Fixtures",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include national team fixtures"
+        },
+        {
+          "name": "u20",
+          "type": "checkbox",
+          "label": "Under-20 Fixtures",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include Under-20 team fixtures"
+        }
+      ]
+    },
+    "fixturestats": {
+      "code": "fs",
+      "category": "Data Retrieval",
+      "description": "Retrieve fixture/match statistics",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "fixtureid",
+          "type": "number",
+          "label": "Fixture ID",
+          "placeholder": "e.g., 12345",
+          "required": true,
+          "default": "",
+          "description": "Individual fixture ID"
+        },
+        {
+          "name": "fixtureids",
+          "type": "text",
+          "label": "Multiple Fixture IDs",
+          "placeholder": "e.g., 12345,12346,12347 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple fixture IDs (comma-separated)"
+        },
+        {
+          "name": "teamstats",
+          "type": "number",
+          "label": "Team Statistics Only",
+          "placeholder": "e.g., 45047",
+          "required": false,
+          "default": "",
+          "description": "Return only team statistics for specified team ID"
+        },
+        {
+          "name": "teamplayersstats",
+          "type": "number",
+          "label": "Team and Player Statistics",
+          "placeholder": "e.g., 45047",
+          "required": false,
+          "default": "",
+          "description": "Return team and player statistics for specified team ID"
+        },
+        {
+          "name": "playerstats",
+          "type": "number",
+          "label": "Player Statistics Only",
+          "placeholder": "e.g., 123456",
+          "required": false,
+          "default": "",
+          "description": "Return only statistics for specified player ID"
+        }
+      ]
+    },
+    "leagues": {
+      "code": "l",
+      "category": "Data Retrieval",
+      "description": "Retrieve league information",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "leagueid",
+          "type": "number",
+          "label": "League ID",
+          "placeholder": "e.g., 123",
+          "required": false,
+          "default": "",
+          "description": "Individual league ID"
+        },
+        {
+          "name": "leagueids",
+          "type": "text",
+          "label": "Multiple League IDs",
+          "placeholder": "e.g., 123,124,125 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple league IDs (comma-separated)"
+        },
+        {
+          "name": "season",
+          "type": "number",
+          "label": "Season Number",
+          "placeholder": "e.g., 10",
+          "required": false,
+          "default": "",
+          "description": "Season number"
+        },
+        {
+          "name": "country_iso",
+          "type": "text",
+          "label": "Country ISO Code",
+          "placeholder": "e.g., NZ",
+          "required": false,
+          "default": "",
+          "description": "Country ISO code"
+        },
+        {
+          "name": "division",
+          "type": "number",
+          "label": "Division Number",
+          "placeholder": "e.g., 1",
+          "required": false,
+          "default": "",
+          "description": "Division number"
+        },
+        {
+          "name": "league",
+          "type": "number",
+          "label": "League Number",
+          "placeholder": "e.g., 1",
+          "required": false,
+          "default": "",
+          "description": "League number"
+        },
+        {
+          "name": "divisionid",
+          "type": "number",
+          "label": "Division ID",
+          "placeholder": "e.g., 123",
+          "required": false,
+          "default": "",
+          "description": "Division ID"
+        }
+      ]
+    },
+    "lineups": {
+      "code": "li",
+      "category": "Data Retrieval",
+      "description": "Retrieve or set team lineups (both GET and POST supported)",
+      "authentication": "Member key required for write operations",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "teamid",
+          "type": "number",
+          "label": "Team ID",
+          "placeholder": "e.g., 45047",
+          "required": true,
+          "default": "",
+          "description": "Team ID (required)"
+        },
+        {
+          "name": "fixtureid",
+          "type": "number",
+          "label": "Fixture ID",
+          "placeholder": "e.g., 12345",
+          "required": false,
+          "default": "",
+          "description": "Specific fixture ID (0 for current fixture)"
+        },
+        {
+          "name": "fixtureids",
+          "type": "text",
+          "label": "Multiple Fixture IDs",
+          "placeholder": "e.g., 12345,12346,12347 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple fixture IDs (comma-separated)"
+        },
+        {
+          "name": "youth",
+          "type": "checkbox",
+          "label": "Youth Team Lineup",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Retrieve youth team lineup"
+        },
+        {
+          "name": "nat",
+          "type": "checkbox",
+          "label": "National Team Lineup",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Retrieve national team lineup"
+        },
+        {
+          "name": "u20",
+          "type": "checkbox",
+          "label": "Under-20 Team Lineup",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Retrieve Under-20 team lineup"
+        }
+      ]
+    },
+    "mail": {
+      "code": "m",
+      "category": "Data Retrieval",
+      "description": "Retrieve or send mail messages (member key required)",
+      "authentication": "Member key required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "folderid",
+          "type": "text",
+          "label": "Folder ID",
+          "placeholder": "e.g., inbox,sent,archive",
+          "required": false,
+          "default": "",
+          "description": "Folder ID(s) to retrieve (comma-separated)"
+        },
+        {
+          "name": "subfolderid",
+          "type": "text",
+          "label": "Subfolder ID",
+          "placeholder": "e.g., 1,2,3",
+          "required": false,
+          "default": "",
+          "description": "Subfolder ID(s) to retrieve (comma-separated)"
+        },
+        {
+          "name": "messageid",
+          "type": "number",
+          "label": "Message ID",
+          "placeholder": "e.g., 56789",
+          "required": false,
+          "default": "",
+          "description": "Specific message ID to retrieve"
+        }
+      ]
+    },
+    "matchcommentary": {
+      "code": "mc",
+      "category": "Live Data",
+      "description": "Retrieve live match commentary and events",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "fixtureid",
+          "type": "number",
+          "label": "Fixture ID",
+          "placeholder": "e.g., 12345",
+          "required": true,
+          "default": "",
+          "description": "Fixture ID (required)"
+        },
+        {
+          "name": "youth",
+          "type": "checkbox",
+          "label": "Youth Match",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Match is a youth match"
+        },
+        {
+          "name": "nat",
+          "type": "checkbox",
+          "label": "National Match",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Match is a national team match"
+        },
+        {
+          "name": "u20",
+          "type": "checkbox",
+          "label": "Under-20 Match",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Match is an Under-20 team match"
+        }
+      ]
+    },
+    "matchscore": {
+      "code": "ms",
+      "category": "Live Data",
+      "description": "Retrieve current match score and game time",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "fixtureid",
+          "type": "number",
+          "label": "Fixture ID",
+          "placeholder": "e.g., 12345",
+          "required": true,
+          "default": "",
+          "description": "Fixture ID (required)"
+        },
+        {
+          "name": "youth",
+          "type": "checkbox",
+          "label": "Youth Match",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Match is a youth match"
+        },
+        {
+          "name": "nat",
+          "type": "checkbox",
+          "label": "National Match",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Match is a national team match"
+        },
+        {
+          "name": "u20",
+          "type": "checkbox",
+          "label": "Under-20 Match",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Match is an Under-20 team match"
+        }
+      ]
+    },
+    "matchsummary": {
+      "code": "msum",
+      "category": "Live Data",
+      "description": "Retrieve match summary with scoring details",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "fixtureid",
+          "type": "number",
+          "label": "Fixture ID",
+          "placeholder": "e.g., 12345",
+          "required": false,
+          "default": "",
+          "description": "Individual fixture ID"
+        },
+        {
+          "name": "fixtureids",
+          "type": "text",
+          "label": "Multiple Fixture IDs",
+          "placeholder": "e.g., 12345,12346,12347 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple fixture IDs (comma-separated)"
+        },
+        {
+          "name": "youth",
+          "type": "checkbox",
+          "label": "Youth Match",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Filter for youth matches"
+        },
+        {
+          "name": "nat",
+          "type": "checkbox",
+          "label": "National Match",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Filter for national team matches"
+        },
+        {
+          "name": "u20",
+          "type": "checkbox",
+          "label": "Under-20 Match",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Filter for Under-20 team matches"
+        }
+      ]
+    },
+    "members": {
+      "code": "mem",
+      "category": "Data Retrieval",
+      "description": "Retrieve member profile information",
+      "authentication": "Not required (limited data without member key)",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "memberid",
+          "type": "number",
+          "label": "Member ID",
+          "placeholder": "e.g., 202665",
+          "required": false,
+          "default": "",
+          "description": "Individual member ID"
+        },
+        {
+          "name": "memberids",
+          "type": "text",
+          "label": "Multiple Member IDs",
+          "placeholder": "e.g., 202665,202666,202667 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple member IDs (comma-separated)"
+        }
+      ]
+    },
+    "playerhistory": {
+      "code": "ph",
+      "category": "Data Retrieval",
+      "description": "Retrieve player history and career events",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "playerid",
+          "type": "number",
+          "label": "Player ID",
+          "placeholder": "e.g., 123456",
+          "required": true,
+          "default": "",
+          "description": "Player ID (required)"
+        }
+      ]
+    },
+    "players": {
+      "code": "p",
+      "category": "Data Retrieval",
+      "description": "Retrieve player information and statistics",
+      "authentication": "Not required (limited data without member key)",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "playerid",
+          "type": "number",
+          "label": "Player ID",
+          "placeholder": "e.g., 123456",
+          "required": false,
+          "default": "",
+          "description": "Individual player ID"
+        },
+        {
+          "name": "playerids",
+          "type": "text",
+          "label": "Multiple Player IDs",
+          "placeholder": "e.g., 123456,123457,123458 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple player IDs (comma-separated)"
+        },
+        {
+          "name": "teamid",
+          "type": "number",
+          "label": "Team ID",
+          "placeholder": "e.g., 45047",
+          "required": false,
+          "default": "",
+          "description": "Get all players from a team"
+        },
+        {
+          "name": "teamids",
+          "type": "text",
+          "label": "Multiple Team IDs",
+          "placeholder": "e.g., 45047,45048,45049 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Players from multiple teams (comma-separated)"
+        },
+        {
+          "name": "youth",
+          "type": "checkbox",
+          "label": "Youth Players",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include youth players"
+        },
+        {
+          "name": "nat",
+          "type": "checkbox",
+          "label": "National Team Players",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include national team players"
+        },
+        {
+          "name": "u20",
+          "type": "checkbox",
+          "label": "Under-20 Team Players",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include Under-20 team players"
+        }
+      ]
+    },
+    "playerstats": {
+      "code": "ps",
+      "category": "Data Retrieval",
+      "description": "Retrieve player career statistics",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "playerid",
+          "type": "number",
+          "label": "Player ID",
+          "placeholder": "e.g., 123456",
+          "required": false,
+          "default": "",
+          "description": "Individual player ID"
+        },
+        {
+          "name": "playerids",
+          "type": "text",
+          "label": "Multiple Player IDs",
+          "placeholder": "e.g., 123456,123457,123458 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple player IDs (comma-separated)"
+        },
+        {
+          "name": "league",
+          "type": "checkbox",
+          "label": "League Statistics",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include league competition statistics"
+        },
+        {
+          "name": "season",
+          "type": "number",
+          "label": "Season Number",
+          "placeholder": "e.g., 10",
+          "required": false,
+          "default": "",
+          "description": "Season number (for league/nat/u20)"
+        },
+        {
+          "name": "nat",
+          "type": "checkbox",
+          "label": "National Team Statistics",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include national team statistics"
+        },
+        {
+          "name": "wc",
+          "type": "checkbox",
+          "label": "World Cup Statistics",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include World Cup statistics"
+        },
+        {
+          "name": "u20",
+          "type": "checkbox",
+          "label": "Under-20 Statistics",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Include Under-20 team statistics"
+        }
+      ]
+    },
+    "rankings": {
+      "code": "rk",
+      "category": "Data Retrieval",
+      "description": "Retrieve team rankings",
+      "authentication": "Not required",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "iso",
+          "type": "text",
+          "label": "Country ISO Code",
+          "placeholder": "e.g., NZ",
+          "required": false,
+          "default": "",
+          "description": "Regional rankings for specific country"
+        },
+        {
+          "name": "regionid",
+          "type": "number",
+          "label": "Region ID",
+          "placeholder": "e.g., 123",
+          "required": false,
+          "default": "",
+          "description": "Rankings for specific region"
+        },
+        {
+          "name": "leagueid",
+          "type": "number",
+          "label": "League ID",
+          "placeholder": "e.g., 123",
+          "required": false,
+          "default": "",
+          "description": "Rankings for specific league"
+        },
+        {
+          "name": "nat",
+          "type": "checkbox",
+          "label": "National Rankings",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Return national team rankings"
+        },
+        {
+          "name": "u20",
+          "type": "checkbox",
+          "label": "Under-20 Rankings",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Return Under-20 team rankings"
+        },
+        {
+          "name": "start",
+          "type": "number",
+          "label": "Starting Position",
+          "placeholder": "e.g., 1",
+          "required": false,
+          "default": "",
+          "description": "Starting position in rankings"
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "label": "Result Limit",
+          "placeholder": "e.g., 10",
+          "required": false,
+          "default": "",
+          "description": "Maximum number of results to return"
+        }
+      ]
+    },
+    "teams": {
+      "code": "t",
+      "category": "Data Retrieval",
+      "description": "Retrieve team information",
+      "authentication": "Not required (limited data without member key)",
+      "supportedFormats": ["XML", "JSON"],
+      "parameters": [
+        {
+          "name": "teamid",
+          "type": "number",
+          "label": "Team ID",
+          "placeholder": "e.g., 45047",
+          "required": false,
+          "default": "",
+          "description": "Individual team ID"
+        },
+        {
+          "name": "teamids",
+          "type": "text",
+          "label": "Multiple Team IDs",
+          "placeholder": "e.g., 45047,45048,45049 (comma-separated)",
+          "required": false,
+          "default": "",
+          "description": "Multiple team IDs (max 10, comma-separated)"
+        },
+        {
+          "name": "regionid",
+          "type": "number",
+          "label": "Region ID",
+          "placeholder": "e.g., 123",
+          "required": false,
+          "default": "",
+          "description": "All teams in a region"
+        },
+        {
+          "name": "leagueid",
+          "type": "number",
+          "label": "League ID",
+          "placeholder": "e.g., 123",
+          "required": false,
+          "default": "",
+          "description": "All teams in a league"
+        },
+        {
+          "name": "nat",
+          "type": "checkbox",
+          "label": "National Team",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Return national team"
+        },
+        {
+          "name": "u20",
+          "type": "checkbox",
+          "label": "Under-20 Team",
+          "placeholder": "",
+          "required": false,
+          "default": false,
+          "description": "Return Under-20 team"
+        },
+        {
+          "name": "country",
+          "type": "text",
+          "label": "Country ISO Code",
+          "placeholder": "e.g., NZ",
+          "required": false,
+          "default": "",
+          "description": "National/U20 team by country ISO code"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0",
+    "lastUpdated": "2026-04-21",
+    "baseUrl": "http://classic-api.blackoutrugby.com",
+    "jsonSupport": "Add &json=1 to any request for JSON response",
+    "totalEndpoints": 17,
+    "categories": {
+      "Data Retrieval": "Standard data queries for game information",
+      "Live Data": "Real-time match data during active fixtures"
+    },
+    "requiredAuthenticationParameters": {
+      "d": "Developer ID (always required)",
+      "dk": "Developer Key (required for GET/read requests)",
+      "m": "Member ID (optional, for member-specific data)",
+      "mk": "Member Key (optional, for member-specific data)"
+    },
+    "notes": {
+      "rateLimit": "0-120s: 3s between requests, 120-240s: 1s between requests, 240s+: no wait",
+      "timestamps": "All dates in ISO 8601 format in BRT (GMT+12)",
+      "caching": "Recommended to minimize server load",
+      "searchFormat": "Multiple IDs use comma-separated format (e.g., &playerids=1,2,3)",
+      "pagination": "Use &offset=0&limit=10 format for pagination"
+    }
+  }
+}

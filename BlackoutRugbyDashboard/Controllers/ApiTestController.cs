@@ -57,58 +57,128 @@ public class ApiTestController : ControllerBase
         return endpoint switch
         {
             "countries" => await client.GetCountriesAsync(
-                iso: query.GetValueOrDefault("iso")),
+                countryIso: query.GetValueOrDefault("country_iso"),
+                countryIsos: query.GetValueOrDefault("country_isos"),
+                real: query.GetValueOrDefault("real") == "1"),
             
             "divisions" => await client.GetDivisionsAsync(
-                divisionId: ParseInt(query.GetValueOrDefault("divisionid"))),
+                divisionId: ParseInt(query.GetValueOrDefault("divisionid")),
+                divisionIds: query.GetValueOrDefault("divisionids"),
+                season: ParseInt(query.GetValueOrDefault("season")),
+                countryIso: query.GetValueOrDefault("country_iso"),
+                division: ParseInt(query.GetValueOrDefault("division"))),
             
             "finances" => await client.GetFinancesAsync(
                 season: ParseInt(query.GetValueOrDefault("season")) ?? DateTime.Now.Year,
                 round: ParseInt(query.GetValueOrDefault("round")) ?? 1),
             
             "fixtures" => await client.GetFixturesAsync(
+                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")),
+                fixtureIds: query.GetValueOrDefault("fixtureids"),
                 teamId: ParseInt(query.GetValueOrDefault("teamid")),
-                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid"))),
+                last: ParseInt(query.GetValueOrDefault("last")),
+                future: ParseInt(query.GetValueOrDefault("future")),
+                past: ParseInt(query.GetValueOrDefault("past")),
+                latest: ParseInt(query.GetValueOrDefault("latest")),
+                leagueId: ParseInt(query.GetValueOrDefault("leagueid")),
+                season: ParseInt(query.GetValueOrDefault("season")),
+                round: ParseInt(query.GetValueOrDefault("round")),
+                roundRobin: query.GetValueOrDefault("roundrobin") == "1",
+                friendlyCompId: ParseInt(query.GetValueOrDefault("friendlycompid")),
+                youth: query.GetValueOrDefault("youth") == "1",
+                nat: query.GetValueOrDefault("nat") == "1",
+                u20: query.GetValueOrDefault("u20") == "1"),
             
             "fixturestats" => await client.GetFixtureStatisticsAsync(
-                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")) ?? 0),
+                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")),
+                fixtureIds: query.GetValueOrDefault("fixtureids"),
+                teamStats: ParseInt(query.GetValueOrDefault("teamstats")),
+                teamPlayersStats: ParseInt(query.GetValueOrDefault("teamplayersstats")),
+                playerStats: ParseInt(query.GetValueOrDefault("playerstats"))),
             
             "leagues" => await client.GetLeaguesAsync(
-                leagueId: ParseInt(query.GetValueOrDefault("leagueid"))),
+                leagueId: ParseInt(query.GetValueOrDefault("leagueid")),
+                leagueIds: query.GetValueOrDefault("leagueids"),
+                season: ParseInt(query.GetValueOrDefault("season")),
+                countryIso: query.GetValueOrDefault("country_iso"),
+                division: ParseInt(query.GetValueOrDefault("division")),
+                league: ParseInt(query.GetValueOrDefault("league")),
+                divisionId: ParseInt(query.GetValueOrDefault("divisionid"))),
             
             "lineups" => await client.GetLineupsAsync(
-                teamId: ParseInt(query.GetValueOrDefault("teamid")) ?? _dashboardDefaults.TeamId),
+                teamId: ParseInt(query.GetValueOrDefault("teamid")) ?? _dashboardDefaults.TeamId,
+                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")),
+                fixtureIds: query.GetValueOrDefault("fixtureids"),
+                youth: query.GetValueOrDefault("youth") == "1",
+                nat: query.GetValueOrDefault("nat") == "1",
+                u20: query.GetValueOrDefault("u20") == "1"),
             
             "mail" => await client.GetMailAsync(
-                folderIds: query.GetValueOrDefault("folderid")?.Split(',').Select(x => ParseInt(x)).OfType<int>()),
+                folderIds: query.GetValueOrDefault("folderid"),
+                subfolderIds: query.GetValueOrDefault("subfolderid"),
+                messageId: ParseInt(query.GetValueOrDefault("messageid"))),
             
             "matchcommentary" => await client.GetMatchCommentaryAsync(
-                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")) ?? 0),
+                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")) ?? 0,
+                youth: query.GetValueOrDefault("youth") == "1",
+                nat: query.GetValueOrDefault("nat") == "1",
+                u20: query.GetValueOrDefault("u20") == "1"),
             
             "matchscore" => await client.GetMatchScoreAsync(
-                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")) ?? 0),
+                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")) ?? 0,
+                youth: query.GetValueOrDefault("youth") == "1",
+                nat: query.GetValueOrDefault("nat") == "1",
+                u20: query.GetValueOrDefault("u20") == "1"),
             
             "matchsummary" => await client.GetMatchSummaryAsync(
-                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")) ?? 0),
+                fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")),
+                fixtureIds: query.GetValueOrDefault("fixtureids"),
+                youth: query.GetValueOrDefault("youth") == "1",
+                nat: query.GetValueOrDefault("nat") == "1",
+                u20: query.GetValueOrDefault("u20") == "1"),
             
             "members" => await client.GetMembersAsync(
-                memberId: ParseInt(query.GetValueOrDefault("memberid"))),
+                memberId: ParseInt(query.GetValueOrDefault("memberid")),
+                memberIds: query.GetValueOrDefault("memberids")),
             
             "playerhistory" => await client.GetPlayerHistoryAsync(
                 playerId: ParseInt(query.GetValueOrDefault("playerid")) ?? 1),
             
             "players" => await client.GetPlayersAsync(
                 playerId: ParseInt(query.GetValueOrDefault("playerid")),
-                teamId: ParseInt(query.GetValueOrDefault("teamid"))),
+                playerIds: query.GetValueOrDefault("playerids"),
+                teamId: ParseInt(query.GetValueOrDefault("teamid")),
+                teamIds: query.GetValueOrDefault("teamids"),
+                youth: query.GetValueOrDefault("youth") == "1",
+                nat: query.GetValueOrDefault("nat") == "1",
+                u20: query.GetValueOrDefault("u20") == "1"),
             
             "playerstats" => await client.GetPlayerStatisticsAsync(
-                playerId: ParseInt(query.GetValueOrDefault("playerid")) ?? 1),
+                playerId: ParseInt(query.GetValueOrDefault("playerid")),
+                playerIds: query.GetValueOrDefault("playerids"),
+                league: query.GetValueOrDefault("league") == "1",
+                season: ParseInt(query.GetValueOrDefault("season")),
+                nat: query.GetValueOrDefault("nat") == "1",
+                wc: query.GetValueOrDefault("wc") == "1",
+                u20: query.GetValueOrDefault("u20") == "1"),
             
             "rankings" => await client.GetRankingsAsync(
-                leagueId: ParseInt(query.GetValueOrDefault("leagueid"))),
+                iso: query.GetValueOrDefault("iso"),
+                regionId: ParseInt(query.GetValueOrDefault("regionid")),
+                leagueId: ParseInt(query.GetValueOrDefault("leagueid")),
+                nat: query.GetValueOrDefault("nat") == "1",
+                u20: query.GetValueOrDefault("u20") == "1",
+                start: ParseInt(query.GetValueOrDefault("start")),
+                limit: ParseInt(query.GetValueOrDefault("limit"))),
             
             "teams" => await client.GetTeamsAsync(
-                teamId: ParseInt(query.GetValueOrDefault("teamid"))),
+                teamId: ParseInt(query.GetValueOrDefault("teamid")),
+                teamIds: query.GetValueOrDefault("teamids"),
+                regionId: ParseInt(query.GetValueOrDefault("regionid")),
+                leagueId: ParseInt(query.GetValueOrDefault("leagueid")),
+                nat: query.GetValueOrDefault("nat") == "1",
+                u20: query.GetValueOrDefault("u20") == "1",
+                country: query.GetValueOrDefault("country")),
             
             _ => throw new ArgumentException($"Unknown endpoint: {endpoint}")
         };

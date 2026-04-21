@@ -72,6 +72,18 @@
         box-shadow: 0 0 4px rgba(46, 92, 101, 0.2);
     }
 
+    .checkbox-group label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+        margin-right: 8px;
+        cursor: pointer;
+    }
+
     .button-group {
         display: flex;
         gap: 8px;
@@ -186,123 +198,192 @@
             code: 'c',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'iso', type: 'text', label: 'Country ISO', placeholder: 'e.g., NZ', required: false, default: '' }
+                { name: 'country_iso', type: 'text', label: 'Country ISO Code', placeholder: 'e.g., NZ, AU, SA', required: false, default: '' },
+                { name: 'country_isos', type: 'text', label: 'Multiple Country ISO Codes', placeholder: 'e.g., NZ,AU,SA (comma-separated)', required: false, default: '' },
+                { name: 'real', type: 'checkbox', label: 'Real Countries Only', required: false, default: false }
             ]
         },
         divisions: {
             code: 'd',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'divisionid', type: 'number', label: 'Division ID', placeholder: 'e.g., 123', required: false, default: '' }
+                { name: 'divisionid', type: 'number', label: 'Division ID', placeholder: 'e.g., 123', required: false, default: '' },
+                { name: 'divisionids', type: 'text', label: 'Multiple Division IDs', placeholder: 'e.g., 123,124,125 (comma-separated)', required: false, default: '' },
+                { name: 'season', type: 'number', label: 'Season Number', placeholder: 'e.g., 10', required: false, default: '' },
+                { name: 'country_iso', type: 'text', label: 'Country ISO Code', placeholder: 'e.g., NZ', required: false, default: '' },
+                { name: 'division', type: 'number', label: 'Division Number', placeholder: 'e.g., 1', required: false, default: '' }
             ]
         },
         finances: {
             code: 'fi',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'season', type: 'number', label: 'Season', placeholder: 'e.g., 2024', required: true, default: new Date().getFullYear() },
-                { name: 'round', type: 'number', label: 'Round', placeholder: 'e.g., 1', required: true, default: 1 }
+                { name: 'season', type: 'number', label: 'Season Number', placeholder: 'e.g., 10', required: true, default: '' },
+                { name: 'round', type: 'number', label: 'Round Number', placeholder: 'e.g., 1', required: true, default: '' }
             ]
         },
         fixtures: {
-            code: 'f',
+            code: 'fix',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'teamid', type: 'number', label: 'Team ID', placeholder: 'e.g., 45047', required: false, default: 45047 },
-                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 123', required: false, default: '' }
+                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 12345', required: false, default: '' },
+                { name: 'fixtureids', type: 'text', label: 'Multiple Fixture IDs', placeholder: 'e.g., 12345,12346,12347 (comma-separated)', required: false, default: '' },
+                { name: 'teamid', type: 'number', label: 'Team ID', placeholder: 'e.g., 45047', required: false, default: '' },
+                { name: 'last', type: 'number', label: 'Last N Fixtures', placeholder: 'e.g., 10', required: false, default: '' },
+                { name: 'future', type: 'number', label: 'Future Fixtures for Team', placeholder: 'e.g., 45047', required: false, default: '' },
+                { name: 'past', type: 'number', label: 'Past Fixtures for Team', placeholder: 'e.g., 45047', required: false, default: '' },
+                { name: 'latest', type: 'number', label: 'Latest Match in League', placeholder: 'e.g., 123', required: false, default: '' },
+                { name: 'leagueid', type: 'number', label: 'League ID', placeholder: 'e.g., 123', required: false, default: '' },
+                { name: 'season', type: 'number', label: 'Season Number', placeholder: 'e.g., 10', required: false, default: '' },
+                { name: 'round', type: 'number', label: 'Round Number', placeholder: 'e.g., 1', required: false, default: '' },
+                { name: 'roundrobin', type: 'checkbox', label: 'Round-robin Fixtures', required: false, default: false },
+                { name: 'friendlycompid', type: 'number', label: 'Friendly Competition ID', placeholder: 'e.g., 456', required: false, default: '' },
+                { name: 'youth', type: 'checkbox', label: 'Youth Fixtures', required: false, default: false },
+                { name: 'nat', type: 'checkbox', label: 'National Team Fixtures', required: false, default: false },
+                { name: 'u20', type: 'checkbox', label: 'Under-20 Fixtures', required: false, default: false }
             ]
         },
         fixturestats: {
             code: 'fs',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 123', required: true, default: '' }
+                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 12345', required: false, default: '' },
+                { name: 'fixtureids', type: 'text', label: 'Multiple Fixture IDs', placeholder: 'e.g., 12345,12346,12347 (comma-separated)', required: false, default: '' },
+                { name: 'teamstats', type: 'number', label: 'Team Statistics Only', placeholder: 'e.g., 45047', required: false, default: '' },
+                { name: 'teamplayersstats', type: 'number', label: 'Team and Player Statistics', placeholder: 'e.g., 45047', required: false, default: '' },
+                { name: 'playerstats', type: 'number', label: 'Player Statistics Only', placeholder: 'e.g., 123456', required: false, default: '' }
             ]
         },
         leagues: {
             code: 'l',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'leagueid', type: 'number', label: 'League ID', placeholder: 'e.g., 123', required: false, default: '' }
+                { name: 'leagueid', type: 'number', label: 'League ID', placeholder: 'e.g., 123', required: false, default: '' },
+                { name: 'leagueids', type: 'text', label: 'Multiple League IDs', placeholder: 'e.g., 123,124,125 (comma-separated)', required: false, default: '' },
+                { name: 'season', type: 'number', label: 'Season Number', placeholder: 'e.g., 10', required: false, default: '' },
+                { name: 'country_iso', type: 'text', label: 'Country ISO Code', placeholder: 'e.g., NZ', required: false, default: '' },
+                { name: 'division', type: 'number', label: 'Division Number', placeholder: 'e.g., 1', required: false, default: '' },
+                { name: 'league', type: 'number', label: 'League Number', placeholder: 'e.g., 1', required: false, default: '' },
+                { name: 'divisionid', type: 'number', label: 'Division ID', placeholder: 'e.g., 123', required: false, default: '' }
             ]
         },
         lineups: {
-            code: 'lu',
+            code: 'li',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'teamid', type: 'number', label: 'Team ID', placeholder: 'e.g., 45047', required: true, default: 45047 },
-                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 123', required: false, default: '' }
+                { name: 'teamid', type: 'number', label: 'Team ID', placeholder: 'e.g., 45047', required: true, default: '' },
+                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 12345', required: false, default: '' },
+                { name: 'fixtureids', type: 'text', label: 'Multiple Fixture IDs', placeholder: 'e.g., 12345,12346,12347 (comma-separated)', required: false, default: '' },
+                { name: 'youth', type: 'checkbox', label: 'Youth Team Lineup', required: false, default: false },
+                { name: 'nat', type: 'checkbox', label: 'National Team Lineup', required: false, default: false },
+                { name: 'u20', type: 'checkbox', label: 'Under-20 Team Lineup', required: false, default: false }
             ]
         },
         mail: {
-            code: 'ma',
-            category: 'Data Retrieval',
-            parameters: [
-                { name: 'folderid', type: 'text', label: 'Folder ID', placeholder: 'e.g., 1', required: false, default: '' }
-            ]
-        },
-        matchcommentary: {
-            code: 'me',
-            category: 'Live Data',
-            parameters: [
-                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 123', required: true, default: '' }
-            ]
-        },
-        matchscore: {
-            code: 'ls',
-            category: 'Live Data',
-            parameters: [
-                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 123', required: true, default: '' }
-            ]
-        },
-        matchsummary: {
-            code: 'ms',
-            category: 'Live Data',
-            parameters: [
-                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 123', required: false, default: '' }
-            ]
-        },
-        members: {
             code: 'm',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'memberid', type: 'number', label: 'Member ID', placeholder: 'e.g., 202665', required: false, default: 202665 }
+                { name: 'folderid', type: 'text', label: 'Folder ID', placeholder: 'e.g., inbox,sent,archive', required: false, default: '' },
+                { name: 'subfolderid', type: 'text', label: 'Subfolder ID', placeholder: 'e.g., 1,2,3', required: false, default: '' },
+                { name: 'messageid', type: 'number', label: 'Message ID', placeholder: 'e.g., 56789', required: false, default: '' }
+            ]
+        },
+        matchcommentary: {
+            code: 'mc',
+            category: 'Live Data',
+            parameters: [
+                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 12345', required: true, default: '' },
+                { name: 'youth', type: 'checkbox', label: 'Youth Match', required: false, default: false },
+                { name: 'nat', type: 'checkbox', label: 'National Match', required: false, default: false },
+                { name: 'u20', type: 'checkbox', label: 'Under-20 Match', required: false, default: false }
+            ]
+        },
+        matchscore: {
+            code: 'ms',
+            category: 'Live Data',
+            parameters: [
+                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 12345', required: true, default: '' },
+                { name: 'youth', type: 'checkbox', label: 'Youth Match', required: false, default: false },
+                { name: 'nat', type: 'checkbox', label: 'National Match', required: false, default: false },
+                { name: 'u20', type: 'checkbox', label: 'Under-20 Match', required: false, default: false }
+            ]
+        },
+        matchsummary: {
+            code: 'msum',
+            category: 'Live Data',
+            parameters: [
+                { name: 'fixtureid', type: 'number', label: 'Fixture ID', placeholder: 'e.g., 12345', required: false, default: '' },
+                { name: 'fixtureids', type: 'text', label: 'Multiple Fixture IDs', placeholder: 'e.g., 12345,12346,12347 (comma-separated)', required: false, default: '' },
+                { name: 'youth', type: 'checkbox', label: 'Youth Match', required: false, default: false },
+                { name: 'nat', type: 'checkbox', label: 'National Match', required: false, default: false },
+                { name: 'u20', type: 'checkbox', label: 'Under-20 Match', required: false, default: false }
+            ]
+        },
+        members: {
+            code: 'mem',
+            category: 'Data Retrieval',
+            parameters: [
+                { name: 'memberid', type: 'number', label: 'Member ID', placeholder: 'e.g., 202665', required: false, default: '' },
+                { name: 'memberids', type: 'text', label: 'Multiple Member IDs', placeholder: 'e.g., 202665,202666,202667 (comma-separated)', required: false, default: '' }
             ]
         },
         playerhistory: {
             code: 'ph',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'playerid', type: 'number', label: 'Player ID', placeholder: 'e.g., 123', required: true, default: '' }
+                { name: 'playerid', type: 'number', label: 'Player ID', placeholder: 'e.g., 123456', required: true, default: '' }
             ]
         },
         players: {
             code: 'p',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'playerid', type: 'number', label: 'Player ID', placeholder: 'e.g., 123', required: false, default: '' },
-                { name: 'teamid', type: 'number', label: 'Team ID', placeholder: 'e.g., 45047', required: false, default: 45047 }
+                { name: 'playerid', type: 'number', label: 'Player ID', placeholder: 'e.g., 123456', required: false, default: '' },
+                { name: 'playerids', type: 'text', label: 'Multiple Player IDs', placeholder: 'e.g., 123456,123457,123458 (comma-separated)', required: false, default: '' },
+                { name: 'teamid', type: 'number', label: 'Team ID', placeholder: 'e.g., 45047', required: false, default: '' },
+                { name: 'teamids', type: 'text', label: 'Multiple Team IDs', placeholder: 'e.g., 45047,45048,45049 (comma-separated)', required: false, default: '' },
+                { name: 'youth', type: 'checkbox', label: 'Youth Players', required: false, default: false },
+                { name: 'nat', type: 'checkbox', label: 'National Team Players', required: false, default: false },
+                { name: 'u20', type: 'checkbox', label: 'Under-20 Team Players', required: false, default: false }
             ]
         },
         playerstats: {
             code: 'ps',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'playerid', type: 'number', label: 'Player ID', placeholder: 'e.g., 123', required: true, default: '' }
+                { name: 'playerid', type: 'number', label: 'Player ID', placeholder: 'e.g., 123456', required: false, default: '' },
+                { name: 'playerids', type: 'text', label: 'Multiple Player IDs', placeholder: 'e.g., 123456,123457,123458 (comma-separated)', required: false, default: '' },
+                { name: 'league', type: 'checkbox', label: 'League Statistics', required: false, default: false },
+                { name: 'season', type: 'number', label: 'Season Number', placeholder: 'e.g., 10', required: false, default: '' },
+                { name: 'nat', type: 'checkbox', label: 'National Team Statistics', required: false, default: false },
+                { name: 'wc', type: 'checkbox', label: 'World Cup Statistics', required: false, default: false },
+                { name: 'u20', type: 'checkbox', label: 'Under-20 Statistics', required: false, default: false }
             ]
         },
         rankings: {
             code: 'rk',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'leagueid', type: 'number', label: 'League ID', placeholder: 'e.g., 123', required: false, default: '' }
+                { name: 'iso', type: 'text', label: 'Country ISO Code', placeholder: 'e.g., NZ', required: false, default: '' },
+                { name: 'regionid', type: 'number', label: 'Region ID', placeholder: 'e.g., 123', required: false, default: '' },
+                { name: 'leagueid', type: 'number', label: 'League ID', placeholder: 'e.g., 123', required: false, default: '' },
+                { name: 'nat', type: 'checkbox', label: 'National Rankings', required: false, default: false },
+                { name: 'u20', type: 'checkbox', label: 'Under-20 Rankings', required: false, default: false },
+                { name: 'start', type: 'number', label: 'Starting Position', placeholder: 'e.g., 1', required: false, default: '' },
+                { name: 'limit', type: 'number', label: 'Result Limit', placeholder: 'e.g., 10', required: false, default: '' }
             ]
         },
         teams: {
             code: 't',
             category: 'Data Retrieval',
             parameters: [
-                { name: 'teamid', type: 'number', label: 'Team ID', placeholder: 'e.g., 45047', required: false, default: 45047 }
+                { name: 'teamid', type: 'number', label: 'Team ID', placeholder: 'e.g., 45047', required: false, default: '' },
+                { name: 'teamids', type: 'text', label: 'Multiple Team IDs', placeholder: 'e.g., 45047,45048,45049 (comma-separated, max 10)', required: false, default: '' },
+                { name: 'regionid', type: 'number', label: 'Region ID', placeholder: 'e.g., 123', required: false, default: '' },
+                { name: 'leagueid', type: 'number', label: 'League ID', placeholder: 'e.g., 123', required: false, default: '' },
+                { name: 'nat', type: 'checkbox', label: 'National Team', required: false, default: false },
+                { name: 'u20', type: 'checkbox', label: 'Under-20 Team', required: false, default: false },
+                { name: 'country', type: 'text', label: 'Country ISO Code', placeholder: 'e.g., NZ', required: false, default: '' }
             ]
         }
     };
@@ -352,20 +433,37 @@
         config.parameters.forEach(param => {
             const requiredMark = param.required ? '<span class="parameter-required">*</span>' : '';
             const defaultVal = param.default || '';
-            html += `
-                <div class="form-group">
-                    <label for="${key}-${param.name}">
-                        ${param.label} ${requiredMark}
-                    </label>
-                    <input 
-                        type="${param.type}" 
-                        id="${key}-${param.name}" 
-                        name="${param.name}"
-                        placeholder="${param.placeholder}"
-                        value="${defaultVal}"
-                    />
-                </div>
-            `;
+            
+            if (param.type === 'checkbox') {
+                html += `
+                    <div class="form-group checkbox-group">
+                        <label for="${key}-${param.name}">
+                            <input 
+                                type="checkbox" 
+                                id="${key}-${param.name}" 
+                                name="${param.name}"
+                                ${defaultVal ? 'checked' : ''}
+                            />
+                            ${param.label} ${requiredMark}
+                        </label>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="form-group">
+                        <label for="${key}-${param.name}">
+                            ${param.label} ${requiredMark}
+                        </label>
+                        <input 
+                            type="${param.type}" 
+                            id="${key}-${param.name}" 
+                            name="${param.name}"
+                            placeholder="${param.placeholder}"
+                            value="${defaultVal}"
+                        />
+                    </div>
+                `;
+            }
         });
 
         html += `
@@ -391,7 +489,13 @@
         // Collect form data
         const formElements = form.querySelectorAll('input');
         formElements.forEach(input => {
-            if (input.value) {
+            if (input.type === 'checkbox') {
+                // For checkboxes, only send if checked
+                if (input.checked) {
+                    params.append(input.name, '1');
+                }
+            } else if (input.value) {
+                // For text/number inputs, only send if has value
                 params.append(input.name, input.value);
             }
         });
