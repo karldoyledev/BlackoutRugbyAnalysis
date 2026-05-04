@@ -19,7 +19,7 @@ public class TeamDashboardService
         _developerOptions = developerOptions.Value;
     }
 
-    public async Task<TeamDashboardViewModel> BuildDashboardAsync(TeamDashboardRequest request)
+    public async Task<TeamDashboardViewModel> BuildDashboardAsync(TeamDashboardRequest request, ApiLogger? apiLogger = null)
     {
         var credentials = request.HasCredentials
             ? new BlackoutRugbyApiCredentials(request.MemberId, request.MemberKey)
@@ -42,8 +42,16 @@ public class TeamDashboardService
         }
 
         var client = new BlackoutRugbyApiClient(_httpClientFactory.CreateClient(), request.BaseEndpoint, credentials);
+        
+        // Log API calls
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        apiLogger?.LogRequest("GET", $"{request.BaseEndpoint}/teams?teamId={request.TeamId}");
         var teamTask = client.GetTeamsAsync(teamId: request.TeamId);
+        
+        apiLogger?.LogRequest("GET", $"{request.BaseEndpoint}/players?teamId={request.TeamId}");
         var playersXml = await client.GetPlayersAsync(teamId: request.TeamId).ConfigureAwait(false);
+        apiLogger?.LogResponse($"{request.BaseEndpoint}/players?teamId={request.TeamId}", 200, playersXml?.Length > 3000 ? playersXml[..3000] + "\n... (truncated)" : playersXml, sw.ElapsedMilliseconds);
+        
         var players = ParsePlayers(playersXml);
 
         if (players.Count == 0)

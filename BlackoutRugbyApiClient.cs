@@ -125,7 +125,7 @@ namespace BlackoutRugby.Api
         /// <returns>XML response containing fixture data</returns>
         public async Task<string> GetFixturesAsync(int? fixtureId = null, string? fixtureIds = null, int? teamId = null, int? last = null, int? future = null, int? past = null, int? latest = null, int? leagueId = null, int? season = null, int? round = null, bool roundRobin = false, int? friendlyCompId = null, bool youth = false, bool nat = false, bool u20 = false)
         {
-            return await SendRequestAsync("fix", new Dictionary<string, string?>
+            return await SendRequestAsync("f", new Dictionary<string, string?>
             {
                 ["fixtureid"] = fixtureId?.ToString(),
                 ["fixtureids"] = fixtureIds,

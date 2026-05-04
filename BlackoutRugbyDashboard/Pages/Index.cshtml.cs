@@ -12,17 +12,20 @@ public class IndexModel : PageModel
     private readonly SnapshotStore _snapshotStore;
     private readonly DashboardDefaultsOptions _dashboardDefaults;
     private readonly ILogger<IndexModel> _logger;
+    private readonly ApiLogger _apiLogger;
 
     public IndexModel(
         TeamDashboardService dashboardService,
         SnapshotStore snapshotStore,
         ILogger<IndexModel> logger,
-        IOptions<DashboardDefaultsOptions> dashboardDefaults)
+        IOptions<DashboardDefaultsOptions> dashboardDefaults,
+        ApiLogger apiLogger)
     {
         _dashboardService = dashboardService;
         _snapshotStore = snapshotStore;
         _logger = logger;
         _dashboardDefaults = dashboardDefaults.Value;
+        _apiLogger = apiLogger;
         Input = CreateRequestFromDefaults();
     }
 
@@ -36,6 +39,8 @@ public class IndexModel : PageModel
     public string? StatusMessage { get; private set; }
 
     public string? ErrorMessage { get; private set; }
+
+    public string ApiLogsJson { get; private set; } = "[]";
 
     public void OnGet()
     {
@@ -64,7 +69,8 @@ public class IndexModel : PageModel
 
         try
         {
-            Dashboard = await _dashboardService.BuildDashboardAsync(Input);
+            _apiLogger.Clear();
+            Dashboard = await _dashboardService.BuildDashboardAsync(Input, _apiLogger);
 
             if (captureSnapshot)
             {
@@ -77,11 +83,13 @@ public class IndexModel : PageModel
             }
 
             LatestComparison = await _snapshotStore.GetLatestComparisonAsync(Input.TeamId);
+            ApiLogsJson = _apiLogger.GetLogsJson();
         }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Failed to load dashboard for team {TeamId}", Input.TeamId);
             ErrorMessage = exception.Message;
+            ApiLogsJson = _apiLogger.GetLogsJson();
         }
 
         return Page();

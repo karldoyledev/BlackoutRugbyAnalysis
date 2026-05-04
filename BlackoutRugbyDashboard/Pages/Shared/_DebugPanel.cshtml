@@ -1,0 +1,648 @@
+@{
+    ViewData["Title"] = "Debug Panel";
+}
+
+<div id="debugToggleBtn" class="debug-toggle-btn" title="Toggle Debug Panel">
+    <span>🔧 Debug</span>
+</div>
+
+<div id="debugPanel" class="debug-panel">
+    <div class="debug-panel-header">
+        <h3>Debug Console</h3>
+        <div class="debug-controls">
+            <label class="debug-toggle">
+                <input type="checkbox" id="debugToggle" />
+                <span>Enable Debug Logging</span>
+            </label>
+            <button id="debugClear" class="btn-sm">Clear Logs</button>
+            <button id="debugClose" class="btn-sm">Close</button>
+        </div>
+    </div>
+    <div id="debugContent" class="debug-content">
+        <div id="debugLogs" class="debug-logs"></div>
+    </div>
+    <div id="debugResize" class="debug-resize-handle" title="Drag to resize panel"></div>
+</div>
+
+<script>
+    // Debug logging system
+    window.DebugLogger = {
+        enabled: localStorage.getItem('debugLogging') === 'true',
+        panelOpen: localStorage.getItem('debugPanelOpen') === 'true',
+        panelHeight: parseInt(localStorage.getItem('debugPanelHeight') || '400'),
+        logs: [],
+        maxLogs: 100,
+        isResizing: false,
+
+        init() {
+            const toggle = document.getElementById('debugToggle');
+            const clearBtn = document.getElementById('debugClear');
+            const closeBtn = document.getElementById('debugClose');
+            const toggleBtn = document.getElementById('debugToggleBtn');
+            const panel = document.getElementById('debugPanel');
+            const resizeHandle = document.getElementById('debugResize');
+            
+            // Set initial height
+            panel.style.height = this.panelHeight + 'px';
+            
+            if (toggle) {
+                toggle.checked = this.enabled;
+                toggle.addEventListener('change', (e) => {
+                    this.enabled = e.target.checked;
+                    localStorage.setItem('debugLogging', this.enabled);
+                });
+            }
+            
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => this.clear());
+            }
+            
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    this.panelOpen = false;
+                    localStorage.setItem('debugPanelOpen', false);
+                    panel.classList.remove('active');
+                });
+            }
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    this.panelOpen = !this.panelOpen;
+                    localStorage.setItem('debugPanelOpen', this.panelOpen);
+                    panel.classList.toggle('active', this.panelOpen);
+                });
+            }
+
+            // Handle panel resizing
+            if (resizeHandle) {
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    this.isResizing = true;
+                    const startY = e.clientY;
+                    const startHeight = panel.offsetHeight;
+                    e.preventDefault();
+
+                    const handleMouseMove = (e) => {
+                        if (!this.isResizing) return;
+                        const diff = startY - e.clientY;
+                        const newHeight = Math.max(200, startHeight + diff);
+                        panel.style.height = newHeight + 'px';
+                    };
+
+                    const handleMouseUp = () => {
+                        if (this.isResizing) {
+                            this.isResizing = false;
+                            this.panelHeight = panel.offsetHeight;
+                            localStorage.setItem('debugPanelHeight', this.panelHeight);
+                            document.removeEventListener('mousemove', handleMouseMove);
+                            document.removeEventListener('mouseup', handleMouseUp);
+                        }
+                    };
+
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                });
+            }
+
+            // Intercept fetch calls
+            this.interceptFetch();
+            
+            // Show panel if it was open before
+            if (this.panelOpen) {
+                panel.classList.add('active');
+            }
+        },
+
+        interceptFetch() {
+            const originalFetch = window.fetch;
+            const self = this;
+
+            window.fetch = function(...args) {
+                const [resource, config] = args;
+                const startTime = performance.now();
+                
+                if (self.enabled) {
+                    self.logRequest(resource, config);
+                }
+
+                return originalFetch.apply(this, args)
+                    .then(response => {
+                        const duration = (performance.now() - startTime).toFixed(2);
+                        
+                        if (self.enabled) {
+                            // Clone response to read body
+                            const responseClone = response.clone();
+                            responseClone.text().then(body => {
+                                self.logResponse(response, body, duration);
+                            }).catch(() => {
+                                self.logResponse(response, '[Binary or empty]', duration);
+                            });
+                        }
+                        
+                        return response;
+                    })
+                    .catch(error => {
+                        const duration = (performance.now() - startTime).toFixed(2);
+                        if (self.enabled) {
+                            self.logError(resource, error, duration);
+                        }
+                        throw error;
+                    });
+            };
+        },
+
+        logRequest(resource, config) {
+            const url = typeof resource === 'string' ? resource : resource.url;
+            const method = config?.method || 'GET';
+            const body = config?.body ? (typeof config.body === 'string' ? config.body : JSON.stringify(config.body)) : null;
+
+            const log = {
+                timestamp: new Date().toLocaleTimeString(),
+                type: 'request',
+                method: method,
+                url: url,
+                body: body,
+                headers: config?.headers
+            };
+
+            this.addLog(log);
+        },
+
+        logResponse(response, body, duration) {
+            const log = {
+                timestamp: new Date().toLocaleTimeString(),
+                type: 'response',
+                status: response.status,
+                statusText: response.statusText,
+                duration: duration + 'ms',
+                url: response.url,
+                body: body.length > 500 ? body.substring(0, 500) + '...' : body,
+                fullBody: body
+            };
+
+            this.addLog(log);
+        },
+
+        logError(resource, error, duration) {
+            const url = typeof resource === 'string' ? resource : resource.url;
+            const log = {
+                timestamp: new Date().toLocaleTimeString(),
+                type: 'error',
+                url: url,
+                duration: duration + 'ms',
+                error: error.message
+            };
+
+            this.addLog(log);
+        },
+
+        addLog(log) {
+            this.logs.unshift(log);
+            if (this.logs.length > this.maxLogs) {
+                this.logs.pop();
+            }
+            this.render();
+        },
+
+        clear() {
+            this.logs = [];
+            this.render();
+        },
+
+        escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        },
+
+        toggleExpand(index) {
+            if (this.logs[index]) {
+                this.logs[index]._expanded = !this.logs[index]._expanded;
+                this.render();
+            }
+        },
+
+        render() {
+            const logsContainer = document.getElementById('debugLogs');
+            if (!logsContainer) return;
+
+            const self = this;
+            logsContainer.innerHTML = this.logs.map((log, index) => {
+                const type = (log.type || '').toLowerCase();
+                const hasDetails = log.body || log.headers || (type !== 'request' && log.url);
+                const isExpanded = !!log._expanded;
+
+                let html = `<div class="debug-log debug-log-${type}">`;
+                html += `<div class="debug-log-summary${hasDetails ? ' clickable' : ''}" onclick="window.DebugLogger.toggleExpand(${index})">`;
+                html += `<span class="debug-time">${log.timestamp || ''}</span>`;
+                html += `<span class="debug-type">${type.toUpperCase()}</span>`;
+
+                if (type === 'request') {
+                    html += `<span class="debug-method">${log.method || 'GET'}</span>`;
+                    html += `<span class="debug-url">${self.escapeHtml(log.url || '')}</span>`;
+                } else if (type === 'response') {
+                    const status = log.status ?? log.Status ?? '';
+                    const duration = log.duration || log.Duration || '';
+                    const url = log.url || log.Url || '';
+                    html += `<span class="debug-status ${String(status).startsWith('2') ? 'success' : 'error'}">${status}</span>`;
+                    html += `<span class="debug-url">${self.escapeHtml(url)}</span>`;
+                    if (duration) html += `<span class="debug-duration">${duration}</span>`;
+                } else if (type === 'error') {
+                    const url = log.url || log.Url || '';
+                    const duration = log.duration || log.Duration || '';
+                    html += `<span class="debug-error-label">Error</span>`;
+                    html += `<span class="debug-url">${self.escapeHtml(url)}</span>`;
+                    if (duration) html += `<span class="debug-duration">${duration}</span>`;
+                }
+
+                if (hasDetails) {
+                    html += `<span class="debug-expand-arrow">${isExpanded ? '▼' : '▶'}</span>`;
+                }
+
+                html += `</div>`; // close summary
+
+                if (hasDetails && isExpanded) {
+                    html += `<div class="debug-log-details">`;
+
+                    const body = log.body || log.Body;
+                    const headers = log.headers;
+
+                    if (headers) {
+                        html += `<div class="debug-detail-section">`;
+                        html += `<span class="debug-detail-label">Headers</span>`;
+                        html += `<pre class="debug-detail-pre">${self.escapeHtml(JSON.stringify(headers, null, 2))}</pre>`;
+                        html += `</div>`;
+                    }
+
+                    if (body) {
+                        html += `<div class="debug-detail-section">`;
+                        html += `<span class="debug-detail-label">Body</span>`;
+                        let bodyDisplay = body;
+                        try {
+                            const parsed = JSON.parse(body);
+                            bodyDisplay = JSON.stringify(parsed, null, 2);
+                        } catch { /* XML or plain text — show as-is */ }
+                        html += `<pre class="debug-detail-pre">${self.escapeHtml(bodyDisplay)}</pre>`;
+                        html += `</div>`;
+                    }
+
+                    html += `</div>`; // close details
+                }
+
+                html += `</div>`;
+                return html;
+            }).join('');
+        },
+
+        loadServerLogs(apiLogsJson) {
+            if (!apiLogsJson || apiLogsJson === '[]') return;
+            
+            try {
+                const serverLogs = JSON.parse(apiLogsJson);
+                serverLogs.forEach(raw => {
+                    // Normalize PascalCase keys (from C# JsonSerializer) to camelCase
+                    const log = {
+                        timestamp: raw.Timestamp || raw.timestamp || '',
+                        type: (raw.Type || raw.type || 'request').toLowerCase(),
+                        method: raw.Method || raw.method || 'GET',
+                        url: raw.Url || raw.url || '',
+                        status: raw.Status ?? raw.status ?? null,
+                        duration: raw.Duration || raw.duration || '',
+                        body: raw.Body || raw.body || null,
+                    };
+                    this.addLog(log);
+                });
+            } catch (e) {
+                console.error('Failed to parse server API logs:', e);
+            }
+        }
+    };
+
+    // Initialize debug logger when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            window.DebugLogger.init();
+            loadServerApiLogs();
+        });
+    } else {
+        window.DebugLogger.init();
+        loadServerApiLogs();
+    }
+
+    // Load server-side API logs from page
+    function loadServerApiLogs() {
+        const el = document.getElementById('apiLogsData');
+        if (el && el.textContent.trim()) {
+            window.DebugLogger.loadServerLogs(el.textContent);
+        }
+    }
+</script>
+
+<style>
+    .debug-toggle-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #007acc;
+        color: white;
+        padding: 10px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 12px;
+        z-index: 9999;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        transition: all 0.2s;
+        user-select: none;
+    }
+
+    .debug-toggle-btn:hover {
+        background: #0098ff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        transform: scale(1.05);
+    }
+
+    .debug-panel {
+        position: fixed;
+        bottom: -400px;
+        left: 0;
+        right: 0;
+        background: #1e1e1e;
+        border-top: 2px solid #007acc;
+        color: #d4d4d4;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        z-index: 10000;
+        transition: bottom 0.3s ease;
+        height: 400px;
+        display: flex;
+        flex-direction: column-reverse;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .debug-panel.active {
+        bottom: 0;
+    }
+
+    .debug-resize-handle {
+        height: 12px;
+        background: linear-gradient(to right, transparent, #007acc 45%, #007acc 55%, transparent);
+        cursor: ns-resize;
+        flex-shrink: 0;
+        transition: all 0.2s;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: #007acc;
+    }
+
+    .debug-resize-handle:hover {
+        background: linear-gradient(to right, transparent, #0098ff 45%, #0098ff 55%, transparent);
+        color: #0098ff;
+        font-weight: bold;
+    }
+
+    .debug-panel-header {
+        background: #252526;
+        border-bottom: 1px solid #3e3e42;
+        padding: 8px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .debug-panel-header h3 {
+        margin: 0;
+        font-size: 14px;
+        color: #007acc;
+    }
+
+    .debug-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .debug-toggle {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .debug-toggle input[type="checkbox"] {
+        margin: 0;
+    }
+
+    .debug-controls .btn-sm {
+        padding: 4px 8px;
+        background: #007acc;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 11px;
+        transition: background 0.2s;
+    }
+
+    .debug-controls .btn-sm:hover {
+        background: #0098ff;
+    }
+
+    .debug-content {
+        overflow-y: auto;
+        flex: 1;
+        padding: 8px;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .debug-logs {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .debug-logs:empty::after {
+        content: "No API calls logged yet. Enable Debug Logging and make a request.";
+        color: #858585;
+        font-style: italic;
+        padding: 12px;
+        text-align: center;
+    }
+
+    .debug-log {
+        border: 1px solid #3e3e42;
+        border-radius: 3px;
+        padding: 6px 8px;
+        background: #252526;
+    }
+
+    .debug-log-request {
+        border-left: 3px solid #4ec9b0;
+    }
+
+    .debug-log-response {
+        border-left: 3px solid #7cb342;
+    }
+
+    .debug-log-error {
+        border-left: 3px solid #f44747;
+    }
+
+    .debug-log-summary {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .debug-log-summary.clickable {
+        cursor: pointer;
+        border-radius: 2px;
+        padding: 2px 0;
+        user-select: none;
+    }
+
+    .debug-log-summary.clickable:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .debug-expand-arrow {
+        color: #858585;
+        font-size: 10px;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .debug-log-details {
+        margin-top: 6px;
+        border-top: 1px solid #3e3e42;
+        padding-top: 6px;
+    }
+
+    .debug-detail-section {
+        margin-bottom: 6px;
+    }
+
+    .debug-detail-label {
+        color: #569cd6;
+        font-size: 11px;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .debug-detail-pre {
+        margin: 0;
+        color: #ce9178;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background: #1a1a1a;
+        padding: 6px 8px;
+        border-radius: 2px;
+        border-left: 2px solid #3e3e42;
+        font-size: 11px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .debug-error-label {
+        color: #f44747;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    .debug-time {
+        color: #858585;
+        font-size: 11px;
+    }
+
+    .debug-type {
+        padding: 2px 6px;
+        border-radius: 2px;
+        font-weight: bold;
+        font-size: 11px;
+        background: #1e1e1e;
+    }
+
+    .debug-log-request .debug-type {
+        color: #4ec9b0;
+    }
+
+    .debug-log-response .debug-type {
+        color: #7cb342;
+    }
+
+    .debug-log-error .debug-type {
+        color: #f44747;
+    }
+
+    .debug-method {
+        padding: 2px 6px;
+        background: #1e1e1e;
+        border-radius: 2px;
+        color: #7cb342;
+        font-weight: bold;
+        font-size: 11px;
+    }
+
+    .debug-url {
+        color: #ce9178;
+        word-break: break-all;
+        flex: 1;
+        font-size: 11px;
+    }
+
+    .debug-status {
+        padding: 2px 6px;
+        border-radius: 2px;
+        font-weight: bold;
+        font-size: 11px;
+        background: #1e1e1e;
+    }
+
+    .debug-status.success {
+        color: #7cb342;
+    }
+
+    .debug-status.error {
+        color: #f44747;
+    }
+
+    .debug-duration {
+        color: #569cd6;
+        font-size: 11px;
+    }
+
+    .debug-error {
+        color: #f44747;
+        font-size: 11px;
+    }
+
+    /* Scrollbar styling */
+    .debug-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .debug-content::-webkit-scrollbar-track {
+        background: #1e1e1e;
+    }
+
+    .debug-content::-webkit-scrollbar-thumb {
+        background: #464647;
+        border-radius: 4px;
+    }
+
+    .debug-content::-webkit-scrollbar-thumb:hover {
+        background: #5a5a5a;
+    }
+</style>
