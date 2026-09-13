@@ -1,0 +1,35 @@
+<fixtures brt="52880">
+  <fixture>
+    <id>3812596</id>
+    <date>2026-08-22 14:30:00</date>
+    <season>80</season>
+    <round>12</round>
+    <competition>National+League</competition>
+    <home_team_id>2</home_team_id>
+    <away_team_id>7</away_team_id>
+    <home_team_name>Marist+Brothers</home_team_name>
+    <away_team_name>North%20Harbour</away_team_name>
+    <home_score>24</home_score>
+    <away_score>17</away_score>
+  </fixture>
+  <fixture>
+    <id>3812601</id>
+    <matchstart>1755774600</matchstart>
+    <season>80</season>
+    <round>13</round>
+    <hometeamid>9</hometeamid>
+    <guestteamid>2</guestteamid>
+    <hometeam>Poneke</hometeam>
+    <guestteamname>Oriental-Rongotai</guestteamname>
+    <homescore>10</homescore>
+    <guestscore>10</guestscore>
+  </fixture>
+  <fixture>
+    <id>3812655</id>
+    <date>not-a-date</date>
+    <season>80</season>
+    <round>14</round>
+    <home_team_id>2</home_team_id>
+    <away_team_id>11</away_team_id>
+  </fixture>
+</fixtures>

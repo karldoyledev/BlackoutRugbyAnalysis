@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Xml.Linq;
 using BlackoutRugby.Api;
 using BlackoutRugbyDashboard.Models;
 using Microsoft.Extensions.Options;
@@ -11,12 +9,18 @@ public class TeamDashboardService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<TeamDashboardService> _logger;
     private readonly DeveloperOptions _developerOptions;
+    private readonly BlackoutRugbyResponseAdapter _responseAdapter;
 
-    public TeamDashboardService(IHttpClientFactory httpClientFactory, ILogger<TeamDashboardService> logger, IOptions<DeveloperOptions> developerOptions)
+    public TeamDashboardService(
+        IHttpClientFactory httpClientFactory,
+        ILogger<TeamDashboardService> logger,
+        IOptions<DeveloperOptions> developerOptions,
+        BlackoutRugbyResponseAdapter responseAdapter)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _developerOptions = developerOptions.Value;
+        _responseAdapter = responseAdapter;
     }
 
     public async Task<TeamDashboardViewModel> BuildDashboardAsync(TeamDashboardRequest request, ApiLogger? apiLogger = null)
@@ -52,11 +56,11 @@ public class TeamDashboardService
         var playersXml = await client.GetPlayersAsync(teamId: request.TeamId).ConfigureAwait(false);
         apiLogger?.LogResponse($"{request.BaseEndpoint}/players?teamId={request.TeamId}", 200, playersXml?.Length > 3000 ? playersXml[..3000] + "\n... (truncated)" : playersXml, sw.ElapsedMilliseconds);
         
-        var players = ParsePlayers(playersXml);
+        var players = _responseAdapter.ParsePlayers(playersXml);
 
         if (players.Count == 0)
         {
-            var team = ParseTeam(await teamTask.ConfigureAwait(false));
+            var team = _responseAdapter.ParseTeam(await teamTask.ConfigureAwait(false));
             return new TeamDashboardViewModel
             {
                 TeamId = request.TeamId,
@@ -66,7 +70,7 @@ public class TeamDashboardService
         }
 
         var statsByPlayerId = await LoadPlayerStatisticsAsync(client, players.Select(player => player.Id), request.Season).ConfigureAwait(false);
-        var teamInfo = ParseTeam(await teamTask.ConfigureAwait(false));
+        var teamInfo = _responseAdapter.ParseTeam(await teamTask.ConfigureAwait(false));
 
         var dashboardPlayers = players
             .Select(player =>
@@ -156,7 +160,7 @@ public class TeamDashboardService
         };
     }
 
-    private async Task<Dictionary<int, PlayerStats>> LoadPlayerStatisticsAsync(BlackoutRugbyApiClient client, IEnumerable<int> playerIds, int season)
+    private async Task<Dictionary<int, PlayerStatistics>> LoadPlayerStatisticsAsync(BlackoutRugbyApiClient client, IEnumerable<int> playerIds, int season)
     {
         var semaphore = new SemaphoreSlim(6);
         var tasks = playerIds.Select(async playerId =>
@@ -165,7 +169,7 @@ public class TeamDashboardService
             try
             {
                 var xml = await client.GetPlayerStatisticsAsync(playerId, season: season).ConfigureAwait(false);
-                return ParsePlayerStatistics(playerId, xml);
+                return _responseAdapter.ParsePlayerStatistics(playerId, xml);
             }
             catch (Exception exception)
             {
@@ -184,178 +188,6 @@ public class TeamDashboardService
             .ToDictionary(item => item!.PlayerId, item => item!);
     }
 
-    private static TeamInfo? ParseTeam(string xml)
-    {
-        var document = TryParse(xml);
-        var element = document?.Descendants("team").FirstOrDefault();
-        if (element is null)
-        {
-            return null;
-        }
-
-        return new TeamInfo(
-            ReadInt(element, "id"),
-            Decode(ReadString(element, "name")) ?? string.Empty,
-            Decode(ReadString(element, "country_iso")) ?? string.Empty);
-    }
-
-    private static List<PlayerInfo> ParsePlayers(string xml)
-    {
-        var document = TryParse(xml);
-        if (document is null)
-        {
-            return new List<PlayerInfo>();
-        }
-
-        return document
-            .Descendants("player")
-            .Select(element => new PlayerInfo(
-                ReadInt(element, "id"),
-                BuildPlayerName(element),
-                ReadInt(element, "age"),
-                ReadInt(element, "csr"),
-                ReadInt(element, "salary"),
-                ReadInt(element, "form"),
-                ReadInt(element, "energy"),
-                element.Descendants("pops").Descendants("skill").Select(skill => Decode(skill.Value) ?? skill.Value).Where(value => !string.IsNullOrWhiteSpace(value)).ToList()))
-            .Where(player => player.Id > 0)
-            .ToList();
-    }
-
-    private static PlayerStats? ParsePlayerStatistics(int playerId, string xml)
-    {
-        var document = TryParse(xml);
-        var element = document?.Descendants("player_statistics").FirstOrDefault();
-        if (element is null)
-        {
-            return null;
-        }
-
-        var leagueCaps = ReadInt(element, "leaguecaps");
-        var friendlyCaps = ReadInt(element, "friendlycaps");
-        var cupCaps = ReadInt(element, "cupcaps");
-        var underTwentyCaps = ReadInt(element, "undertwentycaps");
-        var nationalCaps = ReadInt(element, "nationalcaps");
-        var worldCupCaps = ReadInt(element, "worldcupcaps");
-        var underTwentyWorldCupCaps = ReadInt(element, "undertwentyworldcupcaps");
-        var otherCaps = ReadInt(element, "othercaps");
-        var totalCaps = leagueCaps + friendlyCaps + cupCaps + underTwentyCaps + nationalCaps + worldCupCaps + underTwentyWorldCupCaps + otherCaps;
-
-        return new PlayerStats(
-            playerId,
-            ReadInt(element, "tackles"),
-            ReadInt(element, "metresgained"),
-            ReadInt(element, "tries"),
-            ReadInt(element, "conversions"),
-            ReadInt(element, "dropgoals"),
-            ReadInt(element, "penalties"),
-            ReadInt(element, "totalpoints"),
-            ReadInt(element, "yellowcards"),
-            ReadInt(element, "redcards"),
-            ReadInt(element, "linebreaks"),
-            ReadInt(element, "intercepts"),
-            ReadInt(element, "kicks"),
-            ReadInt(element, "knockons"),
-            ReadInt(element, "forwardpasses"),
-            ReadInt(element, "tryassists"),
-            ReadInt(element, "beatendefenders"),
-            ReadInt(element, "injuries"),
-            ReadInt(element, "handlingerrors"),
-            ReadInt(element, "missedtackles"),
-            ReadInt(element, "fights"),
-            ReadInt(element, "kickingmetres"),
-            ReadInt(element, "missedconversions"),
-            ReadInt(element, "misseddropgoals"),
-            ReadInt(element, "missedpenalties"),
-            ReadInt(element, "goodupandunders"),
-            ReadInt(element, "badupandunders"),
-            ReadInt(element, "upandunders"),
-            ReadInt(element, "goodkicks"),
-            ReadInt(element, "badkicks"),
-            ReadInt(element, "turnoverswon"),
-            ReadInt(element, "lineoutssecured"),
-            ReadInt(element, "lineoutsconceded"),
-            ReadInt(element, "lineoutsstolen"),
-            ReadInt(element, "successfullineoutthrows"),
-            ReadInt(element, "unsuccessfullineoutthrows"),
-            ReadInt(element, "penaltiesconceded"),
-            ReadInt(element, "kicksoutonthefull"),
-            ReadInt(element, "balltime"),
-            ReadInt(element, "penaltytime"),
-            totalCaps,
-            leagueCaps,
-            friendlyCaps,
-            cupCaps,
-            underTwentyCaps,
-            nationalCaps,
-            worldCupCaps,
-            underTwentyWorldCupCaps,
-            otherCaps);
-    }
-
-    private static XDocument? TryParse(string xml)
-    {
-        if (string.IsNullOrWhiteSpace(xml))
-        {
-            return null;
-        }
-
-        try
-        {
-            return XDocument.Parse(xml, LoadOptions.PreserveWhitespace);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static string BuildPlayerName(XElement element)
-    {
-        var firstName = Decode(ReadString(element, "fname"));
-        var lastName = Decode(ReadString(element, "lname"));
-        return string.Join(' ', new[] { firstName, lastName }.Where(value => !string.IsNullOrWhiteSpace(value)));
-    }
-
-    private static string? ReadString(XElement element, string name)
-    {
-        return element.Element(name)?.Value?.Trim();
-    }
-
-    private static int ReadInt(XElement element, string name)
-    {
-        var rawValue = ReadString(element, name);
-        if (string.IsNullOrWhiteSpace(rawValue))
-        {
-            return 0;
-        }
-
-        // Try parsing with thousands separators (both . and , formats)
-        if (int.TryParse(rawValue, NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var result))
-        {
-            return result;
-        }
-
-        // Try parsing with comma as thousands separator (European format)
-        var cleanedValue = rawValue.Replace(",", "").Replace(".", "");
-        if (int.TryParse(cleanedValue, out var cleanedResult))
-        {
-            return cleanedResult;
-        }
-
-        return 0;
-    }
-
-    private static string? Decode(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return value;
-        }
-
-        return Uri.UnescapeDataString(value.Replace('+', ' '));
-    }
-
     private static decimal RoundAverage(IEnumerable<int> values)
     {
         var list = values.ToList();
@@ -366,59 +198,4 @@ public class TeamDashboardService
 
         return Math.Round((decimal)list.Average(), 1, MidpointRounding.AwayFromZero);
     }
-
-    private sealed record TeamInfo(int Id, string Name, string CountryIso);
-
-    private sealed record PlayerInfo(int Id, string Name, int Age, int Csr, int Salary, int Form, int Energy, IReadOnlyList<string> RecentPops);
-
-    private sealed record PlayerStats(
-        int PlayerId,
-        int Tackles,
-        int MetresGained,
-        int Tries,
-        int Conversions,
-        int DropGoals,
-        int Penalties,
-        int TotalPoints,
-        int YellowCards,
-        int RedCards,
-        int Linebreaks,
-        int Intercepts,
-        int Kicks,
-        int KnockOns,
-        int ForwardPasses,
-        int TryAssists,
-        int BeatenDefenders,
-        int Injuries,
-        int HandlingErrors,
-        int MissedTackles,
-        int Fights,
-        int KickingMetres,
-        int MissedConversions,
-        int MissedDropGoals,
-        int MissedPenalties,
-        int GoodUpAndUnders,
-        int BadUpAndUnders,
-        int UpAndUnders,
-        int GoodKicks,
-        int BadKicks,
-        int TurnoversWon,
-        int LineoutsSecured,
-        int LineoutsConceded,
-        int LineoutsStolen,
-        int SuccessfulLineoutThrows,
-        int UnsuccessfulLineoutThrows,
-        int PenaltiesConceded,
-        int KicksOutOnTheFull,
-        int BallTime,
-        int PenaltyTime,
-        int TotalCaps,
-        int LeagueCaps,
-        int FriendlyCaps,
-        int CupCaps,
-        int UnderTwentyCaps,
-        int NationalCaps,
-        int WorldCupCaps,
-        int UnderTwentyWorldCupCaps,
-        int OtherCaps);
 }

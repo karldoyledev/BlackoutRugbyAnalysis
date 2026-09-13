@@ -11,6 +11,7 @@ builder.Services.Configure<DeveloperOptions>(builder.Configuration.GetSection("D
 builder.Services.AddSingleton<BlackoutRugbyDashboard.Services.SnapshotStore>();
 builder.Services.AddScoped<BlackoutRugbyDashboard.Services.ApiLogger>();
 builder.Services.AddScoped<BlackoutRugbyDashboard.Services.TeamDashboardService>();
+builder.Services.AddSingleton<BlackoutRugbyDashboard.Services.BlackoutRugbyResponseAdapter>();
 
 var app = builder.Build();
 

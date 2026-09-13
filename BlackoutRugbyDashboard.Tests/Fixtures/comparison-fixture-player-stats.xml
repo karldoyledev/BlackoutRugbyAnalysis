@@ -1,0 +1,52 @@
+<fixture_statistics id="3812596" brt="52880">
+  <home_team_stats id="2">
+    <id>2</id>
+    <tackles>120</tackles>
+  </home_team_stats>
+  <player_stats teamid="2">
+    <id>101</id>
+    <name>Se%C3%A1n+O%27Brien</name>
+    <tackles>14</tackles>
+    <metres_gained>185</metres_gained>
+    <tries>2</tries>
+    <conversions>0</conversions>
+    <drop_goals>1</drop_goals>
+    <penalties>0</penalties>
+    <total_points>12</total_points>
+    <yellow_cards>1</yellow_cards>
+    <red_cards>0</red_cards>
+    <linebreaks>3</linebreaks>
+    <intercepts>1</intercepts>
+    <kicks>2</kicks>
+    <knock_ons>1</knock_ons>
+    <forward_passes>0</forward_passes>
+    <try_assists>1</try_assists>
+    <beaten_defenders>6</beaten_defenders>
+    <injuries>0</injuries>
+    <handling_errors>1</handling_errors>
+    <missed_tackles>2</missed_tackles>
+    <fights>0</fights>
+    <kicking_metres>240</kicking_metres>
+    <penalties_conceded>2</penalties_conceded>
+    <kicks_out_on_the_full>1</kicks_out_on_the_full>
+    <lineouts_won>4</lineouts_won>
+    <lineouts_lost>1</lineouts_lost>
+    <scrums_won>5</scrums_won>
+    <scrums_lost>2</scrums_lost>
+  </player_stats>
+  <player_stats teamid="2">
+    <id>102</id>
+    <tackles>9</tackles>
+    <metresgained>88</metresgained>
+    <tries>1</tries>
+    <totalpoints>5</totalpoints>
+  </player_stats>
+  <player_stats teamid="9">
+    <id>201</id>
+    <tackles>11</tackles>
+  </player_stats>
+  <player_stats teamid="2">
+    <id>0</id>
+    <tackles>99</tackles>
+  </player_stats>
+</fixture_statistics>

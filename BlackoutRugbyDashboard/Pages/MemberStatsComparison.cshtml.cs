@@ -3,8 +3,6 @@ using BlackoutRugbyDashboard.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
-using System.Xml.Linq;
-using System.Globalization;
 
 namespace BlackoutRugbyDashboard.Pages;
 
@@ -16,6 +14,7 @@ public class MemberStatsComparisonModel : PageModel
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly DeveloperOptions _developerOptions;
     private readonly ApiLogger _apiLogger;
+    private readonly BlackoutRugbyResponseAdapter _responseAdapter;
 
     public MemberStatsComparisonModel(
         TeamDashboardService dashboardService,
@@ -23,7 +22,8 @@ public class MemberStatsComparisonModel : PageModel
         IOptions<DashboardDefaultsOptions> dashboardDefaults,
         IOptions<DeveloperOptions> developerOptions,
         IHttpClientFactory httpClientFactory,
-        ApiLogger apiLogger)
+        ApiLogger apiLogger,
+        BlackoutRugbyResponseAdapter responseAdapter)
     {
         _dashboardService = dashboardService;
         _logger = logger;
@@ -31,6 +31,7 @@ public class MemberStatsComparisonModel : PageModel
         _developerOptions = developerOptions.Value;
         _httpClientFactory = httpClientFactory;
         _apiLogger = apiLogger;
+        _responseAdapter = responseAdapter;
         Input = CreateRequestFromDefaults();
     }
 
@@ -107,7 +108,7 @@ public class MemberStatsComparisonModel : PageModel
             _apiLogger.LogResponse($"{request.BaseEndpoint}/fixtures?teamId={request.TeamId}&last=20&season={request.Season}", 200, fixturesXml?.Length > 3000 ? fixturesXml[..3000] + "\n... (truncated)" : fixturesXml, sw.ElapsedMilliseconds);
 
             // Fallback: if no fixtures are found for the selected season, retry without season filter.
-            var fixturesError = ReadApiError(fixturesXml);
+            var fixturesError = _responseAdapter.ExtractResponseError(fixturesXml);
             if (!string.IsNullOrWhiteSpace(fixturesError) && fixturesError.Contains("No fixtures found", StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogInformation("No fixtures found for team {TeamId} season {Season}. Retrying without season filter.", request.TeamId, request.Season);
@@ -117,7 +118,7 @@ public class MemberStatsComparisonModel : PageModel
                 _apiLogger.LogResponse($"{request.BaseEndpoint}/fixtures?teamId={request.TeamId}&last=20", 200, fixturesXml?.Length > 3000 ? fixturesXml[..3000] + "\n... (truncated)" : fixturesXml, sw.ElapsedMilliseconds);
             }
 
-            var fixtures = ParseFixtures(fixturesXml ?? string.Empty);
+            var fixtures = _responseAdapter.ParseFixtures(fixturesXml ?? string.Empty);
 
             // Get statistics for each fixture.
             foreach (var fixture in fixtures.OrderByDescending(f => f.Date))
@@ -128,10 +129,10 @@ public class MemberStatsComparisonModel : PageModel
                     sw.Restart();
                     var statsXml = await client.GetFixtureStatisticsAsync(fixtureId: fixture.Id, teamPlayersStats: request.TeamId);
                     _apiLogger.LogResponse($"{request.BaseEndpoint}/fixturestats?fixtureId={fixture.Id}&teamPlayersStats={request.TeamId}", 200, statsXml?.Length > 3000 ? statsXml[..3000] + "\n... (truncated)" : statsXml, sw.ElapsedMilliseconds);
-                    var breakdown = ParseFixtureBreakdown(statsXml ?? string.Empty, fixture, request.TeamId, playerNames);
-                    if (breakdown is not null)
+                    var playerStats = _responseAdapter.ParseFixturePlayerStatistics(statsXml ?? string.Empty, request.TeamId, playerNames);
+                    if (playerStats.Count > 0)
                     {
-                        fixtureBreakdowns.Add(breakdown);
+                        fixtureBreakdowns.Add(BuildFixtureBreakdown(fixture, request.TeamId, playerStats));
                     }
                 }
                 catch (Exception ex)
@@ -150,175 +151,26 @@ public class MemberStatsComparisonModel : PageModel
         return fixtureBreakdowns;
     }
 
-    private List<FixtureInfo> ParseFixtures(string xml)
+    private static FixtureBreakdown BuildFixtureBreakdown(Fixture fixture, int teamId, IReadOnlyList<FixturePlayerStatistics> playerStats)
     {
-        var fixtures = new List<FixtureInfo>();
-        try
+        return new FixtureBreakdown
         {
-            var doc = XDocument.Parse(xml);
-            foreach (var fixture in doc.Descendants("fixture"))
-            {
-                var id = ReadInt(fixture, "id");
-                var dateStr = ReadString(fixture, "date");
-                var matchStartUnix = ReadString(fixture, "matchstart");
-                var season = ReadIntAny(fixture, "season");
-                var round = ReadIntAny(fixture, "round");
-                var competition = ReadString(fixture, "competition") ?? string.Empty;
-
-                var homeTeamId = ReadInt(fixture, "home_team_id");
-                if (homeTeamId == 0)
-                {
-                    homeTeamId = ReadInt(fixture, "hometeamid");
-                }
-
-                var awayTeamId = ReadInt(fixture, "away_team_id");
-                if (awayTeamId == 0)
-                {
-                    awayTeamId = ReadInt(fixture, "guestteamid");
-                }
-
-                var homeTeamName = ReadString(fixture, "home_team_name")
-                    ?? ReadString(fixture, "hometeam")
-                    ?? ReadString(fixture, "hometeamname")
-                    ?? $"Team {homeTeamId}";
-                var awayTeamName = ReadString(fixture, "away_team_name")
-                    ?? ReadString(fixture, "guestteam")
-                    ?? ReadString(fixture, "guestteamname")
-                    ?? $"Team {awayTeamId}";
-
-                var homeScore = ReadInt(fixture, "home_score");
-                if (homeScore == 0)
-                {
-                    homeScore = ReadInt(fixture, "homescore");
-                }
-
-                var awayScore = ReadInt(fixture, "away_score");
-                if (awayScore == 0)
-                {
-                    awayScore = ReadInt(fixture, "guestscore");
-                }
-
-                DateTime date;
-                if (DateTime.TryParse(dateStr, out var parsedDate))
-                {
-                    date = parsedDate;
-                }
-                else if (long.TryParse(matchStartUnix, NumberStyles.Any, CultureInfo.InvariantCulture, out var unixSeconds))
-                {
-                    date = DateTimeOffset.FromUnixTimeSeconds(unixSeconds).LocalDateTime;
-                }
-                else
-                {
-                    continue;
-                }
-
-                fixtures.Add(new FixtureInfo
-                {
-                    Id = id,
-                    Season = season,
-                    Round = round,
-                    Competition = competition,
-                    Date = date,
-                    HomeTeamId = homeTeamId,
-                    AwayTeamId = awayTeamId,
-                    HomeTeamName = homeTeamName,
-                    AwayTeamName = awayTeamName,
-                    HomeScore = homeScore,
-                    AwayScore = awayScore
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to parse fixtures XML");
-        }
-
-        return fixtures;
-    }
-
-    private FixtureBreakdown? ParseFixtureBreakdown(string xml, FixtureInfo fixture, int teamId, IReadOnlyDictionary<int, string> playerNames)
-    {
-        try
-        {
-            var doc = XDocument.Parse(xml);
-            var playerStats = doc
-                .Descendants()
-                .Where(element => string.Equals(element.Attribute("teamid")?.Value, teamId.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal))
-                .Where(element => element.Name.LocalName.Contains("player", StringComparison.OrdinalIgnoreCase))
-                .Select(element => ParseFixturePlayerStats(element, playerNames))
-                .Where(item => item is not null)
-                .Cast<PlayerGameStats>()
-                .OrderByDescending(item => item.TotalPoints)
-                .ThenByDescending(item => item.Tackles)
-                .ThenBy(item => item.Name)
-                .ToList();
-
-            if (playerStats.Count == 0)
-            {
-                return null;
-            }
-
-            return new FixtureBreakdown
-            {
-                FixtureId = fixture.Id,
-                Label = fixture.BuildLabel(),
-                TeamStats = BuildTeamGameStats(fixture, teamId, playerStats),
-                PlayerStats = playerStats
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to parse fixture breakdown for fixture {FixtureId}", fixture.Id);
-        }
-
-        return null;
-    }
-
-    private static PlayerGameStats? ParseFixturePlayerStats(XElement element, IReadOnlyDictionary<int, string> playerNames)
-    {
-        var playerId = ReadIntAny(element, "id");
-        if (playerId <= 0)
-        {
-            return null;
-        }
-
-        playerNames.TryGetValue(playerId, out var playerName);
-
-        return new PlayerGameStats
-        {
-            PlayerId = playerId,
-            Name = string.IsNullOrWhiteSpace(playerName) ? $"Player {playerId}" : playerName,
-            Tackles = ReadIntAny(element, "tackles"),
-            MetresGained = ReadIntAny(element, "metresgained", "metres_gained"),
-            Tries = ReadIntAny(element, "tries"),
-            Conversions = ReadIntAny(element, "conversions"),
-            DropGoals = ReadIntAny(element, "dropgoals", "drop_goals"),
-            Penalties = ReadIntAny(element, "penalties"),
-            TotalPoints = ReadIntAny(element, "totalpoints", "total_points"),
-            YellowCards = ReadIntAny(element, "yellowcards", "yellow_cards"),
-            RedCards = ReadIntAny(element, "redcards", "red_cards"),
-            Linebreaks = ReadIntAny(element, "linebreaks"),
-            Intercepts = ReadIntAny(element, "intercepts"),
-            Kicks = ReadIntAny(element, "kicks"),
-            KnockOns = ReadIntAny(element, "knockons", "knock_ons"),
-            ForwardPasses = ReadIntAny(element, "forwardpasses", "forward_passes"),
-            TryAssists = ReadIntAny(element, "tryassists", "try_assists"),
-            BeatenDefenders = ReadIntAny(element, "beatendefenders", "beaten_defenders"),
-            Injuries = ReadIntAny(element, "injuries"),
-            HandlingErrors = ReadIntAny(element, "handlingerrors", "handling_errors"),
-            MissedTackles = ReadIntAny(element, "missedtackles", "missed_tackles"),
-            Fights = ReadIntAny(element, "fights"),
-            KickingMetres = ReadIntAny(element, "kickingmetres", "kicking_metres"),
-            PenaltiesConceded = ReadIntAny(element, "penaltiesconceded", "penalties_conceded"),
-            KicksOutOnTheFull = ReadIntAny(element, "kicksoutonthefull", "kicks_out_on_the_full"),
-            LineoutsWon = ReadIntAny(element, "lineoutswon", "lineouts_won"),
-            LineoutsLost = ReadIntAny(element, "lineoutslost", "lineouts_lost"),
-            ScrumWins = ReadIntAny(element, "scrumswon", "scrums_won"),
-            ScrumLosses = ReadIntAny(element, "scrumslost", "scrums_lost")
+            FixtureId = fixture.Id,
+            Label = BuildFixtureLabel(fixture),
+            TeamStats = BuildTeamGameStats(fixture, teamId, playerStats),
+            PlayerStats = playerStats
         };
     }
 
-    private static GameStats BuildTeamGameStats(FixtureInfo fixture, int teamId, IReadOnlyCollection<PlayerGameStats> playerStats)
+    private static string BuildFixtureLabel(Fixture fixture)
+    {
+        var seasonLabel = fixture.Season > 0 ? $"Season {fixture.Season}" : "Season";
+        var roundLabel = fixture.Round > 0 ? $"Week {fixture.Round}" : "Fixture";
+        var competitionLabel = string.IsNullOrWhiteSpace(fixture.Competition) ? string.Empty : $" {fixture.Competition}";
+        return $"{seasonLabel}, {roundLabel}{competitionLabel} - {fixture.Date:MMM d}";
+    }
+
+    private static GameStats BuildTeamGameStats(Fixture fixture, int teamId, IReadOnlyCollection<FixturePlayerStatistics> playerStats)
     {
         var isHome = fixture.HomeTeamId == teamId;
         var opponent = isHome ? fixture.AwayTeamName : fixture.HomeTeamName;
@@ -372,49 +224,6 @@ public class MemberStatsComparisonModel : PageModel
         };
     }
 
-    private static int ReadInt(XElement element, string name)
-    {
-        var value = element.Element(name)?.Value;
-        return int.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var result) ? result : 0;
-    }
-
-    private static int ReadIntAny(XElement element, params string[] names)
-    {
-        foreach (var name in names)
-        {
-            var value = element.Element(name)?.Value;
-            if (int.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
-            {
-                return result;
-            }
-        }
-
-        return 0;
-    }
-
-    private static string? ReadString(XElement element, string name)
-    {
-        return element.Element(name)?.Value;
-    }
-
-    private static string? ReadApiError(string? xml)
-    {
-        if (string.IsNullOrWhiteSpace(xml))
-        {
-            return null;
-        }
-
-        try
-        {
-            var doc = XDocument.Parse(xml);
-            return doc.Descendants("error").FirstOrDefault()?.Value;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
     private TeamDashboardRequest CreateRequestFromDefaults()
     {
         return new TeamDashboardRequest
@@ -436,68 +245,12 @@ public class MemberStatsComparisonModel : PageModel
     }
 }
 
-public class FixtureInfo
-{
-    public int Id { get; set; }
-    public int Season { get; set; }
-    public int Round { get; set; }
-    public string Competition { get; set; } = string.Empty;
-    public DateTime Date { get; set; }
-    public int HomeTeamId { get; set; }
-    public int AwayTeamId { get; set; }
-    public string HomeTeamName { get; set; } = string.Empty;
-    public string AwayTeamName { get; set; } = string.Empty;
-    public int HomeScore { get; set; }
-    public int AwayScore { get; set; }
-
-    public string BuildLabel()
-    {
-        var seasonLabel = Season > 0 ? $"Season {Season}" : "Season";
-        var roundLabel = Round > 0 ? $"Week {Round}" : "Fixture";
-        var competitionLabel = string.IsNullOrWhiteSpace(Competition) ? string.Empty : $" {Competition}";
-        return $"{seasonLabel}, {roundLabel}{competitionLabel} - {Date:MMM d}";
-    }
-}
-
 public class FixtureBreakdown
 {
     public int FixtureId { get; set; }
     public string Label { get; set; } = string.Empty;
     public GameStats TeamStats { get; set; } = new();
-    public List<PlayerGameStats> PlayerStats { get; set; } = new();
-}
-
-public class PlayerGameStats
-{
-    public int PlayerId { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int Tackles { get; set; }
-    public int MetresGained { get; set; }
-    public int Tries { get; set; }
-    public int Conversions { get; set; }
-    public int DropGoals { get; set; }
-    public int Penalties { get; set; }
-    public int TotalPoints { get; set; }
-    public int YellowCards { get; set; }
-    public int RedCards { get; set; }
-    public int Linebreaks { get; set; }
-    public int Intercepts { get; set; }
-    public int Kicks { get; set; }
-    public int KnockOns { get; set; }
-    public int ForwardPasses { get; set; }
-    public int TryAssists { get; set; }
-    public int BeatenDefenders { get; set; }
-    public int Injuries { get; set; }
-    public int HandlingErrors { get; set; }
-    public int MissedTackles { get; set; }
-    public int Fights { get; set; }
-    public int KickingMetres { get; set; }
-    public int PenaltiesConceded { get; set; }
-    public int KicksOutOnTheFull { get; set; }
-    public int LineoutsWon { get; set; }
-    public int LineoutsLost { get; set; }
-    public int ScrumWins { get; set; }
-    public int ScrumLosses { get; set; }
+    public IReadOnlyList<FixturePlayerStatistics> PlayerStats { get; set; } = Array.Empty<FixturePlayerStatistics>();
 }
 
 public class GameStats
