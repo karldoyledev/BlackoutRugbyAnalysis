@@ -2,7 +2,7 @@
 
 **Repo**: karldoyledev/BlackoutRugbyAnalysis — this file is the local draft of the GitHub issue labelled `wayfinder:map`. When pushed, the map becomes an issue; each ticket below becomes a child issue (`Part of #<map>`, labels `wayfinder:research` / `wayfinder:grilling` / `wayfinder:task`), blocking edges become GitHub native `blocked_by` dependencies.
 
-**Tracker (live)**: Map = [#4](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/4) · R1 #5 · R2 #6 · R3 #7 · D1 #8 · D2 #9 · D3 #10 · D4 #11 · D5 #12 · D6 #13 · D7 #14 · D8 #15 · D9 #16. All sub-issue links and 17 blocked_by edges verified wired.
+**Tracker (live)**: Map = [#4](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/4) · R1 #5 · R2 #6 · R3 #7 · R4 #17 · D1 #8 · D2 #9 · D3 #10 · D4 #11 · D5 #12 · D6 #13 · D7 #14 · D8 #15 · D9 #16. All sub-issue links and 18 blocked_by edges verified wired.
 
 ## Destination
 
@@ -42,16 +42,17 @@ The spec is the destination artifact. **Plan, don't do**: build execution is a s
 13. **Secrets hygiene**: scrub committed MemberKey + developer credentials out of `appsettings.json` into user-secrets as part of the login work.
 14. **Wayfinding infra**: map + tickets live on GitHub Issues via `gh` CLI (installed this session; auth pending user).
 15. **API fact**: client already sends `r=fi` for finances, matching the raw game docs; `API_ENDPOINTS_COMPLETE.md` §6 saying `r=f` is the doc error (fix during build).
+16. **Lineups read (R1)**: `r=lu` is the live code (`r=li` invalid — client fix needed); no strategy fields verifiable on read (fixture lineup = XV + bench `b1–b8` + captain + kicker; response duplicates the `<lineup>` element); per-area attack tactics don't exist → out of scope; side-facts: fixtures read is `r=f` (`r=fix` invalid), `data_removed=1` edge → new ticket R4. Findings: `docs/research/r1-lineup-tactics-probe.md`.
 
 ## Not yet specified (fog)
 
 - **Overall visual design/theming** of the new pages (no one has raised it; surface when the user does).
-- **Per-area attack tactics UI** — exists only if the R1 probe proves the API exposes it; otherwise permanently out of scope.
 - **Cache design details** — anything R3/R2 findings invalidate about the cache-first assumption.
 - Whatever else the research probes surface (new tickets get created + wired as answers land).
 
 ## Out of scope (consciously ruled out of this effort)
 
+- **Per-area attack tactics UI** — the API has no per-area tactics read surface (verified by R1, [#5](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/5)); the in-game UI feature has no API backing.
 - **Build execution** — the spec is the destination; building is a separate effort.
 - **AI/LLM recommendation layer** — explicitly "later" (decision 10).
 - **Future-opponent tactical preview** — deferred (decision 10).
@@ -62,7 +63,7 @@ The spec is the destination artifact. **Plan, don't do**: build execution is a s
 
 ## Tickets
 
-Each ticket below becomes a child issue of the map. Blocked-by edges are listed per ticket and wired with GitHub native dependencies at push time. **Frontier (nothing blocks them): R1, R2, R3, D2, D3.**
+Each ticket below becomes a child issue of the map. Blocked-by edges are listed per ticket and wired with GitHub native dependencies at push time. **Frontier at push: R1, R2, R3, D2, D3. R1 closed 2026-09-14 — findings in `docs/research/r1-lineup-tactics-probe.md`; frontier now R2, R3, R4, D2, D3.**
 
 ### R1 — Probe the lineup endpoint for tactics fields — `wayfinder:research` — frontier
 
@@ -102,6 +103,18 @@ Each ticket below becomes a child issue of the map. Blocked-by edges are listed 
 
 **Notes**: resolve with the **research** skill.
 
+### R4 — Probe data_removed semantics for stats reads — `wayfinder:research` — frontier
+
+**Question**: What do `r=fs` (fixture statistics) and `r=msum` (match summary) return for a fixture with `data_removed=1`? R1's fixtures probe showed every season-61 fixture in the last-8 window and one season-62 League fixture carries `data_removed=1`, while the two most recent are `0`. Empty elements, an error, or full data — and does the flag flip to 1 for current-season fixtures over time (will the Home page's last-8 window decay into missing stats)?
+
+**Why**: D5 (Home page) must spec the W/L row for fixtures whose stats are unavailable; the cache-first decision (11) needs to know whether removed-data fixtures are worth caching.
+
+**How**: probe `r=fs&fixtureid=X&teamplayersstats=45047` and `r=msum&fixtureid=X` on one `data_removed=1` fixture (e.g. 21416925) and one `data_removed=0` control (e.g. 21416928); diff shapes. If `r=msum` is rejected, try `r=ms` (docs conflict: `API_ENDPOINTS_COMPLETE.md` §15 vs `Blackout Rugby Api Reference.md` §12).
+
+**Context**: R1 findings `docs/research/r1-lineup-tactics-probe.md` §F5; `API_ENDPOINTS_COMPLETE.md` §7, §14/§15; `Blackout Rugby Api Reference.md` §5, §12.
+
+**Notes**: resolve with the **research** skill. Tracker: #17.
+
 ### D1 — Lock the match-cache data model — `wayfinder:grilling` — blocked by R3
 
 **Question**: What exactly persists per viewed Fixture — parsed DTO, raw XML, or both? Storage layout under `Data/`, retention/eviction rules, and the aggregation key (PlayerId + FixtureId) the Player page joins on. Evolve the existing `SnapshotStore` or replace it outright?
@@ -128,11 +141,11 @@ Each ticket below becomes a child issue of the map. Blocked-by edges are listed 
 
 **Notes**: resolve with **grilling** + **domain-modeling** (stat-group names may join the glossary). Blocked by: R3.
 
-### D5 — Lock the Home page spec — `wayfinder:grilling` — blocked by R2
+### D5 — Lock the Home page spec — `wayfinder:grilling` — blocked by R2, R4
 
 **Question**: Exact row composition per fixture (W/L + score, opponent name + CSR, attendance, match income from R2's category map, link), empty/edge states (bot matches, missing finance rows, unplayed-but-listed fixtures), and the data-call plan (fix last=8 → msum batch → teams batch → fi per round, all cache-backed per decision 11).
 
-**Notes**: resolve with **grilling**. Blocked by: R2.
+**Notes**: resolve with **grilling**. Blocked by: R2, R4.
 
 ### D6 — Lock the Match Analysis page spec — `wayfinder:grilling` — blocked by R1, D4
 
