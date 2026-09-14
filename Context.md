@@ -76,6 +76,10 @@ _Avoid_: link, member link, club binding
 The two states of a User with respect to its Club Link.
 _Avoid_: connected, paired, activated
 
+**Squad**:
+The set of Players currently contracted to a Team; the Squad page compares them over time via Squad Snapshots.
+_Avoid_: roster, team list
+
 #Important rules
 
 All timestamps are in BRT, which is GMT+12
