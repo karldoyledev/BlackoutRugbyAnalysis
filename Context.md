@@ -60,6 +60,14 @@ _Avoid_: area, zone
 The auction market for Players.
 _Avoid_: auction house, bidding market
 
+**Match Cache**:
+The local, append-only store of completed Fixtures — their metadata, summaries, team and player statistics, and lineups — persisted as they are viewed; the source for Match Analysis, Home history, and Player History trends, and the hedge against API data removal.
+_Avoid_: fixture cache, match history, local store
+
+**Squad Snapshot**:
+A time-keyed capture of a Team's squad state used by the team comparison page; distinct from the Match Cache.
+_Avoid_: snapshot, team snapshot, snapshot store
+
 #Important rules
 
 All timestamps are in BRT, which is GMT+12
