@@ -68,6 +68,14 @@ _Avoid_: fixture cache, match history, local store
 A time-keyed capture of a Team's squad state used by the team comparison page; distinct from the Match Cache.
 _Avoid_: snapshot, team snapshot, snapshot store
 
+**Club Link**:
+The binding between a local User and the Member whose API access authorizes the dashboard's data reads; live-validated when made and re-establishable from Settings.
+_Avoid_: link, member link, club binding
+
+**Linked / Unlinked**:
+The two states of a User with respect to its Club Link.
+_Avoid_: connected, paired, activated
+
 #Important rules
 
 All timestamps are in BRT, which is GMT+12
