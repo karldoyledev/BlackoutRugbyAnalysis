@@ -43,6 +43,7 @@ The spec is the destination artifact. **Plan, don't do**: build execution is a s
 14. **Wayfinding infra**: map + tickets live on GitHub Issues via `gh` CLI (installed this session; auth pending user).
 15. **API fact**: client already sends `r=fi` for finances, matching the raw game docs; `API_ENDPOINTS_COMPLETE.md` §6 saying `r=f` is the doc error (fix during build).
 16. **Lineups read (R1)**: `r=lu` is the live code (`r=li` invalid — client fix needed); no strategy fields verifiable on read (fixture lineup = XV + bench `b1–b8` + captain + kicker; response duplicates the `<lineup>` element); per-area attack tactics don't exist → out of scope; side-facts: fixtures read is `r=f` (`r=fix` invalid), `data_removed=1` edge → new ticket R4. Findings: `docs/research/r1-lineup-tactics-probe.md`.
+17. **Finances + match summary (R2)**: match-summary read is `r=ms` (`msum` invalid — client fix needed, same bug class as R1's `li`); `fixtureids` batching verified (3/3), `<attendance>` = tail element per summary (tiers standing/uncovered/covered/members/corporate); `r=fi` verified live but returns zero transactions for team 45047 in every probed season/round with valid member credentials — gate receipts not sourceable from `fi` today (D5 implication: drop "fi per round" or make best-effort); undocumented: developer `d`/`dk` required on all reads; `data_removed=1` fixture returns full `ms` (feeds R4). Findings: `docs/research/r2-finances-matchsummary-probe.md`.
 
 ## Not yet specified (fog)
 
@@ -63,7 +64,7 @@ The spec is the destination artifact. **Plan, don't do**: build execution is a s
 
 ## Tickets
 
-Each ticket below becomes a child issue of the map. Blocked-by edges are listed per ticket and wired with GitHub native dependencies at push time. **Frontier at push: R1, R2, R3, D2, D3. R1 closed 2026-09-14 — findings in `docs/research/r1-lineup-tactics-probe.md`; frontier now R2, R3, R4, D2, D3.**
+Each ticket below becomes a child issue of the map. Blocked-by edges are listed per ticket and wired with GitHub native dependencies at push time. **Frontier at push: R1, R2, R3, D2, D3. R1 closed 2026-09-14 — findings in `docs/research/r1-lineup-tactics-probe.md`; R2 closed 2026-09-14 — findings in `docs/research/r2-finances-matchsummary-probe.md`; frontier now R3, R4, D2, D3.**
 
 ### R1 — Probe the lineup endpoint for tactics fields — `wayfinder:research` — frontier
 
