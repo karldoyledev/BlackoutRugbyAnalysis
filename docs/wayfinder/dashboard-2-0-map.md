@@ -66,7 +66,7 @@ The spec is the destination artifact. **Plan, don't do**: build execution is a s
 
 ## Tickets
 
-Each ticket below becomes a child issue of the map. Blocked-by edges are listed per ticket and wired with GitHub native dependencies at push time. **Frontier at push: R1, R2, R3, D2, D3. R1 closed 2026-09-14 — findings in `docs/research/r1-lineup-tactics-probe.md`; R2 closed 2026-09-14 — findings in `docs/research/r2-finances-matchsummary-probe.md`; frontier now R3, R4, D2, D3.**
+Each ticket below becomes a child issue of the map. Blocked-by edges are listed per ticket and wired with GitHub native dependencies at push time. **Frontier at push: R1, R2, R3, D2, D3. R1 closed 2026-09-14 — findings in `docs/research/r1-lineup-tactics-probe.md`; R2 closed 2026-09-14 — findings in `docs/research/r2-finances-matchsummary-probe.md`; frontier was R3, R4, D2, D3. R3 closed 2026-09-15 — findings in `docs/research/r3-per-player-fixture-history-probe.md`; R4 closed 2026-09-15 — findings in `docs/research/r4-data-removed-semantics-probe.md`; frontier now D1, D2, D3, D4, D5.**
 
 ### R1 — Probe the lineup endpoint for tactics fields — `wayfinder:research` — frontier
 
