@@ -2,7 +2,7 @@
 
 **Repo**: karldoyledev/BlackoutRugbyAnalysis — this file is the local draft of the GitHub issue labelled `wayfinder:map`. When pushed, the map becomes an issue; each ticket below becomes a child issue (`Part of #<map>`, labels `wayfinder:research` / `wayfinder:grilling` / `wayfinder:task`), blocking edges become GitHub native `blocked_by` dependencies.
 
-**Tracker (live)**: Map = [#4](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/4) · R1 #5 · R2 #6 · R3 #7 · R4 #17 · D1 #8 · D2 #9 · D3 #10 · D4 #11 · D5 #12 · D6 #13 · D7 #14 · D8 #15 · D9 #16. All sub-issue links and 18 blocked_by edges verified wired.
+**Tracker (live)**: Map = [#4](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/4) · R1 #5 · R2 #6 · R3 #7 · R4 #17 · R5 #18 · D1 #8 · D2 #9 · D3 #10 · D4 #11 · D5 #12 · D6 #13 · D7 #14 · D8 #15 · D9 #16. All sub-issue links and 18 blocked_by edges verified wired. **Status**: resolved R1–R5 (#5–#7, #17, #18), D1–D4 (#8–#11), D6 (#13), D7 (#14), D8 (#15) and D10 (#19); frontier is now D5 (#12, claimed by its session); D9 (#16) waits on D5 only. Decisions 21+ live on the map issue (canonical; now ends at 28); this draft's list below ends at 20.
 
 ## Destination
 
@@ -69,7 +69,7 @@ The spec is the destination artifact. **Plan, don't do**: build execution is a s
 
 ## Tickets
 
-Each ticket below becomes a child issue of the map. Blocked-by edges are listed per ticket and wired with GitHub native dependencies at push time. **Frontier at push: R1, R2, R3, D2, D3. R1 closed 2026-09-14 — findings in `docs/research/r1-lineup-tactics-probe.md`; R2 closed 2026-09-14 — findings in `docs/research/r2-finances-matchsummary-probe.md`; frontier was R3, R4, D2, D3. R3 closed 2026-09-15 — findings in `docs/research/r3-per-player-fixture-history-probe.md`; R4 closed 2026-09-15 — findings in `docs/research/r4-data-removed-semantics-probe.md`; D1 closed 2026-09-15 — resolution on [D1 - Lock the match-cache data model](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/8); frontier was D2, D3, D4, D5. D3 closed 2026-09-14 — resolution on [D3 - Lock the auth & account spec section](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/10); D2 closed 2026-09-14 — resolution on [D2 - Lock the route map + navigation](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/9); frontier now D4, D5.**
+Each ticket below becomes a child issue of the map. Blocked-by edges are listed per ticket and wired with GitHub native dependencies at push time. **Frontier at push: R1, R2, R3, D2, D3. R1 closed 2026-09-14 — findings in `docs/research/r1-lineup-tactics-probe.md`; R2 closed 2026-09-14 — findings in `docs/research/r2-finances-matchsummary-probe.md`; frontier was R3, R4, D2, D3. R3 closed 2026-09-15 — findings in `docs/research/r3-per-player-fixture-history-probe.md`; R4 closed 2026-09-15 — findings in `docs/research/r4-data-removed-semantics-probe.md`; D1 closed 2026-09-15 — resolution on [D1 - Lock the match-cache data model](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/8); frontier was D2, D3, D4, D5. D3 closed 2026-09-14 — resolution on [D3 - Lock the auth & account spec section](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/10); D2 closed 2026-09-14 — resolution on [D2 - Lock the route map + navigation](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/9); D1 closed 2026-09-15 (#8); R4 closed 2026-09-15 (#17); D4 closed 2026-09-15 (#11); R5 closed 2026-09-15 (#18); **D6 closed 2026-09-15 — resolution on [D6 - Lock the Match Analysis page spec](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/13); frontier now D5, D7, D8.**
 
 ### R1 — Probe the lineup endpoint for tactics fields — `wayfinder:research` — frontier
 
@@ -109,7 +109,7 @@ Each ticket below becomes a child issue of the map. Blocked-by edges are listed 
 
 **Notes**: resolve with the **research** skill.
 
-### R4 — Probe data_removed semantics for stats reads — `wayfinder:research` — frontier
+### R4 — Probe data_removed semantics for stats reads — `wayfinder:research` — resolved (#17)
 
 **Question**: What do `r=fs` (fixture statistics) and `r=msum` (match summary) return for a fixture with `data_removed=1`? R1's fixtures probe showed every season-61 fixture in the last-8 window and one season-62 League fixture carries `data_removed=1`, while the two most recent are `0`. Empty elements, an error, or full data — and does the flag flip to 1 for current-season fixtures over time (will the Home page's last-8 window decay into missing stats)?
 
@@ -121,6 +121,18 @@ Each ticket below becomes a child issue of the map. Blocked-by edges are listed 
 
 **Notes**: resolve with the **research** skill. Tracker: #17.
 
+### R5 — Probe the teams read (r=t) for batch, ranking_points, bot — `wayfinder:research` — resolved (#18)
+
+**Question**: Does `r=t` work live, does `teamids` batching work (docs claim max 10), are the public fields live as documented (esp. name, ranking_points, bot, leagueid), and does a bot team return `bot=1`? Raised during D5's session: D1 ruled `f` carries no team facts (score lives in `ms`; team identity in team reads), and decision 7's "opponent CSR" had no verified source.
+
+**Why**: D5 (Home) needs opponent name + strength figure per fixture row; the Teams read is the only batched public source.
+
+**How**: minimal burst, ≥3 s apart; probes `r=t&teamid=<opponent>` and `r=t&teamids=<window opponents>`; artifacts response-bodies-only under `docs/research/artifacts/r5-*.xml`.
+
+**Context**: R1 findings §F5 (`f` carries no names/CSR); `API_ENDPOINTS_COMPLETE.md` §26; `endpoint-parameters.json`.
+
+**Notes**: resolved with the **research** skill 2026-09-15 during D5's session. Verdict: `r=t` verified (single + 6/6 batch); undocumented `average_top15_csr` on the public record is the decision-7 "opponent CSR" figure; documented owner-only extras absent live (doc divergence #6); bot teams verified (`bot=1`, rankpts pinned 25) while their fixtures carry `f.botmatch=0`; `No data requested` recorded as a transient global API state. Findings: `docs/research/r5-teams-probe.md`. Tracker: #18.
+
 ### D1 — Lock the match-cache data model — `wayfinder:grilling` — blocked by R3
 
 **Question**: What exactly persists per viewed Fixture — parsed DTO, raw XML, or both? Storage layout under `Data/`, retention/eviction rules, and the aggregation key (PlayerId + FixtureId) the Player page joins on. Evolve the existing `SnapshotStore` or replace it outright?
@@ -129,13 +141,13 @@ Each ticket below becomes a child issue of the map. Blocked-by edges are listed 
 
 **Notes**: resolve with **grilling** + **domain-modeling** (likely adds glossary terms, e.g. Match Cache). Blocked by: R3.
 
-### D2 — Lock the route map + navigation — `wayfinder:grilling` — frontier
+### D2 — Lock the route map + navigation — `wayfinder:grilling` — resolved (#9)
 
 **Question**: Exact routes, nav labels, auth gates, landing behavior. Proposal to grill: `/` Home; `/Fixtures/{id}` Match Analysis; `/Players/{id}` Player History; `/Account/SignUp`, `/Account/Login`, `/Account/LinkClub`, `/Account/Settings`; `/Playground` (ApiTester, moved). Nav order: Home · Squad (MemberStatsComparison) · Player History · Playground · Settings. Landing after login = Home, which hard-errors per decision 2 if stored Member credentials are stale. Which routes are public, which auth-only, which link-required?
 
 **Notes**: resolve with **grilling**.
 
-### D3 — Lock the auth & account spec section — `wayfinder:grilling` — frontier
+### D3 — Lock the auth & account spec section — `wayfinder:grilling` — resolved (#10)
 
 **Question**: Pin the full account spec: Identity + SQLite config (provider, migrations home, password policy), cookie lifetime + remember-me, the sign-up state machine (unlinked → linked), Link-club live-validation UX + error copy, the Settings re-link flow (the recovery hatch from decision 2), and the secrets-scrub plan (what moves to user-secrets, what happens to `DashboardDefaults`, plus the `r=f`→`fi` doc fix from decision 15).
 
@@ -153,23 +165,23 @@ Each ticket below becomes a child issue of the map. Blocked-by edges are listed 
 
 **Notes**: resolve with **grilling**. Blocked by: R2, R4.
 
-### D6 — Lock the Match Analysis page spec — `wayfinder:grilling` — blocked by R1, D4
+### D6 — Lock the Match Analysis page spec — `wayfinder:grilling` — resolved (#13)
 
 **Question**: Tactics panel contents per R1's verdict (flat sliders + XV + captain/kicker; per-area UI only if proven to exist), team compare row, the tab set from D4, default sort, injuries/notes display, and where the Recommendations output (D8) renders.
 
-**Notes**: resolve with **grilling**. Blocked by: R1, D4.
+**Notes**: resolved with **grilling** 2026-09-15 (one round; all eight recommendations accepted). Consumes R1's verdict, D1's cache rows, D2's route/gates, D4's tab set + compare row. Resolution: [#13](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/13).
 
-### D7 — Lock the Player History page spec — `wayfinder:grilling` — blocked by D1, D4
+### D7 — Lock the Player History page spec — `wayfinder:grilling` — resolved (#14)
 
 **Question**: Trend granularity (per cached fixture), which stat groups trend (same groups as D4), visual treatment (sparklines vs tables vs both), scope (current season + cache per decision 11), and entry points (from a Match row, from a squad list).
 
-**Notes**: resolve with **grilling**. Blocked by: D1, D4.
+**Notes**: resolved with **grilling** 2026-09-15 (two rounds; all recommendations accepted, including the D2-amending `/Players` index — user-approved explicitly). Strict cache-first (zero `fs` calls; `ps` once per Player+season); 7-tab per-fixture tables + header sparklines; season block with caps from `ps`; slim `/Players` index from the latest Squad Snapshot; edge states per D2/D6 patterns; glossary adds Trend; fog gains "Load full season" backfill. Resolution: [#14](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/14).
 
-### D8 — Pin recommendation rules v1 — `wayfinder:grilling` — blocked by R3, D4
+### D8 — Pin recommendation rules v1 — `wayfinder:grilling` — resolved (#15)
 
 **Question**: The deterministic rule set: per-category your-team-vs-opponent comparisons, weakness→tactic-slider mappings (e.g. lost N lineouts → raise driving / cut expansive), flag thresholds, output rendering, and explicit non-goals (no AI in v1 per decision 10).
 
-**Notes**: resolve with **grilling**. Blocked by: R3, D4.
+**Notes**: resolved with **grilling** + **domain-modeling** 2026-09-15 (one round; all eight recommendations accepted). Consumes D4's compare row, D1's TeamFixtureStat rows, D6's placement. Resolution: [#15](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/15).
 
 ### D9 — Assemble the Dashboard 2.0 spec — `wayfinder:task` — blocked by D1–D8
 

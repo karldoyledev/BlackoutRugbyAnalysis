@@ -35,6 +35,28 @@ _Avoid_: match stats, game stats
 **Player Statistics**:
 A Player's cumulative output over a scoring period (season, competition).
 _Avoid_: player stats, career stats
+**Match Summary**:
+The per-Fixture summary record: final points, scorers by type with counts, injuries, substitutions, intensity, weather, and attendance. Distinct from Fixture Statistics (per-Fixture output) and Player Statistics (cumulative output).
+_Avoid_: match report, game summary, result summary
+
+**CSR**:
+The game's skill-rating value. Each Player has an individual CSR, raised through training; a Team has an overall CSR. A point-in-time attribute of a read, never a per-fixture statistic.
+_Avoid_: rating, club rating
+
+**XV**:
+The fifteen starting Players of a Team's lineup for one Fixture, occupying slots 1–15.
+_Avoid_: starting fifteen, first team, starters
+
+**Bench**:
+The eight substitute slots (16–23) of a Team's lineup for one Fixture.
+_Avoid_: substitutes, replacements, reserves
+**Stat Group**:
+One of seven named buckets (Attack, Defence, Kicking, Handling, Discipline, Lineout, Other) organizing per-fixture player output on the Match Analysis page and per-Player trends on the Player History page.
+_Avoid_: tab group, stat category
+
+**Trend**:
+A per-Player, per-Fixture series of one statistic, drawn from the Match Cache and shown on the Player History page.
+_Avoid_: history, graph, progression
 
 **Standing**:
 A Team's league-table position for a season.
@@ -79,6 +101,14 @@ _Avoid_: connected, paired, activated
 **Squad**:
 The set of Players currently contracted to a Team; the Squad page compares them over time via Squad Snapshots.
 _Avoid_: roster, team list
+
+**Tactic Slider**:
+One of the in-game strategy controls a manager sets for a Fixture (Pick and Go, Driving, Expansive, Creative, Defence, Kicking, Kick for Touch, Up and Under, Drop Goals, Intensity, Discipline); unreadable through the API, so Recommendations reference it by name and direction only.
+_Avoid_: strategy field, tactic setting, slider value
+
+**Recommendation**:
+One output item of the deterministic rules engine on the Match Analysis page: a diagnosis with evidence from the team compare row, a severity (Watch or Act), and zero or more Tactic Slider moves.
+_Avoid_: flag, tip, advice item
 
 #Important rules
 
