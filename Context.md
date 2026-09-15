@@ -110,6 +110,14 @@ _Avoid_: strategy field, tactic setting, slider value
 One output item of the deterministic rules engine on the Match Analysis page: a diagnosis with evidence from the team compare row, a severity (Watch or Act), and zero or more Tactic Slider moves.
 _Avoid_: flag, tip, advice item
 
+**Last-8 Window**:
+The API-provided set of a Team's eight most recent scheduled Fixtures, which may span seasons; Home's rows are its completed Fixtures.
+_Avoid_: recent matches, last-8 list, form guide
+
+**Bot**:
+A Team managed by the game rather than by a Member; identified by the flag on the team read, never by a Fixture-level field.
+_Avoid_: AI team, CPU team, dummy team
+
 #Important rules
 
 All timestamps are in BRT, which is GMT+12

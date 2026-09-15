@@ -2,7 +2,7 @@
 
 **Repo**: karldoyledev/BlackoutRugbyAnalysis — this file is the local draft of the GitHub issue labelled `wayfinder:map`. When pushed, the map becomes an issue; each ticket below becomes a child issue (`Part of #<map>`, labels `wayfinder:research` / `wayfinder:grilling` / `wayfinder:task`), blocking edges become GitHub native `blocked_by` dependencies.
 
-**Tracker (live)**: Map = [#4](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/4) · R1 #5 · R2 #6 · R3 #7 · R4 #17 · R5 #18 · D1 #8 · D2 #9 · D3 #10 · D4 #11 · D5 #12 · D6 #13 · D7 #14 · D8 #15 · D9 #16. All sub-issue links and 18 blocked_by edges verified wired. **Status**: resolved R1–R5 (#5–#7, #17, #18), D1–D4 (#8–#11), D6 (#13), D7 (#14), D8 (#15) and D10 (#19); frontier is now D5 (#12, claimed by its session); D9 (#16) waits on D5 only. Decisions 21+ live on the map issue (canonical; now ends at 28); this draft's list below ends at 20.
+**Tracker (live)**: Map = [#4](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/4) · R1 #5 · R2 #6 · R3 #7 · R4 #17 · R5 #18 · D1 #8 · D2 #9 · D3 #10 · D4 #11 · D5 #12 · D6 #13 · D7 #14 · D8 #15 · D9 #16. All sub-issue links and 18 blocked_by edges verified wired. **Status**: **MAP COMPLETE 2026-09-15** — all tickets resolved and closed (R1–R5 #5–#7/#17/#18, D1–D10 #8–#15/#19, D5 #12, D9 #16); map issue #4 closed. Destination artifact: `docs/spec/dashboard-2-0-spec.md` (decision 30, assembled from decisions 1–29). Decisions 21+ live on the map issue (canonical); this draft's list below ends at 20.
 
 ## Destination
 
