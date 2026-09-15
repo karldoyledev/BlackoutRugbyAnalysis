@@ -4,6 +4,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
+using BlackoutRugbyDashboard.Services;
+
 namespace BlackoutRugby.Api
 {
     public class BlackoutRugbyApiCredentials
@@ -25,7 +27,7 @@ namespace BlackoutRugby.Api
         public string? DeveloperIV { get; set; }
     }
 
-    public class BlackoutRugbyApiClient
+    public class BlackoutRugbyApiClient : BlackoutRugbyDashboard.Services.IBlackoutRugbyApiClient
     {
         private readonly HttpClient _httpClient;
         private readonly string _baseEndpoint;
@@ -319,6 +321,36 @@ namespace BlackoutRugby.Api
             return await SendRequestAsync("m", new Dictionary<string, string?>
             {
                 ["memberid"] = memberId.ToString()
+            });
+        }
+
+        /// <summary>
+        /// Read fixture statistics for one fixture (r=fs, R3-verified shapes).
+        /// Bare read returns the four team-stats blocks; player reads narrow by
+        /// squad or player.
+        /// </summary>
+        /// <param name="fixtureId">Required: The fixture ID</param>
+        /// <param name="playerStats">Optional: Limit to one player's element (playerstats)</param>
+        /// <param name="teamPlayersStats">Optional: Limit to a team's 23 slot elements (teamplayersstats)</param>
+        public async Task<string> GetFixtureStatisticsAsync(int fixtureId, int? playerStats = null, int? teamPlayersStats = null)
+        {
+            return await SendRequestAsync("fs", new Dictionary<string, string?>
+            {
+                ["fixtureid"] = fixtureId.ToString(),
+                ["playerstats"] = playerStats?.ToString(),
+                ["teamplayersstats"] = teamPlayersStats?.ToString()
+            });
+        }
+
+        /// <summary>
+        /// Read a player's cumulative season statistics (r=ps, R3-verified 49 fields).
+        /// </summary>
+        /// <param name="playerId">Required: The player ID</param>
+        public async Task<string> GetPlayerStatisticsAsync(int playerId)
+        {
+            return await SendRequestAsync("ps", new Dictionary<string, string?>
+            {
+                ["playerid"] = playerId.ToString()
             });
         }
 

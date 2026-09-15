@@ -1,5 +1,9 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using BlackoutRugbyDashboard.Data;
 
 namespace BlackoutRugbyDashboard.Services;
 
@@ -408,6 +412,126 @@ public class BlackoutRugbyResponseAdapter
     }
 
     /// <summary>
+    /// Parses a Fixtures response into full `f` metadata rows for the Match
+    /// Cache (D1): every `f` field including data_removed, botmatch, and the
+    /// raw unix timestamps (BRT context lives in the raw archive). Completed =
+    /// matchfinish present (`r=f` carries no scores — the score source is the
+    /// Match Summary batch).
+    /// </summary>
+    public IReadOnlyList<FixtureRow> ParseFixtureRecords(string? xml)
+    {
+        var document = TryParse(xml);
+        if (document is null)
+        {
+            return [];
+        }
+
+        return document
+            .Descendants("fixture")
+            .Select(element => new FixtureRow
+            {
+                FixtureId = ReadInt(element, "id"),
+                Season = ReadIntAny(element, "season"),
+                LeagueId = ReadIntAny(element, "leagueid"),
+                Round = ReadIntAny(element, "round"),
+                Competition = Decode(ReadString(element, "competition")) ?? string.Empty,
+                HomeTeamId = ReadIntAny(element, "hometeamid", "home_team_id"),
+                GuestTeamId = ReadIntAny(element, "guestteamid", "away_team_id"),
+                WeatherId = ReadIntAny(element, "weather"),
+                BotMatch = ReadIntAny(element, "botmatch"),
+                DataRemoved = ReadIntAny(element, "data_removed"),
+                Stadium = ReadString(element, "stadium") ?? string.Empty,
+                CountryIso = Decode(ReadString(element, "country_iso")) ?? string.Empty,
+                MatchStartUnix = ReadLong(element, "matchstart"),
+                MatchFinishUnix = ReadLong(element, "matchfinish"),
+                FetchedAt = DateTime.UtcNow
+            })
+            .Where(row => row.FixtureId > 0)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Parses the live per-player Fixture-statistics shape (R3 F2): one
+    /// home_player_N / guest_player_N element per jersey slot, all 50 fs stat
+    /// fields verbatim. No dedupe needed (R3: no duplicate player elements).
+    /// </summary>
+    public IReadOnlyList<PlayerFixtureRow> ParsePlayerFixtureStats(string? xml)
+    {
+        var document = TryParse(xml);
+        if (document is null)
+        {
+            return [];
+        }
+
+        var rows = new List<PlayerFixtureRow>();
+        foreach (var element in document
+                     .Descendants("fixture_statistics")
+                     .SelectMany(fixture => fixture.Elements())
+                     .Where(element => PlayerSlotRegex.IsMatch(element.Name.LocalName)))
+        {
+            var name = element.Name.LocalName;
+            var slot = int.Parse(name[(name.LastIndexOf('_') + 1)..], CultureInfo.InvariantCulture);
+            var row = new PlayerFixtureRow
+            {
+                FixtureId = ReadIntAttribute(element.Parent!, "id"),
+                PlayerId = ReadId(element),
+                TeamId = int.TryParse(element.Attribute("teamid")?.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var teamId) ? teamId : 0,
+                Side = name.StartsWith("home", StringComparison.Ordinal) ? "home" : "guest",
+                Jersey = slot,
+                Slot = slot
+            };
+            PopulateColumnFields(element, row);
+            if (row.PlayerId > 0)
+            {
+                rows.Add(row);
+            }
+        }
+
+        return rows;
+    }
+
+    /// <summary>
+    /// Parses a bare Fixture-statistics response into the four team-stats blocks
+    /// (R3 F5): full-time and half-time for both sides, all 58 team fields
+    /// verbatim — the team compare row's source.
+    /// </summary>
+    public IReadOnlyList<TeamFixtureStatRow> ParseTeamFixtureStats(string? xml)
+    {
+        var document = TryParse(xml);
+        if (document is null)
+        {
+            return [];
+        }
+
+        var rows = new List<TeamFixtureStatRow>();
+        foreach (var fixture in document.Descendants("fixture_statistics"))
+        {
+            var fixtureId = ReadIntAttribute(fixture, "id");
+            foreach (var (elementName, side, half) in new[]
+                     {
+                         ("home_team_stats", "home", "full"),
+                         ("guest_team_stats", "guest", "full"),
+                         ("home_team_halftime_stats", "home", "half1"),
+                         ("guest_team_halftime_stats", "guest", "half1")
+                     })
+            {
+                foreach (var element in fixture.Elements(elementName))
+                {
+                    var row = new TeamFixtureStatRow
+                    {
+                        FixtureId = fixtureId,
+                        TeamId = ReadId(element),
+                        Side = side,
+                        Half = half
+                    };
+                    PopulateColumnFields(element, row);
+                    rows.Add(row);
+                }
+            }
+        }
+
+        return rows;
+    }
     /// Extracts the response-level error text from an error response. Returns null
     /// when the content is blank, malformed, or carries no error element.
     /// </summary>
@@ -542,6 +666,42 @@ public class BlackoutRugbyResponseAdapter
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// Populates every <see cref="ColumnAttribute"/>-named property of the row
+    /// from the matching XML child element. The Column name is the exact API
+    /// element name, so entity, parser, and tests share one field list.
+    /// </summary>
+    private static void PopulateColumnFields<T>(XElement element, T target) where T : class
+    {
+        foreach (var property in typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (property.GetCustomAttribute<ColumnAttribute>()?.Name is not string columnName)
+            {
+                continue;
+            }
+
+            var rawValue = element.Element(columnName)?.Value?.Trim();
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                continue;
+            }
+
+            if (int.TryParse(rawValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var value))
+            {
+                property.SetValue(target, value);
+            }
+        }
+    }
+
+    private static readonly Regex PlayerSlotRegex = new(@"^(home|guest)_player_(\d{1,2})$", RegexOptions.Compiled);
+
+    private static long ReadLong(XElement element, string name)
+    {
+        return long.TryParse(element.Element(name)?.Value?.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : 0;
     }
 
     /// <summary>
