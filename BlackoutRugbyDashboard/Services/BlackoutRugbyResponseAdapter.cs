@@ -249,6 +249,165 @@ public class BlackoutRugbyResponseAdapter
     }
 
     /// <summary>
+    /// Parses a Teams response (single or teamids batch) into point-in-time team
+    /// facts: identity, bot flag, and the team-strength figures (R5). The API
+    /// duplicates the team id as both attribute and child element; the child
+    /// element is read. Teams without a valid id are skipped.
+    /// </summary>
+    public IReadOnlyList<TeamFact> ParseTeams(string? xml)
+    {
+        var document = TryParse(xml);
+        if (document is null)
+        {
+            return [];
+        }
+
+        return document
+            .Descendants("team")
+            .Select(element => new TeamFact(
+                ReadInt(element, "id"),
+                Decode(ReadString(element, "name")) ?? string.Empty,
+                Decode(ReadString(element, "country_iso")) ?? string.Empty,
+                ReadInt(element, "bot") == 1,
+                ReadInt(element, "average_top15_csr"),
+                ReadNullableDouble(element, "ranking_points"),
+                ReadInt(element, "leagueid"),
+                ReadInt(element, "regional_rank"),
+                ReadInt(element, "national_rank"),
+                ReadInt(element, "world_rank")))
+            .Where(team => team.Id > 0)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Parses a Lineups response into per-Fixture team sheets: XV slots 1–15 and
+    /// bench slots 1–8 plus captain and kicker. The live API duplicates the
+    /// <c>&lt;lineup&gt;</c> element (R1 F4); duplicates collapse on
+    /// (fixtureid, teamid).
+    /// </summary>
+    public IReadOnlyList<Lineup> ParseLineups(string? xml)
+    {
+        var document = TryParse(xml);
+        if (document is null)
+        {
+            return [];
+        }
+
+        return document
+            .Descendants("lineup")
+            .GroupBy(element => $"{ReadInt(element, "fixtureid")}-{ReadInt(element, "teamid")}")
+            .Select(group => group.First())
+            .Select(element => new Lineup(
+                ReadInt(element, "teamid"),
+                ReadInt(element, "fixtureid"),
+                Enumerable.Range(1, 15).Select(slot => ReadInt(element, $"p{slot}")).ToList(),
+                Enumerable.Range(1, 8).Select(slot => ReadInt(element, $"b{slot}")).ToList(),
+                ReadNullableInt(element, "captain"),
+                ReadNullableInt(element, "kicker")))
+            .Where(lineup => lineup.FixtureId > 0 || lineup.TeamId > 0)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Parses a Match-summary response (single or fixtureids batch) into the
+    /// per-Fixture summary records: final points per side, scorers by type with
+    /// counts, injuries, substitutions, intensity, weather, and the five
+    /// attendance tiers (R2 F3).
+    /// </summary>
+    public IReadOnlyList<MatchSummary> ParseMatchSummaries(string? xml)
+    {
+        var document = TryParse(xml);
+        if (document is null)
+        {
+            return [];
+        }
+
+        return document
+            .Descendants("match_summary")
+            .Select(element => new MatchSummary(
+                ReadIntAttribute(element, "fixtureid"),
+                BuildMatchSummarySide(element.Element("home")),
+                BuildMatchSummarySide(element.Element("guest")),
+                BuildMatchSummaryAttendance(element.Element("attendance")),
+                element.Element("weather") is null ? null : ReadNullableInt(element.Element("weather")!, "id"),
+                element.Element("weather") is null ? null : ReadNullableInt(element.Element("weather")!, "night") is int night ? night == 1 : null))
+            .Where(summary => summary.FixtureId > 0)
+            .ToList();
+    }
+
+    private static MatchSummarySide BuildMatchSummarySide(XElement? element)
+    {
+        if (element is null)
+        {
+            return new MatchSummarySide(0, null, [], [], []);
+        }
+
+        return new MatchSummarySide(
+            ReadInt(element, "points"),
+            ReadNullableInt(element, "intensity"),
+            ReadScorers(element),
+            ReadSummaryEvents(element.Element("injuries"), readInjuryDays: true),
+            ReadSummaryEvents(element.Element("subs"), readInjuryDays: false));
+    }
+
+    private static IReadOnlyList<MatchSummaryScorer> ReadScorers(XElement side)
+    {
+        var scorers = new List<MatchSummaryScorer>();
+        foreach (var scorerType in new[] { "tries", "conversions", "penalties", "dropgoals" })
+        {
+            var list = side.Element(scorerType);
+            if (list is null)
+            {
+                continue;
+            }
+
+            foreach (var player in list.Descendants("player"))
+            {
+                var playerId = ReadId(player);
+                if (playerId > 0)
+                {
+                    scorers.Add(new MatchSummaryScorer(scorerType, playerId, ReadInt(player, "number")));
+                }
+            }
+        }
+
+        return scorers;
+    }
+
+    private static IReadOnlyList<MatchSummaryEvent> ReadSummaryEvents(XElement? list, bool readInjuryDays)
+    {
+        if (list is null)
+        {
+            return [];
+        }
+
+        return list
+            .Descendants("player")
+            .Select(player => new MatchSummaryEvent(
+                ReadId(player),
+                ReadInt(player, "minutesplayed"),
+                readInjuryDays ? ReadInt(player, "daysinjured") : 0,
+                ReadNullableInt(player, "replacedby")))
+            .Where(item => item.PlayerId > 0)
+            .ToList();
+    }
+
+    private static MatchSummaryAttendance? BuildMatchSummaryAttendance(XElement? element)
+    {
+        if (element is null)
+        {
+            return null;
+        }
+
+        return new MatchSummaryAttendance(
+            ReadInt(element, "standing"),
+            ReadInt(element, "uncovered"),
+            ReadInt(element, "covered"),
+            ReadInt(element, "members"),
+            ReadInt(element, "corporate"));
+    }
+
+    /// <summary>
     /// Extracts the response-level error text from an error response. Returns null
     /// when the content is blank, malformed, or carries no error element.
     /// </summary>
@@ -386,6 +545,66 @@ public class BlackoutRugbyResponseAdapter
     }
 
     /// <summary>
+    /// Reads an integer held in an element attribute (e.g. fixtureid on
+    /// match_summary elements); missing or invalid attributes normalize to zero.
+    /// </summary>
+    private static int ReadIntAttribute(XElement element, string name)
+    {
+        return int.TryParse(element.Attribute(name)?.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : 0;
+    }
+
+    /// <summary>
+    /// Reads an entity id that the API carries as both an attribute and a
+    /// duplicated child element; the attribute wins, the child is the fallback.
+    /// </summary>
+    private static int ReadId(XElement element)
+    {
+        return int.TryParse(element.Attribute("id")?.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var attributeId)
+            ? attributeId
+            : ReadInt(element, "id");
+    }
+
+    /// <summary>
+    /// Reads an optional integer; a missing or unparseable element yields null
+    /// rather than a zero default, so genuinely-absent values stay absent.
+    /// </summary>
+    private static int? ReadNullableInt(XElement element, string name)
+    {
+        var rawValue = element.Element(name)?.Value?.Trim();
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return null;
+        }
+
+        return int.TryParse(rawValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : null;
+    }
+
+    /// <summary>
+    /// Reads an optional decimal value (e.g. ranking_points "37.211"); a missing
+    /// or unparseable element yields null.
+    /// </summary>
+    private static double? ReadNullableDouble(XElement element, string name)
+    {
+        var rawValue = element.Element(name)?.Value?.Trim();
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return null;
+        }
+
+        return double.TryParse(
+            rawValue,
+            NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowLeadingSign,
+            CultureInfo.InvariantCulture,
+            out var value)
+            ? value
+            : null;
+    }
+
+    /// <summary>
     /// Decodes URL-encoded API text ("Wellington+Rugby", "O%27Brien") so names read
     /// consistently in every workflow.
     /// </summary>
@@ -409,6 +628,64 @@ public class BlackoutRugbyResponseAdapter
 
 /// <summary>Normalized Team details from a Team response.</summary>
 public sealed record Team(int Id, string Name, string CountryIso);
+
+/// <summary>
+/// Point-in-time team facts from a Teams response (R5): identity, bot flag, and
+/// the team-strength figures. The shape of the Match Cache's TeamFact row.
+/// </summary>
+public sealed record TeamFact(
+    int Id,
+    string Name,
+    string CountryIso,
+    bool Bot,
+    int AverageTop15Csr,
+    double? RankingPoints,
+    int LeagueId,
+    int RegionalRank,
+    int NationalRank,
+    int WorldRank);
+
+/// <summary>
+/// One Team's team sheet for a Fixture: the XV (slots 1–15), the Bench (slots
+/// 1–8), and the captain and kicker. Player ids reference Players.
+/// </summary>
+public sealed record Lineup(
+    int TeamId,
+    int FixtureId,
+    IReadOnlyList<int> Xv,
+    IReadOnlyList<int> Bench,
+    int? CaptainId,
+    int? KickerId);
+
+/// <summary>One scorer entry of a Match Summary: the score type, player, and count.</summary>
+public sealed record MatchSummaryScorer(string ScorerType, int PlayerId, int Count);
+
+/// <summary>One injury or substitution event in a Match Summary.</summary>
+public sealed record MatchSummaryEvent(int PlayerId, int Minute, int DaysInjured, int? ReplacedById);
+
+/// <summary>One side's output in a Match Summary: points, intensity, scorers, injuries, substitutions.</summary>
+public sealed record MatchSummarySide(
+    int Points,
+    int? Intensity,
+    IReadOnlyList<MatchSummaryScorer> Scorers,
+    IReadOnlyList<MatchSummaryEvent> Injuries,
+    IReadOnlyList<MatchSummaryEvent> Substitutions);
+
+/// <summary>The five attendance tiers of a Match Summary; the sum is the total crowd.</summary>
+public sealed record MatchSummaryAttendance(int Standing, int Uncovered, int Covered, int Members, int Corporate);
+
+/// <summary>
+/// The per-Fixture summary record from a Match-summary response: final points,
+/// scorers, injuries, substitutions, intensity, weather, and attendance.
+/// Distinct from Fixture Statistics (per-Fixture output) and Player Statistics.
+/// </summary>
+public sealed record MatchSummary(
+    int FixtureId,
+    MatchSummarySide Home,
+    MatchSummarySide Guest,
+    MatchSummaryAttendance? Attendance,
+    int? WeatherId,
+    bool? WeatherNight);
 
 /// <summary>Normalized Player roster entry from a Players response.</summary>
 public sealed record Player(

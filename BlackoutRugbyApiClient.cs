@@ -203,7 +203,7 @@ namespace BlackoutRugby.Api
         /// <returns>XML response containing lineup data with player positions and numbers</returns>
         public async Task<string> GetLineupsAsync(int teamId, int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false)
         {
-            return await SendRequestAsync("li", new Dictionary<string, string?>
+            return await SendRequestAsync("lu", new Dictionary<string, string?>
             {
                 ["teamid"] = teamId.ToString(),
                 ["fixtureid"] = fixtureId?.ToString(),
@@ -280,7 +280,7 @@ namespace BlackoutRugby.Api
         /// <returns>XML response containing final match summary with all scoring details</returns>
         public async Task<string> GetMatchSummaryAsync(int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false)
         {
-            return await SendRequestAsync("msum", new Dictionary<string, string?>
+            return await SendRequestAsync("ms", new Dictionary<string, string?>
             {
                 ["fixtureid"] = fixtureId?.ToString(),
                 ["fixtureids"] = fixtureIds,
@@ -302,6 +302,23 @@ namespace BlackoutRugby.Api
             {
                 ["memberid"] = memberId?.ToString(),
                 ["memberids"] = memberIds
+            });
+        }
+
+        /// <summary>
+        /// Probe a single member record via the live-verified member read (r=m with
+        /// memberid — see R2 F2 / D3 §5). Used to validate a Member ID + Member Key
+        /// pair when linking a club; the response carries the member's teamid.
+        /// NOTE: GetMailAsync also sends r=m and GetMembersAsync sends r=mem; both
+        /// are unverified against the live API and flagged for a future probe.
+        /// </summary>
+        /// <param name="memberId">Required: The member ID to retrieve</param>
+        /// <returns>XML response containing the member record</returns>
+        public async Task<string> GetMemberAsync(int memberId)
+        {
+            return await SendRequestAsync("m", new Dictionary<string, string?>
+            {
+                ["memberid"] = memberId.ToString()
             });
         }
 
