@@ -39,6 +39,25 @@ public class BlackoutRugbyResponseAdapter
     }
 
     /// <summary>
+    /// Parses the single Member record of the verified member probe (r=m, D3 §5) —
+    /// the Club Link validation read. Returns null when no member element can be read.
+    /// </summary>
+    public MemberRecord? ParseMember(string? xml)
+    {
+        var document = TryParse(xml);
+        var element = document?.Descendants("member").FirstOrDefault();
+        if (element is null)
+        {
+            return null;
+        }
+
+        return new MemberRecord(
+            ReadInt(element, "id"),
+            Decode(ReadString(element, "username")) ?? string.Empty,
+            ReadInt(element, "teamid"));
+    }
+
+    /// <summary>
     /// Parses a Players response into roster entries in response order. Players
     /// without a valid id are skipped.
     /// </summary>
@@ -788,6 +807,9 @@ public class BlackoutRugbyResponseAdapter
 
 /// <summary>Normalized Team details from a Team response.</summary>
 public sealed record Team(int Id, string Name, string CountryIso);
+
+/// <summary>The Member record of the r=m Club Link probe (D3 §5): identity plus the managed Team id.</summary>
+public sealed record MemberRecord(int Id, string Username, int TeamId);
 
 /// <summary>
 /// Point-in-time team facts from a Teams response (R5): identity, bot flag, and

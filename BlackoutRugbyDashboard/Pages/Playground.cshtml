@@ -1,7 +1,7 @@
-@page
-@model ApiTesterModel
+﻿@page
+@model BlackoutRugbyDashboard.Pages.PlaygroundModel
 @{
-    ViewData["Title"] = "API Tester";
+    ViewData["Title"] = "API Playground";
 }
 
 <style>
@@ -501,7 +501,7 @@
         });
 
         responseBox.className = 'response-box loading';
-        responseBox.textContent = '⏳ Loading...';
+        responseBox.textContent = 'â³ Loading...';
 
         try {
             const response = await fetch(`/api/test?endpoint=${endpoint}&${params.toString()}`);

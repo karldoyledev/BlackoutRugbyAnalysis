@@ -1,8 +1,8 @@
-@page
-@model MemberStatsComparisonModel
+﻿@page "/Squad"
+@model BlackoutRugbyDashboard.Pages.SquadModel
 @using System.Text.Json
 @{
-    ViewData["Title"] = "Member Stats Comparison";
+    ViewData["Title"] = "Squad";
     var dashboard = Model.Dashboard;
     var gameStats = Model.GameStatsList;
     var fixtureBreakdowns = Model.FixtureBreakdowns;
@@ -72,7 +72,14 @@
 
     @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
     {
-        <div class="error-banner">@Model.ErrorMessage</div>
+        @* Decision-2 hard-error panel (D3, user story 7): an API-backed page that
+           cannot read shows a clear hard error with one button to Settings — a
+           broken Member Key is a runtime condition, recovered by re-linking. *@
+        <div class="error-banner hard-error-panel" role="alert">
+            <p class="mb-2">@Model.ErrorMessage</p>
+            <p class="mb-0">If your club's Member Key changed (e.g. after an in-game password change), re-link from Settings.</p>
+            <a asp-page="/Account/Settings" class="btn btn-primary mt-2">Go to Settings</a>
+        </div>
     }
 </section>
 

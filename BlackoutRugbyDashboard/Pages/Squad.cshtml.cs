@@ -6,30 +6,34 @@ using Microsoft.Extensions.Options;
 
 namespace BlackoutRugbyDashboard.Pages;
 
-public class MemberStatsComparisonModel : PageModel
+/// <summary>
+/// The Squad page (D2 move of MemberStatsComparison, unchanged behavior): Squad
+/// Snapshots over time via the untouched SnapshotStore. Link-required (D2):
+/// member credentials ride the signed-in User's Club Link — the Member Key
+/// never comes from a form (D3), and unlinked users bounce to Home's prompt card.
+/// </summary>
+public class SquadModel : ClubLinkedPageModel
 {
     private readonly TeamDashboardService _dashboardService;
     private readonly DashboardDefaultsOptions _dashboardDefaults;
-    private readonly ILogger<MemberStatsComparisonModel> _logger;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly DeveloperOptions _developerOptions;
+    private readonly ILogger<SquadModel> _logger;
+    private readonly IBlackoutRugbyApiClient _apiClient;
     private readonly ApiLogger _apiLogger;
     private readonly BlackoutRugbyResponseAdapter _responseAdapter;
 
-    public MemberStatsComparisonModel(
+    public SquadModel(
         TeamDashboardService dashboardService,
-        ILogger<MemberStatsComparisonModel> logger,
+        ILogger<SquadModel> logger,
         IOptions<DashboardDefaultsOptions> dashboardDefaults,
-        IOptions<DeveloperOptions> developerOptions,
-        IHttpClientFactory httpClientFactory,
+        IBlackoutRugbyApiClient apiClient,
         ApiLogger apiLogger,
-        BlackoutRugbyResponseAdapter responseAdapter)
+        BlackoutRugbyResponseAdapter responseAdapter,
+        ClubLinkService clubLinks) : base(clubLinks)
     {
         _dashboardService = dashboardService;
         _logger = logger;
         _dashboardDefaults = dashboardDefaults.Value;
-        _developerOptions = developerOptions.Value;
-        _httpClientFactory = httpClientFactory;
+        _apiClient = apiClient;
         _apiLogger = apiLogger;
         _responseAdapter = responseAdapter;
         Input = CreateRequestFromDefaults();
@@ -53,6 +57,7 @@ public class MemberStatsComparisonModel : PageModel
     public async Task<IActionResult> OnPostLoadAsync()
     {
         ApplyDefaultsIfMissing();
+        ApplyLinkedMemberCredentials();
         ModelState.Clear();
 
         if (!TryValidateModel(Input, nameof(Input)))
@@ -75,12 +80,20 @@ public class MemberStatsComparisonModel : PageModel
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Failed to load dashboard for team {TeamId}", Input.TeamId);
+            _logger.LogError(exception, "Failed to load squad dashboard for team {TeamId}", Input.TeamId);
             ErrorMessage = exception.Message;
             ApiLogsJson = _apiLogger.GetLogsJson();
         }
 
         return Page();
+    }
+
+    /// <summary>D3: the Member Key rides the Club Link, never the form.</summary>
+    private void ApplyLinkedMemberCredentials()
+    {
+        var credentials = ClubLinks.ResolveCurrentMemberCredentials();
+        Input.MemberId = credentials?.MemberId;
+        Input.MemberKey = credentials?.MemberKey;
     }
 
     private async Task<List<FixtureBreakdown>> LoadFixtureBreakdownsAsync(TeamDashboardRequest request, IReadOnlyList<PlayerDashboardItem> players)
@@ -92,14 +105,10 @@ public class MemberStatsComparisonModel : PageModel
         
         try
         {
-            var credentials = new BlackoutRugby.Api.BlackoutRugbyApiCredentials(null, null)
-            {
-                DeveloperId = _developerOptions.DeveloperId,
-                DeveloperKey = _developerOptions.DeveloperKey,
-                DeveloperIV = _developerOptions.DeveloperIV
-            };
-
-            var client = new BlackoutRugby.Api.BlackoutRugbyApiClient(_httpClientFactory.CreateClient(), request.BaseEndpoint, credentials);
+            // The per-request default client (Program.cs): developer credentials
+            // plus the signed-in User's linked member credentials — the same
+            // credentials TeamDashboardService consumes via the request.
+            var client = _apiClient;
             
             // Get the most recent fixtures for the team in the selected season.
             _apiLogger.LogRequest("GET", $"{request.BaseEndpoint}/fixtures?teamId={request.TeamId}&last=20&season={request.Season}");
@@ -226,12 +235,11 @@ public class MemberStatsComparisonModel : PageModel
 
     private TeamDashboardRequest CreateRequestFromDefaults()
     {
+        var link = ClubLinks.GetLinkState();
         return new TeamDashboardRequest
         {
             BaseEndpoint = _dashboardDefaults.BaseEndpoint,
-            TeamId = _dashboardDefaults.TeamId,
-            MemberId = _dashboardDefaults.MemberId,
-            MemberKey = _dashboardDefaults.MemberKey,
+            TeamId = link?.TeamId ?? 0,
             Season = 80
         };
     }
@@ -241,7 +249,7 @@ public class MemberStatsComparisonModel : PageModel
         if (string.IsNullOrEmpty(Input.BaseEndpoint))
             Input.BaseEndpoint = _dashboardDefaults.BaseEndpoint;
         if (Input.TeamId == 0)
-            Input.TeamId = _dashboardDefaults.TeamId;
+            Input.TeamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
     }
 }
 

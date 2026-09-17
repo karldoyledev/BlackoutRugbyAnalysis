@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using BlackoutRugbyDashboard.Services
+@inject ClubLinkService ClubLink
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -13,20 +15,44 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark app-nav mb-4">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">Blackout Rugby Team Hub</a>
+                <a class="navbar-brand" asp-page="/Index">Blackout Rugby Team Hub</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-page="/Index">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-page="/ApiTester">API Tester</a>
-                        </li>
-                    </ul>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        var linked = ClubLink.GetLinkState() is not null;
+                        <ul class="navbar-nav flex-grow-1">
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-page="/Index">Home</a>
+                            </li>
+                            @if (linked)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-light" asp-page="/Squad">Squad</a>
+                                </li>
+                            }
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-page="/Playground">API Playground</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-page="/Account/Settings">Settings</a>
+                            </li>
+                        </ul>
+                    }
+                    else
+                    {
+                        <ul class="navbar-nav flex-grow-1 justify-content-end">
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-page="/Account/Login">Log in</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-page="/Account/SignUp">Sign up</a>
+                            </li>
+                        </ul>
+                    }
                 </div>
             </div>
         </nav>

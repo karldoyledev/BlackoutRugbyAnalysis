@@ -17,5 +17,13 @@ public interface IBlackoutRugbyApiClient
 
     Task<string> GetPlayerStatisticsAsync(int playerId);
 
+    /// <summary>
+    /// The verified member probe (r=m + memberid, R2 F2 / D3 §5): reads one
+    /// Member record — the Club Link validation read. Candidate member
+    /// credentials ride the client, so probes go through
+    /// IBlackoutRugbyApiClientFactory.CreateForMember.
+    /// </summary>
+    Task<string> GetMemberAsync(int memberId);
+
     Task<string> GetLineupsAsync(int teamId, int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false);
 }

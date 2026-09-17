@@ -123,7 +123,7 @@ All requests must include:
 
 ---
 
-### 6. Finances (`r=f`)
+### 6. Finances (`r=fi`)
 **Type:** GET (Read)  
 **Supports JSON:** Yes  
 **Authentication:** Member key required
@@ -223,7 +223,7 @@ All requests must include:
 
 ---
 
-### 10. Lineups (`r=li`)
+### 10. Lineups (`r=lu`)
 **Type:** GET/POST (Read/Write)  
 **Supports JSON:** Yes
 
@@ -332,7 +332,7 @@ All requests must include:
 
 ---
 
-### 14. Match Score (`r=ms`)
+### 14. Match Score (`r=ls`)
 **Type:** GET (Read)  
 **Supports JSON:** Yes
 
@@ -350,7 +350,7 @@ All requests must include:
 
 ---
 
-### 15. Match Summary (`r=msum`)
+### 15. Match Summary (`r=ms`)
 **Type:** GET (Read)  
 **Supports JSON:** Yes
 
@@ -624,6 +624,8 @@ All requests must include:
 
 **Response Fields (Owner Only - Additional):**
 - `drift`, `rush`, `manonman`, `contentment`, `members`, `stadium_capacity`, `stadium_standing`, `stadium_uncovered`, `stadium_covered`, `stadium_members`, `stadium_corporate`, `bank_balance`, `ltnt_effectiveness`, `ltnt_effectiveness_youth`, `major_sponsor`, `minor_sponsors`, `scouting_stars`
+
+**Live-verified note (R5, 2026-09-15):** on an owner read (`r=t&teamid=<own>`) the owner-only fields above were absent — the live public record is name, `bot`, regional/national/world ranks, `ranking_points`, plus the undocumented `average_top15_csr`. Treat the owner-only list as unverified until probed again.
 
 **National/U20 Fields:**
 - `nat: 1` for national, `u20: 1` for Under 20 team

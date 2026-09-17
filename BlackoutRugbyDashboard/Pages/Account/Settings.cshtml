@@ -1,0 +1,122 @@
+@page
+@model BlackoutRugbyDashboard.Pages.Account.SettingsModel
+@using BlackoutRugbyDashboard.Data
+@{
+    ViewData["Title"] = "Settings";
+    var linked = Model.Link is not null;
+}
+
+<div class="container account-page">
+    <h1 class="mb-1">Settings</h1>
+    <p class="text-muted">Link status, recovery hatches, cache reset, sign-out.</p>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="alert alert-success" role="alert">@Model.StatusMessage</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header">Club link</div>
+        <div class="card-body">
+            @if (linked)
+            {
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Status</dt>
+                    <dd class="col-sm-9"><span class="badge bg-success">Club link active</span></dd>
+                    <dt class="col-sm-3">Member ID</dt>
+                    <dd class="col-sm-9">@Model.Link!.MemberId</dd>
+                    <dt class="col-sm-3">Team</dt>
+                    <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.Link.TeamName) ? $"Team {Model.Link.TeamId}" : $"{Model.Link.TeamName} ({Model.Link.TeamId})")</dd>
+                    <dt class="col-sm-3">Linked at</dt>
+                    <dd class="col-sm-9">@Model.Link.LinkedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</dd>
+                </dl>
+            }
+            else
+            {
+                <p class="mb-0">No club linked. Link one below, or skip it — Home and the API Playground work either way.</p>
+            }
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">@(linked ? "Re-link club" : "Link your club")</div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="Link">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="LinkInput.MemberId" class="form-label"></label>
+                        <input asp-for="LinkInput.MemberId" class="form-control" inputmode="numeric" />
+                        <span asp-validation-for="LinkInput.MemberId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="LinkInput.MemberKey" class="form-label"></label>
+                        <input asp-for="LinkInput.MemberKey" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="LinkInput.MemberKey" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-2 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Save link</button>
+                    </div>
+                </div>
+                <small class="form-text text-muted">Validated live with one API probe before anything is saved. Use this when a rotated Member Key hard-errors the API-backed pages.</small>
+            </form>
+        </div>
+    </div>
+
+    @if (linked)
+    {
+        <div class="card mb-4 border-danger">
+            <div class="card-header text-danger">Unlink club</div>
+            <div class="card-body">
+                <p class="mb-3">Removes the binding between your account and the Member. Your account and the entire Match Cache survive; you can link a different Member afterwards.</p>
+                <form method="post" asp-page-handler="Unlink" onsubmit="return confirm('Unlink this club? The Match Cache and your account are kept.');">
+                    <button type="submit" class="btn btn-outline-danger">Unlink club</button>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="card mb-4 border-danger">
+        <div class="card-header text-danger">Match Cache reset (manual, per table)</div>
+        <div class="card-body">
+            <p class="mb-3">
+                Deletes one Match Cache table's parsed rows. Resetting <strong>Fixtures</strong> takes the derived tables and the raw XML archive with it —
+                the cache re-fills append-only as Fixtures are viewed again. PlayerSeasons and TeamFacts are point-in-time facts and reset alone.
+            </p>
+            <form method="post" asp-page-handler="ResetCache" class="row g-2 align-items-end" onsubmit="return confirm('Reset this Match Cache table? This cannot be undone.');">
+                <div class="col-auto">
+                    <label class="form-label" for="resetTable">Table</label>
+                    <select id="resetTable" name="ResetTable" class="form-select">
+                        <option value="">Pick a table…</option>
+                        <option value="Fixtures">Fixtures (+ derived rows &amp; raw archive)</option>
+                        <option value="MatchSummaries">MatchSummaries (+ scorers)</option>
+                        <option value="PlayerFixtures">PlayerFixtures</option>
+                        <option value="TeamFixtureStats">TeamFixtureStats</option>
+                        <option value="PlayerSeasons">PlayerSeasons</option>
+                        <option value="TeamFacts">TeamFacts</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-outline-danger">Reset table</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Sign out</div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="SignOut">
+                <button type="submit" class="btn btn-outline-secondary">Sign out</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

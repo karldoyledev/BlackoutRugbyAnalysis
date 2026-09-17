@@ -8,6 +8,17 @@ namespace BlackoutRugbyDashboard.Data;
 /// <summary>Outcome of one Home window fill: what the window held and what it cost.</summary>
 public record HomeWindowFillResult(int WindowSize, int Completed, int NewlyCached, int ApiCalls);
 
+/// <summary>The Match Cache's parsed-row tables; the manual per-table reset targets (D1 §5).</summary>
+public enum CacheTable
+{
+    Fixtures,
+    MatchSummaries,
+    PlayerFixtures,
+    TeamFixtureStats,
+    PlayerSeasons,
+    TeamFacts
+}
+
 /// <summary>
 /// The Match Cache fill service (spec §Match Cache / D1): fetch → archive raw →
 /// parse → persist. Append-only: completed Fixtures are never re-fetched,
@@ -137,6 +148,47 @@ public class MatchCacheService(
 
         await db.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    /// <summary>
+    /// The manual per-table reset (D1 §5 — Settings is its only surface). Resetting
+    /// Fixtures wipes every Fixture-derived table with it (summaries + scorers,
+    /// per-player and per-team stats) plus the raw XML archive, because the
+    /// append-only fill keys on Fixture rows alone — clearing just the parents
+    /// would duplicate the children on refill. MatchSummaries reset takes its
+    /// scorers; PlayerSeasons and TeamFacts reset alone (point-in-time facts).
+    /// Returns the number of rows deleted.
+    /// </summary>
+    public async Task<int> ResetTableAsync(CacheTable table, CancellationToken cancellationToken = default)
+    {
+        var deleted = table switch
+        {
+            CacheTable.Fixtures =>
+                await db.PlayerFixtures.ExecuteDeleteAsync(cancellationToken)
+                + await db.TeamFixtureStats.ExecuteDeleteAsync(cancellationToken)
+                + await db.MatchSummaryScorers.ExecuteDeleteAsync(cancellationToken)
+                + await db.MatchSummaries.ExecuteDeleteAsync(cancellationToken)
+                + await db.Fixtures.ExecuteDeleteAsync(cancellationToken),
+            CacheTable.MatchSummaries =>
+                await db.MatchSummaryScorers.ExecuteDeleteAsync(cancellationToken)
+                + await db.MatchSummaries.ExecuteDeleteAsync(cancellationToken),
+            CacheTable.PlayerFixtures => await db.PlayerFixtures.ExecuteDeleteAsync(cancellationToken),
+            CacheTable.TeamFixtureStats => await db.TeamFixtureStats.ExecuteDeleteAsync(cancellationToken),
+            CacheTable.PlayerSeasons => await db.PlayerSeasons.ExecuteDeleteAsync(cancellationToken),
+            CacheTable.TeamFacts => await db.TeamFacts.ExecuteDeleteAsync(cancellationToken),
+            _ => 0
+        };
+
+        if (table == CacheTable.Fixtures)
+        {
+            rawStore.Clear();
+        }
+
+        // ExecuteDelete bypasses the change tracker; a destructive reset must not
+        // leave stale tracked rows behind for the rest of the scope.
+        db.ChangeTracker.Clear();
+
+        return deleted;
     }
 
     private void AddSummary(MatchSummary summary)

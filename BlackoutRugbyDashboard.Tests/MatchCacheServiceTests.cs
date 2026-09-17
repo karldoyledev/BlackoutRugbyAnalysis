@@ -34,7 +34,7 @@ public class MatchCacheServiceTests
 
     private sealed class FakeApi : IBlackoutRugbyApiClient
     {
-        public int FixtureCalls, SummaryCalls, TeamCalls, FsCalls, LuCalls;
+        public int FixtureCalls, SummaryCalls, TeamCalls, FsCalls, LuCalls, MemberCalls;
 
         public string TeamXml { get; set; } = TestXml.Load("r5-t-single-45037-fixed.xml");
 
@@ -65,6 +65,12 @@ public class MatchCacheServiceTests
         }
 
         public Task<string> GetPlayerStatisticsAsync(int playerId) => throw new NotSupportedException("ps enters with the Player History slice (D7)");
+
+        public Task<string> GetMemberAsync(int memberId)
+        {
+            MemberCalls++;
+            return Task.FromResult(TestXml.Load("r2-m-memberid.xml"));
+        }
 
         public Task<string> GetLineupsAsync(int teamId, int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false)
         {
@@ -169,5 +175,69 @@ public class MatchCacheServiceTests
 
         Assert.False(await service.FillFixtureAsync(900002, 45047));
         Assert.Equal(2, api.FixtureCalls);
+    }
+
+    [Fact]
+    public async Task ResetTable_Fixtures_WipesDerivedRowsAndRawArchive()
+    {
+        var (service, _, db, rawRoot) = BuildService();
+        await service.FillFixtureAsync(900001, 45047);
+
+        var deleted = await service.ResetTableAsync(CacheTable.Fixtures);
+
+        Assert.True(deleted > 0);
+        Assert.Empty(await db.Fixtures.ToListAsync());
+        Assert.Empty(await db.PlayerFixtures.ToListAsync());
+        Assert.Empty(await db.TeamFixtureStats.ToListAsync());
+        Assert.Empty(await db.MatchSummaries.ToListAsync());
+        Assert.Empty(await db.MatchSummaryScorers.ToListAsync());
+        Assert.Empty(Directory.GetFiles(Path.Combine(rawRoot, "raw")));
+    }
+
+    [Fact]
+    public async Task ResetTable_Fixtures_ThenRefill_AppendOnlyRulesStillHold()
+    {
+        var (service, api, db, _) = BuildService();
+        await service.FillHomeWindowAsync(45047);
+        await service.ResetTableAsync(CacheTable.Fixtures);
+
+        await service.FillHomeWindowAsync(45047);
+
+        Assert.Equal(1, await db.Fixtures.CountAsync());
+        Assert.Equal(1, await db.MatchSummaries.CountAsync());
+        Assert.Equal(2, api.FixtureCalls);
+        Assert.Equal(2, api.SummaryCalls);
+    }
+
+    [Fact]
+    public async Task ResetTable_MatchSummaries_TakesScorers_LeavesFixtures()
+    {
+        var (service, _, db, _) = BuildService();
+        await service.FillFixtureAsync(900001, 45047);
+
+        await service.ResetTableAsync(CacheTable.MatchSummaries);
+
+        Assert.Equal(1, await db.Fixtures.CountAsync());
+        Assert.Equal(23, await db.PlayerFixtures.CountAsync());
+        Assert.Empty(await db.MatchSummaries.ToListAsync());
+        Assert.Empty(await db.MatchSummaryScorers.ToListAsync());
+    }
+
+    [Fact]
+    public async Task ResetTable_TeamFacts_ClearsOnlyThatTable_AndIsRecapturedOnTheNextRefresh()
+    {
+        var (service, api, db, _) = BuildService();
+        await service.FillHomeWindowAsync(45047);
+        Assert.Equal(1, await db.TeamFacts.CountAsync());
+
+        await service.ResetTableAsync(CacheTable.TeamFacts);
+
+        Assert.Empty(await db.TeamFacts.ToListAsync());
+        Assert.Equal(1, await db.Fixtures.CountAsync());
+
+        await service.FillHomeWindowAsync(45047);
+
+        Assert.Equal(1, await db.TeamFacts.CountAsync());
+        Assert.Equal(2, api.TeamCalls);
     }
 }

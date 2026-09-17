@@ -1,29 +1,32 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BlackoutRugby.Api;
-using Microsoft.Extensions.Options;
-using BlackoutRugbyDashboard.Models;
+using BlackoutRugbyDashboard.Services;
 
 namespace BlackoutRugbyDashboard.Controllers;
 
+/// <summary>
+/// The API Playground's backend (D2): auth-only, not link-required. The client
+/// carries developer credentials plus the signed-in User's member credentials
+/// when linked — never configuration credentials (secrets scrub, D3).
+/// </summary>
 [ApiController]
+[Authorize]
 [Route("api")]
 public class ApiTestController : ControllerBase
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IBlackoutRugbyApiClientFactory _clientFactory;
+    private readonly ClubLinkService _clubLinks;
     private readonly ILogger<ApiTestController> _logger;
-    private readonly DashboardDefaultsOptions _dashboardDefaults;
-    private readonly DeveloperOptions _developerOptions;
 
     public ApiTestController(
-        IHttpClientFactory httpClientFactory,
-        ILogger<ApiTestController> logger,
-        IOptions<DashboardDefaultsOptions> dashboardDefaults,
-        IOptions<DeveloperOptions> developerOptions)
+        IBlackoutRugbyApiClientFactory clientFactory,
+        ClubLinkService clubLinks,
+        ILogger<ApiTestController> logger)
     {
-        _httpClientFactory = httpClientFactory;
+        _clientFactory = clientFactory;
+        _clubLinks = clubLinks;
         _logger = logger;
-        _dashboardDefaults = dashboardDefaults.Value;
-        _developerOptions = developerOptions.Value;
     }
 
     [HttpGet("test")]
@@ -31,17 +34,11 @@ public class ApiTestController : ControllerBase
     {
         try
         {
-            var client = new BlackoutRugbyApiClient(
-                _httpClientFactory.CreateClient(),
-                _dashboardDefaults.BaseEndpoint,
-                new BlackoutRugbyApiCredentials(_dashboardDefaults.MemberId, _dashboardDefaults.MemberKey)
-                {
-                    DeveloperId = _developerOptions.DeveloperId,
-                    DeveloperKey = _developerOptions.DeveloperKey,
-                    DeveloperIV = _developerOptions.DeveloperIV
-                });
+            var link = _clubLinks.GetLinkState();
+            var credentials = _clubLinks.ResolveCurrentMemberCredentials();
+            var client = _clientFactory.CreateFullSurface(credentials?.MemberId, credentials?.MemberKey);
 
-            string response = await ExecuteEndpoint(client, endpoint, query);
+            string response = await ExecuteEndpoint(client, endpoint, query, link?.TeamId ?? 0);
 
             return Ok(new { success = true, response = response });
         }
@@ -52,7 +49,7 @@ public class ApiTestController : ControllerBase
         }
     }
 
-    private async Task<string> ExecuteEndpoint(BlackoutRugbyApiClient client, string endpoint, Dictionary<string, string> query)
+    private async Task<string> ExecuteEndpoint(BlackoutRugbyApiClient client, string endpoint, Dictionary<string, string> query, int fallbackTeamId)
     {
         return endpoint switch
         {
@@ -106,7 +103,7 @@ public class ApiTestController : ControllerBase
                 divisionId: ParseInt(query.GetValueOrDefault("divisionid"))),
             
             "lineups" => await client.GetLineupsAsync(
-                teamId: ParseInt(query.GetValueOrDefault("teamid")) ?? _dashboardDefaults.TeamId,
+                teamId: ParseInt(query.GetValueOrDefault("teamid")) ?? fallbackTeamId,
                 fixtureId: ParseInt(query.GetValueOrDefault("fixtureid")),
                 fixtureIds: query.GetValueOrDefault("fixtureids"),
                 youth: query.GetValueOrDefault("youth") == "1",

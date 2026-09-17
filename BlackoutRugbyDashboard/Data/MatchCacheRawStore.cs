@@ -27,4 +27,22 @@ public class MatchCacheRawStore
 
     private static string SanitizeKey(string key) =>
         string.Join('_', key.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+
+    /// <summary>
+    /// Removes every archived response. The Fixtures reset takes the raw archive
+    /// with it (D1 §5) — raw XML is the hedge for fixture data, and a clean slate
+    /// re-archives on the next append-only fill.
+    /// </summary>
+    public void Clear()
+    {
+        if (!Directory.Exists(_rawDirectory))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(_rawDirectory))
+        {
+            File.Delete(file);
+        }
+    }
 }
