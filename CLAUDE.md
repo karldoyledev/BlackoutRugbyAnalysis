@@ -10,3 +10,6 @@ Default canonical labels: needs-triage, needs-info, ready-for-agent, ready-for-h
 
 ### Domain docs
 Single-context layout: one root CONTEXT.md plus docs/adr. See docs/agents/domain.md.
+
+### Running the app
+Start/stop/restart via scripts/run-dashboard.ps1 (reports status when already up). See docs/agents/run.md.

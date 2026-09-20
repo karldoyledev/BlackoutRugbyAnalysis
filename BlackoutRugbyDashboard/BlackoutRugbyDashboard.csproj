@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>6e8ccda8-f86e-465a-99d4-281974a14c9b</UserSecretsId>
+    <!-- This machine only carries the .NET 10 runtime; let the app roll forward from net8 (mirrors the Tests project). -->
+    <RollForward>LatestMajor</RollForward>
   </PropertyGroup>
 
   <ItemGroup>

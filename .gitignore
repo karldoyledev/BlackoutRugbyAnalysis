@@ -11,3 +11,4 @@ BlackoutRugbyDashboard/obj/
 BlackoutRugbyDashboard/Data/Snapshots/
 BlackoutRugbyDashboard/Data/MatchCache/
 BlackoutRugbyDashboard/Data/dashboard.db*
+.scratch/
