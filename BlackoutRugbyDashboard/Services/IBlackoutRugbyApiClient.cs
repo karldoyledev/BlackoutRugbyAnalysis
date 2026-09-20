@@ -13,9 +13,18 @@ public interface IBlackoutRugbyApiClient
 
     Task<string> GetTeamsAsync(int? teamId = null, string? teamIds = null, int? regionId = null, int? leagueId = null, bool nat = false, bool u20 = false, string? country = null);
 
+    Task<string> GetPlayersAsync(int? playerId = null, string? playerIds = null, int? teamId = null, string? teamIds = null, bool youth = false, bool nat = false, bool u20 = false);
+
     Task<string> GetFixtureStatisticsAsync(int fixtureId, int? playerStats = null, int? teamPlayersStats = null);
 
     Task<string> GetPlayerStatisticsAsync(int playerId);
+
+    /// <summary>
+    /// The season-filtered ps read (r=ps + playerid + season) that the Squad
+    /// page's cached season aggregates use. Distinct member from the plain ps
+    /// read — the concrete client delegates both to the same endpoint.
+    /// </summary>
+    Task<string> GetPlayerStatisticsAsync(int playerId, int? season);
 
     /// <summary>
     /// The verified member probe (r=m + memberid, R2 F2 / D3 §5): reads one

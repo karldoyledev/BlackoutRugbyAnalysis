@@ -551,6 +551,64 @@ public class BlackoutRugbyResponseAdapter
 
         return rows;
     }
+
+    /// <summary>
+    /// Builds the normalized per-Player Fixture statistics from cached Match
+    /// Cache rows. The 22 per-player-summable fields map 1:1 from the verbatim
+    /// fs columns. Lineout and scrum win/loss counts are not per-player fs
+    /// fields (R3 field union, verified against the archived XML) — they come
+    /// from the cached bare-fs team row, which is their real source; the live
+    /// per-player parse reads them as absent (0). Ordering matches
+    /// ParseFixturePlayerStatistics so both sources render identically.
+    /// </summary>
+    public IReadOnlyList<FixturePlayerStatistics> ToFixturePlayerStatistics(
+        IEnumerable<PlayerFixtureRow> rows,
+        TeamFixtureStatRow? teamStats,
+        IReadOnlyDictionary<int, string>? rosterNames = null)
+    {
+        return rows
+            .Select(row =>
+            {
+                string? name = null;
+                rosterNames?.TryGetValue(row.PlayerId, out name);
+                return new FixturePlayerStatistics(
+                    row.PlayerId,
+                    string.IsNullOrWhiteSpace(name) ? $"Player {row.PlayerId}" : name,
+                    row.Tackles,
+                    row.MetresGained,
+                    row.Tries,
+                    row.Conversions,
+                    row.DropGoals,
+                    row.Penalties,
+                    row.TotalPoints,
+                    row.YellowCards,
+                    row.RedCards,
+                    row.Linebreaks,
+                    row.Intercepts,
+                    row.Kicks,
+                    row.Knockons,
+                    row.ForwardPasses,
+                    row.TryAssists,
+                    row.BeatenDefenders,
+                    row.Injuries,
+                    row.HandlingErrors,
+                    row.MissedTackles,
+                    row.Fights,
+                    row.KickingMetres,
+                    row.PenaltiesConceded,
+                    row.KicksOutOnTheFull,
+                    teamStats?.LineoutsWon ?? 0,
+                    teamStats?.LineoutsLost ?? 0,
+                    teamStats?.ScrumsWon ?? 0,
+                    teamStats?.ScrumsLost ?? 0);
+            })
+            .OrderByDescending(item => item.TotalPoints)
+            .ThenByDescending(item => item.Tackles)
+            .ThenBy(item => item.Name)
+            .ToList();
+    }
+
+    /// <summary>
     /// Extracts the response-level error text from an error response. Returns null
     /// when the content is blank, malformed, or carries no error element.
     /// </summary>

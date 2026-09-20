@@ -64,6 +64,19 @@ public class SnapshotStore
         return BuildComparison(previous, current);
     }
 
+    /// <summary>The most recent snapshot for a team, or null when none exists. The
+    /// degraded roster replay (D-Squad) sources the dashboard table from here.</summary>
+    public async Task<TeamSnapshot?> GetLatestAsync(int teamId)
+    {
+        var snapshotFiles = Directory.Exists(GetTeamFolder(teamId))
+            ? Directory.GetFiles(GetTeamFolder(teamId), "*.json").OrderByDescending(path => path).ToList()
+            : new List<string>();
+
+        return snapshotFiles.Count == 0
+            ? null
+            : await LoadSnapshotAsync(snapshotFiles[0]).ConfigureAwait(false);
+    }
+
     private static async Task<TeamSnapshot> LoadSnapshotAsync(string filePath)
     {
         var json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);

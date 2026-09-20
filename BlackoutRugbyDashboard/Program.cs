@@ -22,7 +22,6 @@ builder.Services.Configure<DashboardDefaultsOptions>(builder.Configuration.GetSe
 builder.Services.Configure<DeveloperOptions>(builder.Configuration.GetSection("Developer"));
 builder.Services.AddSingleton<BlackoutRugbyDashboard.Services.SnapshotStore>();
 builder.Services.AddScoped<BlackoutRugbyDashboard.Services.ApiLogger>();
-builder.Services.AddScoped<BlackoutRugbyDashboard.Services.TeamDashboardService>();
 builder.Services.AddSingleton<BlackoutRugbyDashboard.Services.BlackoutRugbyResponseAdapter>();
 
 // Accounts & Club Link (D3): one DashboardDbContext hosts the Identity sets and

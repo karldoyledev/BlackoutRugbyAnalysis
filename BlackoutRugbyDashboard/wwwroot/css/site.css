@@ -156,7 +156,8 @@ body {
 }
 
 .status-banner,
-.error-banner {
+.error-banner,
+.warning-banner {
   margin-top: 1rem;
   padding: 0.95rem 1rem;
   border-radius: 16px;
@@ -171,6 +172,11 @@ body {
 .error-banner {
   background: rgba(158, 61, 24, 0.12);
   color: #7d2710;
+}
+
+.warning-banner {
+  background: rgba(217, 184, 74, 0.16);
+  color: #7a611c;
 }
 
 .summary-grid,

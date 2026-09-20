@@ -64,7 +64,18 @@ public class MatchCacheServiceTests
                 : TestXml.Load("r3-fs-bare-21416928.xml"));
         }
 
-        public Task<string> GetPlayerStatisticsAsync(int playerId) => throw new NotSupportedException("ps enters with the Player History slice (D7)");
+        public Task<string> GetPlayersAsync(int? playerId = null, string? playerIds = null, int? teamId = null, string? teamIds = null, bool youth = false, bool nat = false, bool u20 = false) => throw new NotSupportedException("the roster read stays on the page (D-Squad); ps enters with the Squad slice");
+
+        public int PsCalls;
+        public string PlayerStatsXml { get; set; } = string.Empty;
+
+        public Task<string> GetPlayerStatisticsAsync(int playerId) => GetPlayerStatisticsAsync(playerId, null);
+
+        public Task<string> GetPlayerStatisticsAsync(int playerId, int? season)
+        {
+            PsCalls++;
+            return Task.FromResult(PlayerStatsXml);
+        }
 
         public Task<string> GetMemberAsync(int memberId)
         {

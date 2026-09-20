@@ -47,6 +47,10 @@ public class ClubLinkServiceTests
 
         public Task<string> GetPlayerStatisticsAsync(int playerId) => throw new NotSupportedException();
 
+        public Task<string> GetPlayerStatisticsAsync(int playerId, int? season) => throw new NotSupportedException();
+
+        public Task<string> GetPlayersAsync(int? playerId = null, string? playerIds = null, int? teamId = null, string? teamIds = null, bool youth = false, bool nat = false, bool u20 = false) => throw new NotSupportedException();
+
         public Task<string> GetLineupsAsync(int teamId, int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false) => throw new NotSupportedException();
     }
 

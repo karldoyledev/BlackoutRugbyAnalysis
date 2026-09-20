@@ -70,6 +70,13 @@
         <div class="status-banner">@Model.StatusMessage</div>
     }
 
+    @if (!string.IsNullOrWhiteSpace(Model.WarningMessage))
+    {
+        @* Cache-first surfacing (D-Squad Q6): partial loads say exactly what
+           came from where — the page never looks fresh when it is not. *@
+        <div class="warning-banner" role="status">@Model.WarningMessage</div>
+    }
+
     @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
     {
         @* Decision-2 hard-error panel (D3, user story 7): an API-backed page that
@@ -82,6 +89,78 @@
         </div>
     }
 </section>
+
+@if (Model.SnapshotComparison is { } comparison)
+{
+    @* Snapshot comparison revival (D-Squad Q5/Q10): the fully-built
+       TeamSnapshotComparison engine finally rendered — "what changed since
+       you last looked", point-in-time roster deltas. *@
+    <section class="table-panel">
+        <div class="section-heading">
+            <h2>Squad changes since the previous load</h2>
+            <p>
+                Point-in-time snapshot comparison:
+                @comparison.PreviousCapturedAtUtc.ToLocalTime().ToString("MMM d, HH:mm")
+                →
+                @comparison.CurrentCapturedAtUtc.ToLocalTime().ToString("MMM d, HH:mm").
+            </p>
+        </div>
+        <div class="table-responsive">
+            <table class="table dashboard-table compact-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Change</th>
+                        <th>CSR</th>
+                        <th>Salary</th>
+                        <th>Form</th>
+                        <th>Energy</th>
+                        <th>Points</th>
+                        <th>Tries</th>
+                        <th>Tackles</th>
+                        <th>Metres</th>
+                        <th>Caps</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var change in comparison.PlayerChanges)
+                {
+                    <tr>
+                        <td>@change.Name</td>
+                        <td>
+                            @if (change.IsNewPlayer)
+                            {
+                                <span class="pill success-pill">joined</span>
+                            }
+                            else if (change.IsRemovedPlayer)
+                            {
+                                <span class="pill warning-pill">left</span>
+                            }
+                            else
+                            {
+                                <span class="pill neutral-pill">changed</span>
+                            }
+                        </td>
+                        <td>@SquadModel.FormatDelta(change.DeltaCsr)</td>
+                        <td>@SquadModel.FormatDelta(change.DeltaSalary)</td>
+                        <td>@SquadModel.FormatDelta(change.DeltaForm)</td>
+                        <td>@SquadModel.FormatDelta(change.DeltaEnergy)</td>
+                        <td>@SquadModel.FormatDelta(change.DeltaTotalPoints)</td>
+                        <td>@SquadModel.FormatDelta(change.DeltaTries)</td>
+                        <td>@SquadModel.FormatDelta(change.DeltaTackles)</td>
+                        <td>@SquadModel.FormatDelta(change.DeltaMetresGained)</td>
+                        <td>@SquadModel.FormatDelta(change.DeltaTotalCaps)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+else if (Model.SnapshotSaved)
+{
+    <div class="status-banner">Snapshot saved — the squad-changes comparison appears after your next load.</div>
+}
 
 @if (dashboard is not null)
 {

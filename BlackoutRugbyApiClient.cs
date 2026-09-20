@@ -418,6 +418,16 @@ namespace BlackoutRugby.Api
         }
 
         /// <summary>
+        /// The HTTP-boundary seam's season-filtered ps read: same endpoint and
+        /// request shape as the full parameter overload, exposed for the
+        /// IBlackoutRugbyApiClient interface.
+        /// </summary>
+        public Task<string> GetPlayerStatisticsAsync(int playerId, int? season)
+        {
+            return GetPlayerStatisticsAsync((int?)playerId, season: season);
+        }
+
+        /// <summary>
         /// Get historical ranking data for teams showing ranking changes over time.
         /// </summary>
         /// <param name="teamId">Optional: Get ranking history for a specific team</param>
