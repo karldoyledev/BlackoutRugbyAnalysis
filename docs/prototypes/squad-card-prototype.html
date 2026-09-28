@@ -95,8 +95,6 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
   .toggle{position:fixed;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--hair);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--dim);display:flex;gap:8px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35);z-index:9}
   .toggle input{accent-color:var(--accent)}
   .dlv{font-size:9.5px;line-height:1.15;margin-top:1px;font-variant-numeric:tabular-nums}
-  .empty{border:1px dashed var(--hair);border-radius:8px;padding:13px 16px;color:var(--dim);font-size:13px;line-height:1.5}
-  .empty b{color:var(--text)}
   footer{margin-top:26px;font-size:12px;color:var(--dim);text-align:center}
   footer a{color:var(--accent)}
 </style>
@@ -116,7 +114,7 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
 <section class="card" id="c1">
   <div class="cardhead">
     <div><h2>C1 Â· Control panel</h2><p class="sub">How data arrives, and what the top of the page is. Infrastructure â€” redesigned only as a consequence of this decision.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c1a">Today</button><button class="chip" data-vp="c1b">B Â· Club strip</button><button class="chip" data-vp="c1c">C · Cold start</button></div>
+    <div class="chips"><button class="chip on" data-vp="c1a">Today</button><button class="chip" data-vp="c1b">B Â· Club strip</button></div>
   </div>
   <div class="vp on" id="c1a">
     <p class="vpname">Today â€” manual load form (pre-Club-Link legacy)</p>
@@ -139,23 +137,7 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
     </div>
     <p class="note">Arriving on the page renders everything cached immediately (no button required). <b>Capture squad</b> is the only live read: roster refresh (2 calls) + a Squad Snapshot save â€” the volatile present. The season select scopes aggregates. Cold start (no snapshot yet) shows a single "Capture squad" bootstrap panel, mirroring /Players.</p>
   </div>
-    <div class="vp" id="c1c">
-    <p class="vpname">C — Cold start: nothing cached yet, one action to fix it</p>
-    <div class="clubstrip">
-      <span class="club">Ashgrove RFC</span>
-      <span class="tag on">Team CSR 71</span>
-      <span class="tag">Season 62</span>
-      <button class="btn">Capture squad</button>
-    </div>
-    <div class="empty" style="margin-top:12px">
-      <b>No squad captured yet.</b> /Squad renders entirely from your cached Match data and Squad Snapshots. Capture your squad to start: one live read of the current roster (CSR, salary, form, energy), saved as your first snapshot. No other API calls are made by this page.
-    </div>
-    <div class="empty" style="margin-top:8px">
-      Cards stay in their own empty states until there is something to show — Game review: "no cached games yet, open a Fixture and it lands here"; Team review: same; Trend: lists nothing until at least one game is cached.
-    </div>
-    <p class="note">Alternative (not recommended): auto-capture on first visit — a silent live read you did not ask for, and a stale Member Key would land you on a hard error instead of a choice. This mirrors the /Players bootstrap pattern (D7): zero calls when data exists, one explicit action when it does not.</p>
-  </div>
-<div class="judge"><b>Judge C1</b> â€” Is the control panel a tool (manual load) or a context strip (club + capture)? Which makes you want to visit the page? â†’ resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/23">S2</a>.</div>
+  <div class="judge"><b>Judge C1</b> â€” Is the control panel a tool (manual load) or a context strip (club + capture)? Which makes you want to visit the page? â†’ resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/23">S2</a>.</div>
 </section>
 <section class="card" id="c3">
   <div class="cardhead">
