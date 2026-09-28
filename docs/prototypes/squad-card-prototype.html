@@ -106,7 +106,7 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
   <p>This is not a redesign. It is the <b>evidence</b> for one: every visible /Squad card appears in its <b>Today</b> form (as built) next to alternative treatments. Judge each card individually - switch variants with the chips, stack them all with the bottom-right toggle.</p>
   <p>For each card, answer three things: <span class="accent">what did you originally want it to answer?</span> - <span class="accent">does it earn its place?</span> - <span class="accent">which option is closest - or none?</span> Your answers land on the card's ticket (linked in each judge block); the page's primary job is derived from them, not assumed.</p>
   <div class="lab">
-    <a href="#c1">C1 Controls</a><a href="#c3">C3 Squad changes</a><a href="#c4">C4 Player comparison</a><a href="#c5">C5 Fixture breakdown</a><a href="#c6">C6 Team trend</a><a href="#c7">C7 Fixtures table</a>
+    <a href="#c1">C1 Controls</a><a href="#c3">C3 Squad changes</a><a href="#c4">C4 Player comparison</a><a href="#c6">C6 Team trend</a><a href="#c7">C7 Fixtures table</a>
   </div>
   <p class="note">C2 (status banners) and C8 (debug panel) are out of scope by decision. All data is sample: invented <b>Ashgrove RFC</b>, Season <b>62</b> (the game's current season per the API), twenty-fixture window across League + Cup, five point-in-time Squad Snapshots.</p>
 </div>
@@ -201,38 +201,7 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
   </div>
   <div class="judge"><b>Judge C4</b> - What did you originally want: "who is my best X", "where is the squad strong/weak", or "who should I sell"? Does a 23-bar ranked chart answer that - or does B/C? -> resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/27">S4</a>.</div>
 </section>
-<section class="card" id="c5">
-  <div class="cardhead">
-    <div><h2>C5 - Fixture breakdown</h2><p class="sub">One Fixture at a time. Today: 7 silently-chosen metrics, team and players sharing one selector. Sample per-player fixture stats are generated (deterministic) for the 23 squad rows.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c5a">Today</button><button class="chip" data-vp="c5b">B - Split subject</button><button class="chip" data-vp="c5c">C - Fixture sheet</button></div>
-  </div>
-  <div class="vp on" id="c5a">
-    <p class="vpname">Today - team totals and one player's output render in the same shape</p>
-    <div class="formbox" style="margin-bottom:6px">
-      <div class="field"><label>Week / game</label><select id="c5-fx"></select></div>
-      <div class="field"><label>Subject</label><select id="c5-subject"></select></div>
-    </div>
-    <div id="c5a-bars" class="vbars"></div>
-    <p class="note">"Entire team" (78 tackles) and "G. Trent" (6 tackles) share an axis and a chart type. The 7 metrics were never justified - they cut across the Stat Groups used everywhere else in the app.</p>
-  </div>
-  <div class="vp" id="c5b">
-    <p class="vpname">B - subject split: team mode shows top contributors per metric; player mode benchmarks vs. team average</p>
-    <div class="formbox" style="margin-bottom:6px">
-      <div class="field"><label>Week / game</label><select id="c5-fx2"></select></div>
-      <div class="segs" style="margin:0"><button class="chip on" data-mode="team">Team</button><button class="chip" data-mode="player">Player</button></div>
-      <div class="field" id="c5-playerwrap" style="display:none"><label>Player</label><select id="c5-player"></select></div>
-    </div>
-    <div id="c5b-out"></div>
-    <p class="note">Team mode answers "how did the team break down, and who drove it". Player mode answers "did X pull their weight vs. the team's average output".</p>
-  </div>
-  <div class="vp" id="c5c">
-    <p class="vpname">C - fixture sheet: the whole XV by Stat-Group columns, sortable</p>
-    <div class="formbox" style="margin-bottom:6px"><div class="field"><label>Week / game</label><select id="c5-fx3"></select></div></div>
-    <div id="c5c-table"></div>
-    <p class="note">A table, not a chart - every player visible at once, columns grouped by Stat Group. Click a header to sort.</p>
-  </div>
-  <div class="judge"><b>Judge C5</b> - What did you originally want: "who did what in match N", "how did the team break down", or a selection aid for the next Fixture? Does it survive Player History owning per-Player trends and Match Analysis owning diagnosis? -> resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/26">S5</a>.</div>
-</section>
+
 
 <section class="card" id="c6">
   <div class="cardhead">
@@ -248,20 +217,13 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
 </section>
 <section class="card" id="c7">
   <div class="cardhead">
-    <div><h2>C7 - Fixtures table</h2><p class="sub">The window as rows. Today: 12 columns, no links, overlapping Home (last-8 form), Match Analysis (per-Fixture detail) and C6 above it.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c7a">Today</button><button class="chip" data-vp="c7b">B - Slim + linked</button></div>
+    <div><h2>C7 - Results strip</h2><p class="sub">Navigation, not analysis: every completed Fixture in the cached window, one row each, every row linking into Match Analysis.</p></div>
   </div>
-  <div class="vp on" id="c7a">
-    <p class="vpname">Today - 12 columns of plain text, newest first</p>
-    <div id="c7a-table"></div>
-    <p class="note">Four of these columns re-plot C6 as a chart above it. Nothing is clickable: the D7 resolution promised Squad page rows linking into Player History, and no cell links anywhere - not to Match Analysis, not to Players.</p>
-  </div>
-  <div class="vp" id="c7b">
-    <p class="vpname">B - slim: date - competition - opponent - result - margin - every row links out</p>
+  <div class="vp on">
     <div id="c7b-table"></div>
-    <p class="note">The minimal column set for "what happened recently" - competition and round restore the context the window spans. Rows deep-link to Match Analysis; this card becomes a navigation surface instead of a duplicate of it. Per-player detail stays in Player History (linked from the squad rows elsewhere on the page).</p>
+    <p class="note">Slimmed by the S7 resolution: the 12-column stat table is retired (its headline columns were C6's charts re-plotted as text; Match Analysis owns per-fixture detail). Winning margin is the one derived column worth scanning.</p>
   </div>
-  <div class="judge"><b>Judge C7</b> - What did you originally want: a scanable form sheet, a navigation hub into Fixtures/Players, or nothing (Home already shows recent results)? Which columns earn their place? -> resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/28">S7</a>.</div>
+  <div class="judge"><b>S7 - RESOLVED 2026-09-28</b> - slim results strip, every row linked. <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/28">S7</a></div>
 </section>
 
 <footer>P1 - judging artifact for <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20">map #20</a> - judge each card with its chips; answers land on S3-S7; <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/21">S1</a> then derives the page's primary job. All data sample. Throwaway: delete when the build lands.</footer>
@@ -643,10 +605,9 @@ function renderC6(){
 function renderC7(){
   const resPill = f => `<span class="pill ${f.res==="W"?"p-win":f.res==="L"?"p-loss":"p-neu"}">${f.us}-${f.them} (${f.res})</span>`;
   const oppCell = f => esc(f.opp)+(f.bot?' <span class="pill p-bot">BOT</span>':"");
-  $("c7a-table").innerHTML = `<table class="dt"><thead><tr><th>Date</th><th>Opponent</th><th>Result</th><th class="num">Tackles</th><th class="num">Metres</th><th class="num">Tries</th><th class="num">Conv</th><th class="num">Drop G</th><th class="num">Pens</th><th class="num">YC</th><th class="num">RC</th><th class="num">Linebr</th><th class="num">Interc</th></tr></thead><tbody>` +
-    FX.map(f=>`<tr><td>${f.d}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${f.tk}</td><td class="num">${fmt(f.mt)}</td><td class="num">${f.tr}</td><td class="num">${f.cv}</td><td class="num">0</td><td class="num">${f.pn}</td><td class="num">${f.yc}</td><td class="num">${f.rc}</td><td class="num">${f.lb}</td><td class="num">${f.it}</td></tr>`).join("") + `</tbody></table>`;
+  const margin = f => { const d = f.us - f.them; return `<span class="${d>0?"delta-up":d<0?"delta-down":""}">${d>0?"+":""}${d}</span>`; };
   $("c7b-table").innerHTML = `<table class="dt"><thead><tr><th>Date</th><th>Competition</th><th>Opponent</th><th>Result</th><th class="num">Margin</th><th></th></tr></thead><tbody>` +
-    FX.map(f=>`<tr><td>${f.d}</td><td>${f.comp}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${fd(f.us-f.them)}</td><td><a href="#" style="color:var(--accent);text-decoration:none">Match Analysis -></a></td></tr>`).join("") + `</tbody></table>`;
+    FX.map(f=>`<tr><td>${f.d}</td><td>${f.comp}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${margin(f)}</td><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Fixtures/${f.i} (Match Analysis)">Match Analysis -></a></td></tr>`).join("") + `</tbody></table>`;
 }
 // --- C3-C - matrix + trend renderers ---------------------------------------
 let c3cGroup = 0, c3cDelta = "both", c3cMode = "matrix", c3cSort = { k: null, dir: -1 };
@@ -728,15 +689,6 @@ $("c4-tabs").querySelectorAll(".chip").forEach(ch => ch.addEventListener("click"
   c4tab = ch.dataset.tab; c4pill = TABS[c4tab][0][0]; renderC4Pills(); renderC4B();
 }));
 $("c4c-stat").addEventListener("change", renderC4C);
-$("c5-subject").innerHTML = `<option value="team">Entire team</option>` + P.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
-$("c5-subject").addEventListener("change", renderC5A);
-$("c5-player").innerHTML = P.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
-$("c5-player").addEventListener("change", renderC5B);
-document.querySelectorAll("#c5b .segs .chip").forEach(ch=>ch.addEventListener("click",()=>{
-  document.querySelectorAll("#c5b .segs .chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
-  c5mode = ch.dataset.mode; $("c5-playerwrap").style.display = c5mode==="player" ? "" : "none"; renderC5B();
-}));
-fillFx("c5-fx", renderC5A); fillFx("c5-fx2", renderC5B); fillFx("c5-fx3", renderC5C);
 fillFx("c3c-fx", renderC3C);
 $("c3c-tabs").innerHTML = FS_GROUPS.map(([g],i)=>`<button class="chip${i===0?' on':''}" data-g="${i}">${g}</button>`).join("");
 $("c3c-tabs").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
@@ -754,7 +706,6 @@ $("c3c-delta").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click"
 $("c3c-stat").addEventListener("change", renderC3C);
 renderC3C();
 renderC4A(); renderC4Pills(); renderC4B(); renderC4C();
-renderC5A(); renderC5B(); renderC5C();
 renderC6(); renderC7();
 </script>
 </div>

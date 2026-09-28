@@ -2,7 +2,7 @@
 
 **Repo**: karldoyledev/BlackoutRugbyAnalysis - this file is the local draft of the GitHub issue labelled `wayfinder:map`. Each ticket is a child issue (`Part of #<map>`, labels `wayfinder:grilling` / `wayfinder:task`), blocking edges are GitHub native `blocked_by` dependencies.
 
-**Tracker (live)**: Map = [#20](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20) - S1 #21 - S2 #23 - S3 #22 - S4 #27 - S5 #26 - S6 #25 - S7 #28 - S8 #24 - P1 #29 (closed). All 9 sub-issue links wired; edges restructured 2026-09-28 (see Notes). **Status**: S2, S3, S6 resolved (C1 = club strip + capture; C3 = Game review; C6 = Team review 3x8 tabs; no C9). Frontier = S5 (C5 fixture breakdown), S7 (C7 fixtures table), S4 (C4 ranked comparison - has a fork question); S1 derived job + S8 spec follow.
+**Tracker (live)**: Map = [#20](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20) - S1 #21 - S2 #23 - S3 #22 - S4 #27 - S5 #26 - S6 #25 - S7 #28 - S8 #24 - P1 #29 (closed). All 9 sub-issue links wired; edges restructured 2026-09-28 (see Notes). **Status**: all card tickets resolved (S3, S4 no-change, S5 retired, S6, S7 slimmed, S9 folded). Frontier = S1 (derive the page's purpose from the locked cards); S8 (assemble the spec) follows, then the build.
 
 ## Destination
 
@@ -11,6 +11,7 @@ A locked, per-card design for the /Squad page: for every visible card, its inten
 ## Notes
 
 - **Unit of work = the card.** Cards on the visible /Squad surface (top to bottom): C1 control panel (infrastructure; redesigned only as a consequence of the load-model decision), C2 status/warning/error banners (out of scope; D3-governed), C3 "Squad changes since the previous load" snapshot-delta table, C4 "Member stats comparison" ranked-bars card, C5 "Member stats breakdown" fixture-by-subject bars card, C6 "Team stats per game" multi-series line card, C7 "Recent match details" table, C8 debug panel (out of scope; dev tool).
+- **Card outcomes (2026-09-28)**: C1 = club strip + capture (S2) · C3 = Game review matrix+trends (S3) · C4 = unchanged (S4) · C5 = retired (S5) · C6 = Team review 3x8 tabs (S6) · C7 = slim linked results strip (S7) · C9 = folded into C3 (S9).
 - **Card template**, resolved in order in every card ticket: intent (what question did you originally want it to answer) -> value (does it still earn its place) -> design (form, data source, interactions) -> prototype only if the form is contested.
 - Resolve tickets with **grilling**; at most one per session.
 - **Prototype-first override (2026-09-28, user decision)**: the user was unsure of the page's primary job and chose to prototype the cards and talk through them individually BEFORE deriving it. S1 is re-scoped as the derived synthesis (blocked by S3-S7, amends its original body on the ticket); P1 (#29) builds the judging artifact up front; card tickets grill against it. The card template's intent -> value -> design order stands; the prototype now precedes the conversation instead of graduating after it.
@@ -24,13 +25,14 @@ A locked, per-card design for the /Squad page: for every visible card, its inten
 
 ## Decisions so far
 
-- [S2 - Lock the load and snapshot model](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/23): RESOLVED 2026-09-28 - cache-first render on visit + explicit "Capture squad" action; season derived from the API (62) with optional override; endpoint/Team-ID fields deleted; cold start = explicit bootstrap empty-state mirroring /Players (no silent auto-fetch); C1 becomes the club strip (identity + Team CSR + derived season + Capture squad).
-- [S6 - Card C6 (team trend line) intent and design](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/25): RESOLVED 2026-09-28 - C6 becomes "Team review": three tabs of eight small-multiple charts (Match control / Attack / Defence, discipline & kicking), each own scale, time running left-to-right, sourced from the bare r=fs team blocks (59 fields/side/half) cached as TeamFixtureStat; Today/B retired.
-- [S3 - Card C3 (Squad changes since the previous load)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/22): RESOLVED 2026-09-28 - the snapshot-delta card is RETIRED; C3 becomes "Game review": per-game squad matrix (7 Stat-Group tabs on D4's field map, delta vs the previous game, click-to-sort, per-group Coach's-eye standouts) + a Trend tab over any field. Data = Match Cache PlayerFixture rows; zero extra calls for cached games.
-- [S9 - Card C9 (Player trends)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/31): CLOSED as superseded - the consistency/coach-lens views fold into C3's Trend tab; no separate card.
-- [P3 - Prototype the trends card (C9) + C3 matrix upgrades](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/32): built - C3 matrix gains click-to-sort + per-group Coach's-eye standouts; C9 lens section prototyped then retired by the S3/S9 verdicts.
-- [P2 - Prototype C3 as the per-game squad matrix](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/30): built - C3 gains the per-game matrix variant (D4 field map, delta vs last game, trend tab).
-- [P1 - Prototype the Squad cards for judging (static HTML, sample data)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/29): built - docs/prototypes/squad-card-prototype.html on branch prototype/squad-card-design; the judging artifact all card verdicts reference.
+- [S5 - Card C5 (fixture breakdown) intent and design](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/26): RESOLVED 2026-09-28 - C5 is RETIRED; C3's Game review owns the question.
+- [S7 - Card C7 (recent Fixtures table) intent and design](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/28): RESOLVED 2026-09-28 - C7 becomes a slim results strip (date, competition+round, opponent with BOT tag, result pill, margin) with every row linking to Match Analysis; the 12-column stat table retires.
+- [S4 - Card C4 (ranked Player comparison) intent and design](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/27): CLOSED as "no change" - C4 ships unchanged (user: "keep c4 as is, for now"); the retire-vs-present-state-board fork is deferred to a post-build revisit.
+- [S2 - Lock the load and snapshot model](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/23): RESOLVED 2026-09-28 - cache-first render on visit + explicit "Capture squad" action; season derived from the API with optional override; endpoint/Team-ID fields deleted; cold start = explicit bootstrap empty-state (no silent auto-fetch); C1 becomes the club strip.
+- [S6 - Card C6 (team trend line) intent and design](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/25): RESOLVED 2026-09-28 - C6 becomes "Team review": three tabs of eight small-multiple charts, each own scale, time running left-to-right, from the bare r=fs team blocks cached as TeamFixtureStat; Today/B retired.
+- [S3 - Card C3 (Squad changes since the previous load)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/22): RESOLVED 2026-09-28 - C3 becomes "Game review": per-game squad matrix (7 Stat-Group tabs on D4's field map, delta vs the previous game, click-to-sort, Coach's-eye standouts) + a Trend tab; snapshot-delta card retired.
+- [S9 - Card C9 (Player trends)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/31): CLOSED as superseded - folded into C3's Trend tab.
+- [P3](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/32) / [P2](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/30) / [P1](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/29): prototype tickets built - the judging lab at docs/prototypes/squad-card-prototype.html on branch prototype/squad-card-design.
 
 ## Not yet specified
 
