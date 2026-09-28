@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>/Squad card judging lab — P1 prototype</title>
+<!-- PROTOTYPE (throwaway; wayfinder map #20, ticket P1 #29). One question per card:
+     "what did you originally want this card to answer, and which form delivers it?"
+     Each /Squad card shows TODAY (as built) and alternative treatments; switch per
+     card with the chips, or stack all variants with the bottom-right toggle.
+     ALL DATA IS SAMPLE (invented "Ashgrove RFC", season 80), D10 command-centre
+     theme. Judge cards individually; resolutions land on S3-S7; S1 then derives
+     the page's primary job from them. Lives at docs/prototypes/squad-card-prototype.html
+     on branch prototype/squad-card-design (.scratch/ is gitignored). Delete once
+     the map clears and the build lands. -->
+<style>
+  :root { --page:#0b1220; --side:#101a2e; --panel:#121d33; --hair:#1f2c47; --text:#d7e0ee; --head:#fff; --accent:#4cc2ff; --win:#3ddc84; --loss:#ff6b6b; --bot:#d9b84a; --dim:#93a4bd; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--page);color:var(--text);font:14px/1.5 "Segoe UI",system-ui,sans-serif;padding:26px 20px 90px}
+  .wrap{max-width:1180px;margin:0 auto}
+  .kicker{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:0 0 6px;font-weight:600}
+  h2{margin:0;font-size:17px;color:var(--head)}
+  .intro{background:var(--panel);border:1px solid var(--hair);border-radius:10px;padding:16px 20px;margin:0 0 24px}
+  .intro p{margin:6px 0;font-size:13px}
+  .intro .accent{color:var(--accent)}
+  .lab{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .lab a{font:600 10px/1 "Segoe UI",system-ui;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border:1px solid var(--hair);border-radius:999px;padding:6px 11px;text-decoration:none}
+  .lab a:hover{color:var(--accent);border-color:var(--accent)}
+  section.card{background:var(--panel);border:1px solid var(--hair);border-radius:10px;padding:16px 20px 18px;margin:0 0 22px}
+  .cardhead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin:0 0 4px}
+  .cardhead .sub{color:var(--dim);font-size:12.5px;margin:2px 0 0}
+  .chips{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+  .chip{font:600 10px/1 "Segoe UI",system-ui;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);background:none;border:1px solid var(--hair);border-radius:999px;padding:6px 11px;cursor:pointer}
+  .chip.on{color:var(--accent);border-color:var(--accent)}
+  .vp{display:none;margin-top:12px}
+  .vp.on{display:block}
+  body.showall .vp{display:block;border-top:1px dashed var(--hair);padding-top:10px;margin-top:10px}
+  .vpname{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 8px}
+  .judge{border-left:3px solid var(--accent);background:rgba(76,194,255,.06);border-radius:0 8px 8px 0;padding:10px 14px;margin-top:14px;font-size:12.5px;color:var(--dim)}
+  .judge b{color:var(--text)}
+  .judge a{color:var(--accent)}
+table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;margin-top:6px}
+  .dt th{text-align:left;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);font-weight:600;padding:7px 10px;border-bottom:1px solid var(--hair)}
+  .dt td{padding:8px 10px;border-bottom:1px solid rgba(31,44,71,.55);font-size:13px}
+  .dt tbody tr:hover{background:rgba(255,255,255,.03)}
+  .dt .num{text-align:right}
+  .pill{display:inline-block;border-radius:999px;font-size:10.5px;font-weight:700;padding:2px 9px;letter-spacing:.04em}
+  .p-win{background:rgba(61,220,132,.15);color:var(--win)}
+  .p-loss{background:rgba(255,107,107,.15);color:var(--loss)}
+  .p-neu{background:rgba(147,164,189,.15);color:var(--dim)}
+  .p-bot{border:1px solid var(--bot);color:var(--bot);background:none}
+  .p-hidden{background:rgba(217,184,74,.12);color:var(--bot)}
+  .delta-up{color:var(--win)} .delta-down{color:var(--loss)}
+  .row-hidden{opacity:.45}
+  .hgrp{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:14px 0 4px}
+  .hrow{display:flex;align-items:center;gap:10px;margin:3px 0}
+  .hlabel{width:170px;font-size:12.5px;text-align:right;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .htrack{flex:1;position:relative;background:rgba(255,255,255,.05);border-radius:3px;height:16px}
+  .hfill{height:100%;border-radius:3px;background:var(--accent)}
+  .hfill.weak{background:rgba(76,194,255,.45)}
+  .hval{width:56px;font-size:12px;font-variant-numeric:tabular-nums;color:var(--dim)}
+  .hmed{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--bot);border-radius:1px}
+  .hmed i{position:absolute;top:-13px;left:0;transform:translateX(-50%);font-style:normal;font-size:9px;color:var(--bot)}
+  .segs{display:flex;gap:6px;margin:8px 0 10px;flex-wrap:wrap}
+  .vbars{display:flex;align-items:flex-end;gap:18px;height:190px;padding:10px 6px 0}
+  .vcol{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+  .vtrack{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;max-width:46px;height:100%}
+  .vbar{width:100%;border-radius:4px 4px 0 0;background:var(--accent)}
+  .avgline{position:absolute;left:8%;right:8%;height:2px;background:var(--bot);z-index:2}
+  .vnum{font-size:12px;color:var(--text);font-variant-numeric:tabular-nums;margin:4px 0 2px}
+  .vlab{font-size:10.5px;color:var(--dim);text-align:center}
+  .contrib{font-size:12px;color:var(--dim);margin:2px 0}
+  .contrib b{color:var(--text)}
+  svg text{font-family:"Segoe UI",system-ui;font-size:10px;fill:var(--dim)}
+  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--dim);margin:4px 0 8px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .diststrip{position:relative;height:34px;background:rgba(255,255,255,.04);border-radius:5px;margin:14px 0 2px}
+  .dot{position:absolute;top:12px;width:10px;height:10px;border-radius:50%;background:var(--accent);opacity:.85;transform:translateX(-5px)}
+  .axis{position:relative;height:18px;font-size:10px;color:var(--dim)}
+  .axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+  .splitcols{display:flex;gap:26px}
+  .splitcols>div{flex:1}
+  .mini h4{margin:16px 0 4px;font-size:11px;color:var(--head);letter-spacing:.06em;text-transform:uppercase}
+  .formbox{display:flex;gap:14px;align-items:end;flex-wrap:wrap}
+  .field label{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+  .field select,.field input{background:var(--side);color:var(--text);border:1px solid var(--hair);border-radius:6px;padding:7px 10px;font:13px "Segoe UI",system-ui;min-width:190px}
+  .btn{background:var(--accent);color:#06243a;border:none;border-radius:7px;padding:9px 16px;font:600 13px "Segoe UI",system-ui;cursor:pointer}
+  .btn.ghost{background:none;color:var(--accent);border:1px solid var(--accent)}
+  .note{font-size:11.5px;color:var(--dim);margin:10px 0 0}
+  .clubstrip{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 0 2px}
+  .clubstrip .club{font-size:16px;font-weight:700;color:var(--head)}
+  .tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--hair);border-radius:5px;padding:3px 7px;color:var(--dim)}
+  .tag.on{border-color:var(--accent);color:var(--accent)}
+  .toggle{position:fixed;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--hair);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--dim);display:flex;gap:8px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35);z-index:9}
+  .toggle input{accent-color:var(--accent)}
+  footer{margin-top:26px;font-size:12px;color:var(--dim);text-align:center}
+  footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="intro">
+  <p class="kicker">P1 · card judging lab · wayfinder map <a class="accent" href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20">#20</a></p>
+  <p>This is not a redesign. It is the <b>evidence</b> for one: every visible /Squad card appears in its <b>Today</b> form (as built) next to alternative treatments. Judge each card individually — switch variants with the chips, stack them all with the bottom-right toggle.</p>
+  <p>For each card, answer three things: <span class="accent">what did you originally want it to answer?</span> · <span class="accent">does it earn its place?</span> · <span class="accent">which option is closest — or none?</span> Your answers land on the card's ticket (linked in each judge block); the page's primary job is derived from them, not assumed.</p>
+  <div class="lab">
+    <a href="#c1">C1 Controls</a><a href="#c3">C3 Squad changes</a><a href="#c4">C4 Player comparison</a><a href="#c5">C5 Fixture breakdown</a><a href="#c6">C6 Team trend</a><a href="#c7">C7 Fixtures table</a>
+  </div>
+  <p class="note">C2 (status banners) and C8 (debug panel) are out of scope by decision. All data is sample: invented <b>Ashgrove RFC</b>, Season 80, twenty-fixture window across League + Cup, five point-in-time Squad Snapshots.</p>
+</div>
+
+<section class="card" id="c1">
+  <div class="cardhead">
+    <div><h2>C1 · Control panel</h2><p class="sub">How data arrives, and what the top of the page is. Infrastructure — redesigned only as a consequence of this decision.</p></div>
+    <div class="chips"><button class="chip on" data-vp="c1a">Today</button><button class="chip" data-vp="c1b">B · Club strip</button></div>
+  </div>
+  <div class="vp on" id="c1a">
+    <p class="vpname">Today — manual load form (pre-Club-Link legacy)</p>
+    <div class="formbox">
+      <div class="field"><label>API endpoint</label><input type="text" value="https://rugby.example/api.php" disabled /></div>
+      <div class="field"><label>Team ID</label><input type="text" value="2" disabled /></div>
+      <div class="field"><label>Season</label><select disabled><option>Season 80</option></select></div>
+      <div class="field"><label>&nbsp;</label><button class="btn">Load stats comparison</button></div>
+    </div>
+    <p class="note">Nothing renders until you press the button. The endpoint/Team fields are dead weight — your credentials ride the Club Link; Season 50–80 is a hardcoded list. Nothing here says whose page this is.</p>
+  </div>
+  <div class="vp" id="c1b">
+    <p class="vpname">B — Club strip · page renders from cache on visit, capture is explicit</p>
+    <div class="clubstrip">
+      <span class="club">Ashgrove RFC</span>
+      <span class="tag on">Team CSR 71</span>
+      <span class="tag">Season 80</span>
+      <select style="background:var(--side);color:var(--text);border:1px solid var(--hair);border-radius:6px;padding:6px 10px"><option>Season 80</option><option>Season 79</option><option>Season 78</option></select>
+      <button class="btn">Capture squad</button>
+    </div>
+    <p class="note">Arriving on the page renders everything cached immediately (no button required). <b>Capture squad</b> is the only live read: roster refresh (2 calls) + a Squad Snapshot save — the volatile present. The season select scopes aggregates. Cold start (no snapshot yet) shows a single "Capture squad" bootstrap panel, mirroring /Players.</p>
+  </div>
+  <div class="judge"><b>Judge C1</b> — Is the control panel a tool (manual load) or a context strip (club + capture)? Which makes you want to visit the page? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/23">S2</a>.</div>
+</section>
+<section class="card" id="c3">
+  <div class="cardhead">
+    <div><h2>C3 · Squad changes</h2><p class="sub">Who changed, since when. Five snapshots exist in sample data (Aug 2 → Sep 21); today's card reads exactly the newest two.</p></div>
+    <div class="chips"><button class="chip on" data-vp="c3a">Today</button><button class="chip" data-vp="c3b">B · Baseline + history</button></div>
+  </div>
+  <div class="vp on" id="c3a">
+    <p class="vpname">Today — delta vs. your previous load (whenever that was)</p>
+    <div id="c3a-table"></div>
+    <p class="note">Two loads five minutes apart and two loads three weeks apart render identically. The amber <span class="pill p-hidden">hidden in today's build</span> rows are players whose ONLY movement was salary or form — the current filter silently drops them. Performance deltas here compare season aggregates at capture time, so "played fixtures since the last load" reads as "the player changed".</p>
+  </div>
+  <div class="vp" id="c3b">
+    <p class="vpname">B — chosen baseline · salary &amp; form included · joined/left grouped · CSR history per player</p>
+    <div class="segs" id="c3-base">
+      <button class="chip on" data-base="prev">Since previous load (Sep 12 → Sep 21)</button>
+      <button class="chip" data-base="season">Since season start (Aug 2 → Sep 21)</button>
+      <button class="chip" data-base="net5">Net over 5 captures</button>
+    </div>
+    <div id="c3b-table"></div>
+    <p class="note">Baseline is a choice, not an accident. Each row keeps a five-capture CSR sparkline so "improving" and "declining" are visible at a glance; joined/left get their own sections; every delta that moved is shown. Player names link to Player History.</p>
+  </div>
+  <div class="judge"><b>Judge C3</b> — What did you originally want: who joined/left, who improved or declined, or contract movement — all three? Is "since previous load" ever the right baseline, or must it be a choice? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/22">S3</a>.</div>
+</section>
+<section class="card" id="c4">
+  <div class="cardhead">
+    <div><h2>C4 · Player comparison</h2><p class="sub">The squad ranked. Today's selector mixes present-state attributes (CSR, energy, form, salary, age — the live read) with season aggregates in one ~40-stat list. (Sample data exposes 10 of them.)</p></div>
+    <div class="chips"><button class="chip on" data-vp="c4a">Today</button><button class="chip" data-vp="c4b">B · Curated tabs</button><button class="chip" data-vp="c4c">C · Squad scan</button></div>
+  </div>
+  <div class="vp on" id="c4a">
+    <p class="vpname">Today — one dropdown, 23 ranked bars, no context</p>
+    <div class="formbox" style="margin-bottom:6px">
+      <div class="field"><label>Select stat</label><select id="c4-stat">
+        <optgroup label="General (present-state, live read)"><option value="csr">CSR Rating</option><option value="energy">Energy</option><option value="form">Form</option><option value="salary">Salary</option><option value="age">Age</option></optgroup>
+        <optgroup label="Season aggregates (cached)"><option value="points">Total Points</option><option value="tackles">Tackles</option><option value="metres">Metres Gained</option><option value="tries">Tries</option><option value="kickm">Kicking Metres</option></optgroup>
+      </select></div>
+    </div>
+    <div id="c4a-bars"></div>
+    <p class="note">Switching from "Tackles" to "CSR" silently changes what the bars MEAN (a season's work vs. right now). A bar that says "14" never says whether 14 is good for this squad.</p>
+  </div>
+  <div class="vp" id="c4b">
+    <p class="vpname">B — curated tabs aligned to the app's 7 Stat Groups · median marker · top-5 emphasized</p>
+    <div class="segs" id="c4-tabs">
+      <button class="chip on" data-tab="general">General</button>
+      <button class="chip" data-tab="attack">Attack</button>
+      <button class="chip" data-tab="defence">Defence</button>
+      <button class="chip" data-tab="kicking">Kicking</button>
+      <button class="chip" data-tab="caps">Caps</button>
+    </div>
+    <div class="segs" id="c4-pills"></div>
+    <div id="c4b-bars"></div>
+    <p class="note">Present-state (General) and season aggregates (the four Stat-Group tabs) no longer hide in one list — the tab tells you what kind of question you're asking. The amber line is the squad median: instantly visible is who is carrying and who is drifting.</p>
+  </div>
+  <div class="vp" id="c4c">
+    <p class="vpname">C — squad scan: one stat, the whole distribution, above/below median</p>
+    <div class="formbox" style="margin-bottom:2px">
+      <div class="field"><label>Scan stat</label><select id="c4c-stat"><option value="points">Total Points</option><option value="tackles">Tackles</option><option value="metres">Metres Gained</option><option value="csr">CSR</option><option value="age">Age</option></select></div>
+    </div>
+    <div class="diststrip" id="c4c-strip"></div>
+    <div class="axis" id="c4c-axis"></div>
+    <div class="splitcols" style="margin-top:10px">
+      <div><div class="hgrp">Above median</div><div id="c4c-above"></div></div>
+      <div><div class="hgrp">Below median</div><div id="c4c-below"></div></div>
+    </div>
+    <p class="note">Answers "where is my squad strong/weak" instead of "who is #1" — every player visible at once, clusters and gaps included.</p>
+  </div>
+  <div class="judge"><b>Judge C4</b> — What did you originally want: "who is my best X", "where is the squad strong/weak", or "who should I sell"? Does a 23-bar ranked chart answer that — or does B/C? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/27">S4</a>.</div>
+</section>
+<section class="card" id="c5">
+  <div class="cardhead">
+    <div><h2>C5 · Fixture breakdown</h2><p class="sub">One Fixture at a time. Today: 7 silently-chosen metrics, team and players sharing one selector. Sample per-player fixture stats are generated (deterministic) for the 23 squad rows.</p></div>
+    <div class="chips"><button class="chip on" data-vp="c5a">Today</button><button class="chip" data-vp="c5b">B · Split subject</button><button class="chip" data-vp="c5c">C · Fixture sheet</button></div>
+  </div>
+  <div class="vp on" id="c5a">
+    <p class="vpname">Today — team totals and one player's output render in the same shape</p>
+    <div class="formbox" style="margin-bottom:6px">
+      <div class="field"><label>Week / game</label><select id="c5-fx"></select></div>
+      <div class="field"><label>Subject</label><select id="c5-subject"></select></div>
+    </div>
+    <div id="c5a-bars" class="vbars"></div>
+    <p class="note">"Entire team" (78 tackles) and "G. Trent" (6 tackles) share an axis and a chart type. The 7 metrics were never justified — they cut across the Stat Groups used everywhere else in the app.</p>
+  </div>
+  <div class="vp" id="c5b">
+    <p class="vpname">B — subject split: team mode shows top contributors per metric; player mode benchmarks vs. team average</p>
+    <div class="formbox" style="margin-bottom:6px">
+      <div class="field"><label>Week / game</label><select id="c5-fx2"></select></div>
+      <div class="segs" style="margin:0"><button class="chip on" data-mode="team">Team</button><button class="chip" data-mode="player">Player</button></div>
+      <div class="field" id="c5-playerwrap" style="display:none"><label>Player</label><select id="c5-player"></select></div>
+    </div>
+    <div id="c5b-out"></div>
+    <p class="note">Team mode answers "how did the team break down, and who drove it". Player mode answers "did X pull their weight vs. the team's average output".</p>
+  </div>
+  <div class="vp" id="c5c">
+    <p class="vpname">C — fixture sheet: the whole XV by Stat-Group columns, sortable</p>
+    <div class="formbox" style="margin-bottom:6px"><div class="field"><label>Week / game</label><select id="c5-fx3"></select></div></div>
+    <div id="c5c-table"></div>
+    <p class="note">A table, not a chart — every player visible at once, columns grouped by Stat Group. Click a header to sort.</p>
+  </div>
+  <div class="judge"><b>Judge C5</b> — What did you originally want: "who did what in match N", "how did the team break down", or a selection aid for the next Fixture? Does it survive Player History owning per-Player trends and Match Analysis owning diagnosis? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/26">S5</a>.</div>
+</section>
+
+<section class="card" id="c6">
+  <div class="cardhead">
+    <div><h2>C6 · Team trend</h2><p class="sub">The window as a series. Sample data: 20 completed Fixtures, Aug 8 → Sep 19, League + Cup mixed, W13 D2 L5.</p></div>
+    <div class="chips"><button class="chip on" data-vp="c6a">Today</button><button class="chip" data-vp="c6b">B · Two series, time runs right</button><button class="chip" data-vp="c6c">C · Small multiples</button></div>
+  </div>
+  <div class="vp on" id="c6a">
+    <p class="vpname">Today — 4 series, one axis, newest fixture on the LEFT (time runs backwards)</p>
+    <div class="legend"><span><i style="background:#4a94ad"></i>Tackles</span><span><i style="background:#f4b942"></i>Metres</span><span><i style="background:#2d8a58"></i>Tries</span><span><i style="background:#d86f2d"></i>Total Points</span></div>
+    <div id="c6a-chart"></div>
+    <p class="note">The newest Fixture sits at the left edge — the trend reads backwards. Metres (hundreds) flattens tries and points into a straight line at the bottom. No competition or round context, though the window spans two competitions.</p>
+  </div>
+  <div class="vp" id="c6b">
+    <p class="vpname">B — oldest → newest (time runs right) · win/loss shading · 2 headline series</p>
+    <div class="legend"><span><i style="background:#4cc2ff"></i>Total points</span><span><i style="background:#d9b84a"></i>Tackles</span><span><i style="background:rgba(255,255,255,.25)"></i>W/L backdrop</span></div>
+    <div id="c6b-chart"></div>
+    <p class="note">Two series that matter most for "are we trending well" — scoring output and defensive workload — over a background that shades wins green and losses red, so form is readable at a glance.</p>
+  </div>
+  <div class="vp" id="c6c">
+    <p class="vpname">C — small multiples: four charts, each its own scale, time running right</p>
+    <div class="splitcols" id="c6c-grid" style="flex-wrap:wrap"></div>
+    <p class="note">No series competes for axis space; each metric's shape (streaks, dips, plateaus) is readable on its own terms.</p>
+  </div>
+  <div class="judge"><b>Judge C6</b> — What did you originally want this to show: scoring form, workload, discipline — and is a multi-series line ever the right form for it here, or does Home's last-8 / Match Analysis already own that question? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/25">S6</a>.</div>
+</section>
+<section class="card" id="c7">
+  <div class="cardhead">
+    <div><h2>C7 · Fixtures table</h2><p class="sub">The window as rows. Today: 12 columns, no links, overlapping Home (last-8 form), Match Analysis (per-Fixture detail) and C6 above it.</p></div>
+    <div class="chips"><button class="chip on" data-vp="c7a">Today</button><button class="chip" data-vp="c7b">B · Slim + linked</button></div>
+  </div>
+  <div class="vp on" id="c7a">
+    <p class="vpname">Today — 12 columns of plain text, newest first</p>
+    <div id="c7a-table"></div>
+    <p class="note">Four of these columns re-plot C6 as a chart above it. Nothing is clickable: the D7 resolution promised Squad page rows linking into Player History, and no cell links anywhere — not to Match Analysis, not to Players.</p>
+  </div>
+  <div class="vp" id="c7b">
+    <p class="vpname">B — slim: date · competition · opponent · result · margin · every row links out</p>
+    <div id="c7b-table"></div>
+    <p class="note">The minimal column set for "what happened recently" — competition and round restore the context the window spans. Rows deep-link to Match Analysis; this card becomes a navigation surface instead of a duplicate of it. Per-player detail stays in Player History (linked from the squad rows elsewhere on the page).</p>
+  </div>
+  <div class="judge"><b>Judge C7</b> — What did you originally want: a scanable form sheet, a navigation hub into Fixtures/Players, or nothing (Home already shows recent results)? Which columns earn their place? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/28">S7</a>.</div>
+</section>
+
+<footer>P1 · judging artifact for <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20">map #20</a> — judge each card with its chips; answers land on S3–S7; <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/21">S1</a> then derives the page's primary job. All data sample. Throwaway: delete when the build lands.</footer>
+
+<div class="toggle"><input type="checkbox" id="stackall" /><label for="stackall">Stack all variants</label></div>
+
+<script>
+// ─── Sample data (all invented) ─────────────────────────────────────────────
+// players: [id, slot, name, pos, age, csr, salary, form, energy, caps,
+//           tackles, metres, tries, conv, dropg, pens, linebreaks, intercepts, kickm, beaten, assists]
+const squad = [
+  [1,1,"G. Trent","Prop",29,58,18400,1,88,118, 71,640,1,0,0,0,0,0,0,3,0],
+  [2,2,"A. Nkemdi","Hooker",26,63,22100,3,91,142, 89,810,4,0,0,0,1,0,0,5,1],
+  [3,3,"B. Osei","Prop",31,55,16800,0,84,131, 66,520,0,0,0,0,0,0,0,2,0],
+  [4,4,"M. Duval","Lock",34,66,26400,2,79,154, 58,440,2,0,0,1,0,0,0,4,0],
+  [5,5,"K. Ferreira","Lock",24,61,19700,2,90,96, 62,700,3,0,0,0,0,0,0,3,0],
+  [6,6,"D. Kean","Flanker",27,60,20900,1,41,121, 74,760,2,0,0,0,1,0,0,6,0],
+  [7,7,"T. Faulkner","Flanker",25,59,19250,1,93,110, 81,690,2,0,0,0,0,0,0,4,1],
+  [8,8,"J. Maples","No.8",28,64,23300,4,86,137, 77,720,3,0,0,0,0,0,0,5,2],
+  [9,9,"H. Laurent","Scrum-half",23,65,24100,2,89,129, 45,380,1,27,1,19,2,1,610,4,6],
+  [10,10,"J. Okafor","Fly-half",20,62,21600,3,92,84, 22,310,1,24,2,11,4,1,420,7,9],
+  [11,12,"S. Berry","Centre",25,68,27800,4,94,149, 52,980,14,0,0,0,6,2,0,11,4],
+  [12,13,"R. Villiers","Centre",30,61,20200,0,81,126, 43,640,3,0,0,0,2,0,0,5,1],
+  [13,11,"E. Naidoo","Wing",22,60,18800,2,95,78, 31,890,9,0,0,0,7,1,0,9,2],
+  [14,14,"C. Marsh","Wing",29,57,17900,-1,77,117, 26,760,6,0,0,0,3,0,0,6,1],
+  [15,15,"P. Sorensen","Full-back",27,63,22800,3,90,141, 34,1010,5,0,1,0,5,2,870,8,3],
+  [16,16,"W. Abioye","Prop",33,54,15900,1,74,142, 55,380,0,0,0,0,0,0,0,2,0],
+  [17,17,"L. Cruz","Hooker",21,52,14300,2,87,61, 38,290,1,0,0,0,0,0,0,1,0],
+  [18,18,"F. Adeyemi","Lock",23,58,17600,1,89,73, 49,470,1,0,0,0,0,0,0,3,0],
+  [19,19,"N. Roy","Back row",32,59,18600,0,76,150, 68,520,2,0,0,1,1,0,0,4,0],
+  [20,20,"O. Baptiste","Flanker",19,48,12100,2,96,34, 24,260,1,0,0,0,0,0,0,1,0],
+  [21,21,"V. Santos","Scrum-half",30,56,17400,1,82,138, 30,300,0,3,0,6,2,0,240,3,1],
+  [22,22,"I. Petrov","Fly-half",26,57,18100,0,80,102, 27,340,1,9,0,7,3,0,390,4,2],
+  [23,23,"R. Marchetti","Wing",24,59,19400,2,88,52, 18,420,3,0,0,0,2,0,0,4,1]
+];
+const P = squad.map(a => ({id:a[0],slot:a[1],name:a[2],pos:a[3],age:a[4],csr:a[5],salary:a[6],form:a[7],energy:a[8],caps:a[9],
+  tackles:a[10],metres:a[11],tries:a[12],conv:a[13],dropg:a[14],pens:a[15],linebreaks:a[16],intercepts:a[17],kickm:a[18],beaten:a[19],assists:a[20]}));
+P.forEach(p => p.points = p.tries*5 + p.conv*2 + p.dropg*3 + p.pens*3);
+// transferred-out player: in early snapshots only
+const departed = {id:90,slot:0,name:"L. Whitfield",pos:"Flanker",age:28,csr:57,salary:17800,form:1,energy:0,caps:95,
+  tackles:59,metres:510,tries:2,conv:0,dropg:0,pens:0,linebreaks:1,intercepts:0,kickm:0,beaten:3,assists:0,points:10};
+function mulberry32(s){return function(){s|=0;s=(s+0x6D2B79F5)|0;let t=Math.imul(s^(s>>>15),1|s);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296}}
+const FX = (()=>{ // 20 completed fixtures, newest first
+  const rnd = mulberry32(8080), opps = ["Riverton Kestrels","Old Harbor Mariners","Northgate Bears","Calder Falcons","Eastwick Wanderers","Port Mawr Dockers","Silverton Stags","Kingsbridge Athletic","Westreach Hounds","Dunmore Celtic"], bots = ["Gravel Rangers","Ashvale Colts"];
+  const out = []; let d = new Date(2026,8,19); // Sep 19 2026, going back weekly
+  for (let i=0;i<20;i++){
+    const bot = i%7===3, oname = bot ? "Bot: "+bots[i%2] : opps[i%opps.length];
+    const roll = rnd(), res = roll<0.62?"W":(roll<0.72?"D":"L");
+    let us, them;
+    if (res==="W"){ us = 17+Math.floor(rnd()*22); them = 3+Math.floor(rnd()*Math.max(4,us-8)); }
+    else if (res==="D"){ us = 13+Math.floor(rnd()*9); them = us; }
+    else { them = 17+Math.floor(rnd()*22); us = 3+Math.floor(rnd()*Math.max(4,them-8)); }
+    out.push({ i, d: d.toLocaleDateString("en-US",{month:"short",day:"numeric"}),
+      comp: i<3 ? "Cup R"+(4-i) : "League R"+(17-(i-3)),
+      opp: oname.replace("Bot: ",""), bot, res, us, them,
+      tk: 58+Math.floor(rnd()*38), mt: 1150+Math.floor(rnd()*950), tr: Math.max(1,Math.round(us/7)), cv: Math.max(0,Math.round(us/7)-1),
+      lb: 2+Math.floor(rnd()*8), it: Math.floor(rnd()*3), pn: Math.floor(rnd()*3),
+      yc: rnd()<0.22?1:0, rc: rnd()<0.05?1:0 });
+    d = new Date(d.getTime()-7*864e5);
+  }
+  return out;
+})();
+// five point-in-time Squad Snapshots (Aug 2 → Sep 21); h[i] = values at capture i (i=0 is season start)
+const CAPS = ["Aug 2","Aug 16","Sep 2","Sep 12","Sep 21"];
+function snapHist(p){
+  const rnd = mulberry32(4242+p.id), h = [];
+  const step = p.age<24 ? 1.2 : (p.age<29 ? 0.5 : 0);
+  for (let i=0;i<5;i++){
+    h.push({
+      csr: Math.round(p.csr - (4-i)*step + (rnd()-0.5)*2),
+      form: Math.max(-2, Math.min(5, p.form + Math.round((rnd()*2-1)))),
+      energy: Math.max(35, Math.min(100, p.energy + Math.round((rnd()*2-1)*7))),
+      salary: p.salary,
+      points: Math.max(0, Math.round(p.points*(i+1)/5 + (rnd()-0.5)*10)),
+      tries: Math.max(0, Math.round(p.tries*(i+1)/5 + (rnd()-0.5)*1.4)),
+      tackles: Math.max(0, Math.round(p.tackles*(i+1)/5 + (rnd()-0.5)*6)),
+      metres: Math.max(0, Math.round(p.metres*(i+1)/5 + (rnd()-0.5)*60)),
+      caps: Math.max(0, p.caps - Math.round((4-i)*0.6))
+    });
+  }
+  return h;
+}
+const SNAPS = {};
+// narrative specials: Faulkner (id 7) moves ONLY on salary (+250 at Sep 2 capture);
+// Maples (id 8) moves ONLY on form (+1 at the latest capture) — both are silently
+// filtered out of today's delta table, which this prototype makes visible.
+function flatOrNormal(p, flatMode){
+  const h = snapHist(p);
+  if (!flatMode && p.id!==7) return h;
+  return h.map((x,i)=>({
+    csr: p.csr, form: (p.id===8 && i<4) ? p.form-1 : p.form, energy: p.energy,
+    salary: (p.id===7 && i<4) ? p.salary-250 : p.salary,
+    points: p.points, tries: p.tries, tackles: p.tackles, metres: p.metres, caps: p.caps
+  }));
+}
+P.forEach(p => {
+  const h = flatOrNormal(p, p.id===8);
+  SNAPS[p.id] = { p, h: p.id===23 ? [null,null,null,h[3],h[4]] : h };  // Marchetti joined at Sep 12 capture
+});
+SNAPS[departed.id] = { p: departed, h: [snapHist(departed)[0], snapHist(departed)[1], null, null, null] }; // left after Aug 16
+const kickers = new Set([9,10,15,21,22]);
+function pstat(pid, fxIdx){ // deterministic pseudo per-player fixture stats
+  const p = SNAPS[pid].p, rnd = mulberry32(pid*31 + fxIdx*17);
+  const fwd = /Prop|Hooker|Lock|Flanker|No\.8|Back row/.test(p.pos);
+  const tk = Math.round((fwd?4:1) + rnd()*(fwd?6:5));
+  const mt = Math.round((fwd?10:35) + rnd()*(fwd?45:110));
+  const tr = Math.round(rnd()*rnd()*(fwd?1:2));
+  const cv = kickers.has(pid) ? Math.round(rnd()*3) : 0;
+  const lb = Math.round(rnd()*2), it = Math.round(rnd()*rnd());
+  return { tackles:tk, metres:mt, tries:tr, conv:cv, linebreaks:lb, intercepts:it, points: tr*5+cv*2 };
+}
+// ─── render helpers ─────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const fmt = n => n.toLocaleString("en-US");
+function fd(v){ const s = v>0 ? "+"+fmt(v) : (v<0 ? "-"+fmt(Math.abs(v)) : "–");
+  return `<span class="${v>0?'delta-up':v<0?'delta-down':''}">${s}</span>`; }
+function median(a){ const s=[...a].sort((x,y)=>x-y); return s.length%2 ? s[(s.length-1)/2] : Math.round((s[s.length/2-1]+s[s.length/2])/2); }
+function hbars(el, rows, o){
+  o = o||{};
+  const max = Math.max(...rows.map(r=>r.v))*1.06 || 1;
+  el.innerHTML = rows.map((r,i)=>`<div class="hrow"><div class="hlabel" title="${esc(r.l)}">${esc(r.l)}</div>`+
+    `<div class="htrack"><div class="hfill${(o.top && i>=o.top)?' weak':''}" style="width:${(r.v/max*100).toFixed(1)}%"></div>`+
+    (o.median ? `<div class="hmed" style="left:${(o.median/max*100).toFixed(1)}%"><i>median</i></div>` : "")+
+    `</div><div class="hval">${fmt(r.v)}</div></div>`).join("");
+}
+function linesvg(el, series, labels, o){
+  const W=1040, H=230, L=52, R=14, T=14, B=26, iw=W-L-R, ih=H-T-B;
+  o = o||{};
+  const all = series.flatMap(s=>s.vals);
+  const max = Math.max(...all)*1.1, min = 0;
+  const x = i => L + iw*(labels.length<2 ? 0.5 : i/(labels.length-1));
+  const y = v => T + ih*(1-(v-min)/(max-min||1));
+  let g = "";
+  if (o.wl) labels.forEach((_,i)=>{
+    const wpx = iw/(labels.length-1), x0 = i===0 ? L : x(i)-wpx/2;
+    g += `<rect x="${x0.toFixed(1)}" y="${T}" width="${wpx.toFixed(1)}" height="${ih}" fill="${o.wl[i]==='W'?'rgba(61,220,132,.10)':o.wl[i]==='L'?'rgba(255,107,107,.10)':'rgba(147,164,189,.08)'}"/>`;
+  });
+  for (let k=0;k<=4;k++){ const gy=T+ih*k/4;
+    g += `<line x1="${L}" x2="${W-R}" y1="${gy}" y2="${gy}" stroke="rgba(31,44,71,.7)"/>`+
+         `<text x="${L-6}" y="${gy+3}" text-anchor="end">${fmt(Math.round(max-(max-min)*k/4))}</text>`; }
+  series.forEach(s=>{
+    g += `<polyline points="${s.vals.map((v,i)=>x(i).toFixed(1)+","+y(v).toFixed(1)).join(" ")}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    s.vals.forEach((v,i)=>{ g += `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${s.color}"/>`; });
+  });
+  labels.forEach((lb,i)=>{ if (i%3===0 || i===labels.length-1) g += `<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle">${lb}</text>`; });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">${g}</svg>`;
+}
+function spark(el, vals){
+  const vs = vals.filter(v=>v!==null);
+  if (vs.length<2){ el.innerHTML=""; return; }
+  const W=76,H=20,min=Math.min(...vs),max=Math.max(...vs);
+  const pts2 = vals.map((v,i)=> v===null?null:`${(i/(vals.length-1)*W).toFixed(1)},${(H-2-(v-min)/(max-min||1)*(H-4)).toFixed(1)}`).filter(Boolean).join(" ");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:76px;height:20px"><polyline points="${pts2}" fill="none" stroke="var(--accent)" stroke-width="1.5"/></svg>`;
+}
+function diststrip(el, vals, o){
+  const min=Math.min(...vals), max=Math.max(...vals);
+  el.innerHTML = vals.map(v=>`<div class="dot" style="left:${((v-min)/(max-min||1)*96+2).toFixed(1)}%"></div>`).join("");
+  o.axis.innerHTML = `<span style="left:2%">${fmt(min)}</span><span style="left:50%">median ${fmt(o.median)}</span><span style="left:98%">${fmt(max)}</span>`;
+}
+// ─── C3 · delta table ───────────────────────────────────────────────────────
+const DKEYS = ["csr","salary","form","energy","points","tries","tackles","metres","caps"];
+function deltaTable(el, base, todayFilter){
+  const rows = { joined:[], left:[], changed:[] };
+  Object.values(SNAPS).forEach(s => {
+    const prev = s.h[base], cur = s.h[4];
+    if (cur && !prev) { rows.joined.push(s); return; }
+    if (prev && !cur) { rows.left.push(s); return; }
+    if (prev && cur) rows.changed.push(s);
+  });
+  rows.changed.sort((a,b) =>
+    (Math.abs(b.h[4].csr-b.h[base].csr)+Math.abs(b.h[4].points-b.h[base].points)) -
+    (Math.abs(a.h[4].csr-a.h[base].csr)+Math.abs(a.h[4].points-a.h[base].points)));
+  const dcells = s => {
+    const prev = s.h[base], cur = s.h[4];
+    return "<td class='num'>"+DKEYS.map(k=>{
+      const v = (prev && cur) ? cur[k]-prev[k] : (cur ? cur[k] : -prev[k]);
+      return fd(v);
+    }).join("")+"</td>";
+  };
+  const sec = (title, list) => {
+    if (!list.length) return "";
+    return `<tr><td colspan="11" class="hgrp">${title} · ${list.length}</td></tr>` + list.map(s=>{
+      const prev = s.h[base], cur = s.h[4];
+      let hiddenTag = "", rowCls = "";
+      if (todayFilter && prev && cur){
+        const checked = ["csr","energy","points","tries","tackles","metres","caps"]; // salary & form are the two the real filter ignores
+        const onlySalaryForm = checked.every(k=>cur[k]-prev[k]===0) && (cur.salary-prev.salary!==0 || cur.form-prev.form!==0);
+        if (onlySalaryForm){ rowCls = ' class="row-hidden"'; hiddenTag = ' <span class="pill p-hidden">hidden in today\'s build</span>'; }
+      }
+      return `<tr${rowCls}><td>${esc(s.p.name)}${hiddenTag}</td>${dcells(s)}<td><span class="spark" data-pid="${s.p.id}"></span></td></tr>`;
+    }).join("");
+  };
+  el.innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>CSR</th><th>Salary</th><th>Form</th><th>Energy</th><th>Pts</th><th>Tr</th><th>Tk</th><th>Mt</th><th>Caps</th><th>CSR · 5 captures</th></tr></thead><tbody>` +
+    sec("Joined", rows.joined) + sec("Left", rows.left) + sec("Changed", rows.changed) + `</tbody></table>`;
+  el.querySelectorAll(".spark").forEach(sp => spark(sp, SNAPS[+sp.dataset.pid].h.map(x=>x ? x.csr : null)));
+}
+// ─── C4 · ranked comparison ────────────────────────────────────────────────
+const STAT = { points:{l:"Total Points",get:p=>p.points}, tackles:{l:"Tackles",get:p=>p.tackles},
+  metres:{l:"Metres Gained",get:p=>p.metres}, tries:{l:"Tries",get:p=>p.tries}, kickm:{l:"Kicking Metres",get:p=>p.kickm},
+  csr:{l:"CSR Rating",get:p=>p.csr}, energy:{l:"Energy",get:p=>p.energy}, form:{l:"Form",get:p=>p.form},
+  salary:{l:"Salary",get:p=>p.salary}, age:{l:"Age",get:p=>p.age} };
+const TABS = {
+  general: [["csr","CSR Rating"],["energy","Energy"],["form","Form"],["salary","Salary"],["age","Age"]],
+  attack:  [["points","Total Points"],["tries","Tries"],["metres","Metres Gained"],["assists","Try Assists"],["beaten","Beaten Defenders"]],
+  defence: [["tackles","Tackles"],["intercepts","Intercepts"]],
+  kicking: [["kickm","Kicking Metres"],["pens","Penalties"],["conv","Conversions"],["dropg","Drop Goals"]],
+  caps:    [["caps","Caps"]]
+};
+let c4tab="general", c4pill="csr";
+const EXTRA_GET = { assists:p=>p.assists, beaten:p=>p.beaten, pens:p=>p.pens, conv:p=>p.conv, dropg:p=>p.dropg, caps:p=>p.caps };
+function renderC4A(){
+  const k = $("c4-stat").value;
+  hbars($("c4a-bars"), P.map(p=>({l:p.name+" · "+p.pos, v:STAT[k].get(p)})).sort((a,b)=>b.v-a.v));
+}
+function renderC4Pills(){
+  $("c4-pills").innerHTML = TABS[c4tab].map(([k,l])=>`<button class="chip${k===c4pill?' on':''}" data-pill="${k}">${l}</button>`).join("");
+  $("c4-pills").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{ c4pill=ch.dataset.pill; renderC4Pills(); renderC4B(); }));
+}
+function renderC4B(){
+  const get = EXTRA_GET[c4pill] || STAT[c4pill].get;
+  const rows = P.map(p=>({l:p.name, v:get(p)})).sort((a,b)=>b.v-a.v);
+  hbars($("c4b-bars"), rows, {median:median(rows.map(r=>r.v)), top:5});
+}
+function renderC4C(){
+  const k = $("c4c-stat").value, vals = P.map(p=>STAT[k].get(p)), med = median(vals);
+  diststrip($("c4c-strip"), vals, {median:med, axis:$("c4c-axis")});
+  const line = p => `${esc(p.name)} · <b style="color:var(--text)">${fmt(STAT[k].get(p))}</b>`;
+  $("c4c-above").innerHTML = P.filter(p=>STAT[k].get(p)>=med).sort((a,b)=>STAT[k].get(b)-STAT[k].get(a)).map(line).join("<br/>") || "–";
+  $("c4c-below").innerHTML = P.filter(p=>STAT[k].get(p)<med).sort((a,b)=>STAT[k].get(b)-STAT[k].get(a)).map(line).join("<br/>") || "–";
+}
+// ─── C5 · fixture breakdown ────────────────────────────────────────────────
+const MET7 = [["tackles","Tackles"],["metres","Metres"],["tries","Tries"],["conv","Conversions"],["linebreaks","Linebr."],["intercepts","Interc."],["points","Points"]];
+const fxLabel = f => f.d+" · "+f.opp+" · "+f.comp;
+const teamOf = f => ({tackles:f.tk, metres:f.mt, tries:f.tr, conv:f.cv, linebreaks:f.lb, intercepts:f.it, points:f.us});
+function fillFx(id, fn){ const s=$(id); s.innerHTML = FX.map((f,i)=>`<option value="${i}">${fxLabel(f)}</option>`).join(""); s.addEventListener("change", fn); }
+function renderC5A(){
+  const fi = +$("c5-fx").value, sid = $("c5-subject").value;
+  const sub = sid==="team" ? teamOf(FX[fi]) : (()=>{ const q=pstat(+sid,fi);
+    return {tackles:q.tackles,metres:q.metres,tries:q.tries,conv:q.conv,linebreaks:q.linebreaks,intercepts:q.intercepts,points:q.points}; })();
+  const max = Math.max(...MET7.map(([k])=>sub[k])) || 1;
+  $("c5a-bars").innerHTML = MET7.map(([k,l])=>
+    `<div class="vcol"><div class="vtrack"><div class="vbar" style="height:${(sub[k]/max*100).toFixed(1)}%"></div></div>`+
+    `<div class="vnum">${fmt(sub[k])}</div><div class="vlab">${l}</div></div>`).join("");
+}
+let c5mode="team";
+function renderC5B(){
+  const fi = +$("c5-fx2").value, team = teamOf(FX[fi]);
+  if (c5mode==="team"){
+    const wmax = k => Math.max(...FX.map(g=>teamOf(g)[k])) || 1;
+    const top3 = k => P.map(p=>({n:p.name, v:pstat(p.id,fi)[k]||0})).sort((a,b)=>b.v-a.v).slice(0,3);
+    $("c5b-out").innerHTML = `<div class="vbars">` + MET7.map(([k,l])=>
+      `<div class="vcol"><div class="vtrack"><div class="vbar" style="height:${(team[k]/wmax(k)*100).toFixed(1)}%"></div></div>`+
+      `<div class="vnum">${fmt(team[k])}</div><div class="vlab">${l}</div></div>`).join("") + `</div>
+      <div class="splitcols" style="margin-top:12px">
+        <div><div class="hgrp">Most tackles</div>${top3("tackles").map(c=>`<div class="contrib"><b>${esc(c.n)}</b> · ${c.v}</div>`).join("")}</div>
+        <div><div class="hgrp">Most metres</div>${top3("metres").map(c=>`<div class="contrib"><b>${esc(c.n)}</b> · ${c.v}</div>`).join("")}</div>
+        <div><div class="hgrp">Most points</div>${top3("points").map(c=>`<div class="contrib"><b>${esc(c.n)}</b> · ${c.v}</div>`).join("")}</div>
+      </div>`;
+  } else {
+    const pid = +$("c5-player").value, q = pstat(pid,fi);
+    $("c5b-out").innerHTML = `<div class="vbars">` + MET7.map(([k,l])=>{
+      const avg = team[k]/23, maxv = Math.max(q[k],avg)*1.15 || 1;
+      return `<div class="vcol"><div class="vtrack"><div class="vbar" style="height:${(q[k]/maxv*100).toFixed(1)}%"></div>`+
+        `<i class="avgline" style="bottom:${(avg/maxv*100).toFixed(1)}%" title="squad average"></i></div>`+
+        `<div class="vnum">${fmt(q[k])}</div><div class="vlab">${l}</div></div>`;
+    }).join("") + `</div><p class="note">Amber line = the squad's average per-member output for that metric — ${esc(SNAPS[pid].p.name)} vs. the team in ${esc(fxLabel(FX[fi]))}.</p>`;
+  }
+}
+let c5cSort = {k:"slot", dir:1};
+function renderC5C(){
+  const fi = +$("c5-fx3").value;
+  const rows = P.map(p=>({p, s:pstat(p.id,fi)}));
+  const val = r => c5cSort.k==="slot" ? r.p.slot : r.s[c5cSort.k];
+  rows.sort((a,b)=>(val(a)-val(b))*c5cSort.dir);
+  const th = (k,l) => `<th class="num" data-k="${k}" style="cursor:pointer">${l}${c5cSort.k===k?(c5cSort.dir>0?" ▲":" ▼"):''}</th>`;
+  $("c5c-table").innerHTML = `<table class="dt"><thead><tr><th colspan="2">Player</th><th colspan="4" class="hgrp">Attack</th><th colspan="2" class="hgrp">Defence</th><th class="hgrp">Handling</th></tr>`+
+    `<tr><th>Name</th><th>#</th>${th("metres","Mt")}${th("tries","Tr")}${th("conv","Cv")}${th("points","Pts")}${th("tackles","Tk")}${th("intercepts","It")}${th("linebreaks","Lb")}</tr></thead><tbody>` +
+    rows.map(r=>`<tr><td>${esc(r.p.name)}</td><td class="num">${r.p.slot}</td><td class="num">${fmt(r.s.metres)}</td><td class="num">${r.s.tries}</td><td class="num">${r.s.conv}</td><td class="num">${r.s.points}</td><td class="num">${r.s.tackles}</td><td class="num">${r.s.intercepts}</td><td class="num">${r.s.linebreaks}</td></tr>`).join("") +
+    `</tbody></table>`;
+  $("c5c-table").querySelectorAll("th[data-k]").forEach(h=>h.addEventListener("click",()=>{
+    const k=h.dataset.k; c5cSort = {k, dir: c5cSort.k===k ? -c5cSort.dir : -1}; renderC5C();
+  }));
+}
+// ─── C6 · team trend ───────────────────────────────────────────────────────
+function renderC6(){
+  const o2n = [...FX].reverse(), labels = o2n.map(f=>f.d);
+  linesvg($("c6a-chart"), [
+    {color:"#4a94ad", vals:FX.map(f=>f.tk)}, {color:"#f4b942", vals:FX.map(f=>f.mt)},
+    {color:"#2d8a58", vals:FX.map(f=>f.tr)}, {color:"#d86f2d", vals:FX.map(f=>f.us)}
+  ], FX.map(f=>f.d), {});
+  linesvg($("c6b-chart"), [
+    {color:"#4cc2ff", vals:o2n.map(f=>f.us)}, {color:"#d9b84a", vals:o2n.map(f=>f.tk)}
+  ], labels, {wl:o2n.map(f=>f.res)});
+  const minis = [["Total points","us","#4cc2ff"],["Tackles","tk","#d9b84a"],["Metres gained","mt","#93a4bd"],["Tries","tr","#3ddc84"]];
+  $("c6c-grid").innerHTML = minis.map(([t,k,c])=>`<div class="mini" style="flex:1 1 44%"><h4>${t}</h4><div id="mini-${k}"></div></div>`).join("");
+  minis.forEach(([t,k,c])=> linesvg($("mini-"+k), [{color:c, vals:o2n.map(f=>f[k])}], labels, {}));
+}
+// ─── C7 · fixtures table ───────────────────────────────────────────────────
+function renderC7(){
+  const resPill = f => `<span class="pill ${f.res==="W"?"p-win":f.res==="L"?"p-loss":"p-neu"}">${f.us}–${f.them} (${f.res})</span>`;
+  const oppCell = f => esc(f.opp)+(f.bot?' <span class="pill p-bot">BOT</span>':"");
+  $("c7a-table").innerHTML = `<table class="dt"><thead><tr><th>Date</th><th>Opponent</th><th>Result</th><th class="num">Tackles</th><th class="num">Metres</th><th class="num">Tries</th><th class="num">Conv</th><th class="num">Drop G</th><th class="num">Pens</th><th class="num">YC</th><th class="num">RC</th><th class="num">Linebr</th><th class="num">Interc</th></tr></thead><tbody>` +
+    FX.map(f=>`<tr><td>${f.d}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${f.tk}</td><td class="num">${fmt(f.mt)}</td><td class="num">${f.tr}</td><td class="num">${f.cv}</td><td class="num">0</td><td class="num">${f.pn}</td><td class="num">${f.yc}</td><td class="num">${f.rc}</td><td class="num">${f.lb}</td><td class="num">${f.it}</td></tr>`).join("") + `</tbody></table>`;
+  $("c7b-table").innerHTML = `<table class="dt"><thead><tr><th>Date</th><th>Competition</th><th>Opponent</th><th>Result</th><th class="num">Margin</th><th></th></tr></thead><tbody>` +
+    FX.map(f=>`<tr><td>${f.d}</td><td>${f.comp}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${fd(f.us-f.them)}</td><td><a href="#" style="color:var(--accent);text-decoration:none">Match Analysis →</a></td></tr>`).join("") + `</tbody></table>`;
+}
+// ─── switching + init ──────────────────────────────────────────────────────
+document.querySelectorAll("section.card").forEach(sec => {
+  const chips = sec.querySelectorAll(".chips .chip"), vps = sec.querySelectorAll(":scope > .vp");
+  chips.forEach(ch => ch.addEventListener("click", () => {
+    chips.forEach(c=>c.classList.remove("on")); ch.classList.add("on");
+    vps.forEach(v=>v.classList.remove("on")); $(ch.dataset.vp).classList.add("on");
+  }));
+});
+$("stackall").addEventListener("change", e => document.body.classList.toggle("showall", e.target.checked));
+$("c3-base").querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
+  $("c3-base").querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
+  deltaTable($("c3b-table"), ch.dataset.base==="prev" ? 3 : (ch.dataset.base==="season" ? 0 : 1), false);
+}));
+$("c4-stat").addEventListener("change", renderC4A);
+$("c4-tabs").querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
+  $("c4-tabs").querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
+  c4tab = ch.dataset.tab; c4pill = TABS[c4tab][0][0]; renderC4Pills(); renderC4B();
+}));
+$("c4c-stat").addEventListener("change", renderC4C);
+$("c5-subject").innerHTML = `<option value="team">Entire team</option>` + P.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
+$("c5-subject").addEventListener("change", renderC5A);
+$("c5-player").innerHTML = P.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
+$("c5-player").addEventListener("change", renderC5B);
+document.querySelectorAll("#c5b .segs .chip").forEach(ch=>ch.addEventListener("click",()=>{
+  document.querySelectorAll("#c5b .segs .chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
+  c5mode = ch.dataset.mode; $("c5-playerwrap").style.display = c5mode==="player" ? "" : "none"; renderC5B();
+}));
+fillFx("c5-fx", renderC5A); fillFx("c5-fx2", renderC5B); fillFx("c5-fx3", renderC5C);
+deltaTable($("c3a-table"), 3, true);
+deltaTable($("c3b-table"), 3, false);
+renderC4A(); renderC4Pills(); renderC4B(); renderC4C();
+renderC5A(); renderC5B(); renderC5C();
+renderC6(); renderC7();
+</script>
+</div>
+</body>
+</html>
