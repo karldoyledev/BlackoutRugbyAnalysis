@@ -108,7 +108,7 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
   <div class="lab">
     <a href="#c1">C1 Controls</a><a href="#c3">C3 Squad changes</a><a href="#c4">C4 Player comparison</a><a href="#c5">C5 Fixture breakdown</a><a href="#c6">C6 Team trend</a><a href="#c7">C7 Fixtures table</a>
   </div>
-  <p class="note">C2 (status banners) and C8 (debug panel) are out of scope by decision. All data is sample: invented <b>Ashgrove RFC</b>, Season 80, twenty-fixture window across League + Cup, five point-in-time Squad Snapshots.</p>
+  <p class="note">C2 (status banners) and C8 (debug panel) are out of scope by decision. All data is sample: invented <b>Ashgrove RFC</b>, Season <b>62</b> (the game's current season per the API), twenty-fixture window across League + Cup, five point-in-time Squad Snapshots.</p>
 </div>
 
 <section class="card" id="c1">
@@ -124,15 +124,15 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
       <div class="field"><label>Season</label><select disabled><option>Season 80</option></select></div>
       <div class="field"><label>&nbsp;</label><button class="btn">Load stats comparison</button></div>
     </div>
-    <p class="note">Nothing renders until you press the button. The endpoint/Team fields are dead weight — your credentials ride the Club Link; Season 50–80 is a hardcoded list. Nothing here says whose page this is.</p>
+    <p class="note">Nothing renders until you press the button. The endpoint/Team fields are dead weight — your credentials ride the Club Link; the Season list is hardcoded 50–80 with a default of <b>80</b>, while the API's current season is <b>62</b> — a stale legacy default (masked in practice by the loader's retry-without-season fallback). Nothing here says whose page this is.</p>
   </div>
   <div class="vp" id="c1b">
     <p class="vpname">B — Club strip · page renders from cache on visit, capture is explicit</p>
     <div class="clubstrip">
       <span class="club">Ashgrove RFC</span>
       <span class="tag on">Team CSR 71</span>
-      <span class="tag">Season 80</span>
-      <select style="background:var(--side);color:var(--text);border:1px solid var(--hair);border-radius:6px;padding:6px 10px"><option>Season 80</option><option>Season 79</option><option>Season 78</option></select>
+      <span class="tag">Season 62</span>
+      <select style="background:var(--side);color:var(--text);border:1px solid var(--hair);border-radius:6px;padding:6px 10px"><option>Season 62</option><option>Season 61</option><option>Season 60</option></select>
       <button class="btn">Capture squad</button>
     </div>
     <p class="note">Arriving on the page renders everything cached immediately (no button required). <b>Capture squad</b> is the only live read: roster refresh (2 calls) + a Squad Snapshot save — the volatile present. The season select scopes aggregates. Cold start (no snapshot yet) shows a single "Capture squad" bootstrap panel, mirroring /Players.</p>
@@ -290,6 +290,16 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
     <p class="note">The minimal column set for "what happened recently" — competition and round restore the context the window spans. Rows deep-link to Match Analysis; this card becomes a navigation surface instead of a duplicate of it. Per-player detail stays in Player History (linked from the squad rows elsewhere on the page).</p>
   </div>
   <div class="judge"><b>Judge C7</b> — What did you originally want: a scanable form sheet, a navigation hub into Fixtures/Players, or nothing (Home already shows recent results)? Which columns earn their place? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/28">S7</a>.</div>
+</section>
+
+<section class="card" id="c9">
+  <div class="cardhead">
+    <div><h2>C9 · Player trends (new card)</h2><p class="sub">The consistency half of your coaching questions: 20-game per-player views over the cached window. "Who is consistently…", "who's dropping", "who should play more".</p></div>
+  </div>
+  <div class="segs" id="c9-lens"></div>
+  <div id="c9-out"></div>
+  <p class="note">Every lens reads the same cached per-fixture stats (fs) — zero extra API calls for viewed games; the window is everything cached, permanently. Season-scoped totals and caps come from r=ps. "Costing me games" note: the API has no per-event link from a penalty to opposition points, so cost is read through counts + timing, not a direct attribution.</p>
+  <div class="judge"><b>Judge C9</b> — Do the lenses cover your coaching questions? Which lens would you live in? What's missing? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/31">S9</a>.</div>
 </section>
 
 <footer>P1 · judging artifact for <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20">map #20</a> — judge each card with its chips; answers land on S3–S7; <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/21">S1</a> then derives the page's primary job. All data sample. Throwaway: delete when the build lands.</footer>
@@ -664,7 +674,7 @@ function renderC7(){
     FX.map(f=>`<tr><td>${f.d}</td><td>${f.comp}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${fd(f.us-f.them)}</td><td><a href="#" style="color:var(--accent);text-decoration:none">Match Analysis →</a></td></tr>`).join("") + `</tbody></table>`;
 }
 // ─── C3-C · matrix + trend renderers ───────────────────────────────────────
-let c3cGroup = 0, c3cDelta = "both", c3cMode = "matrix";
+let c3cGroup = 0, c3cDelta = "both", c3cMode = "matrix", c3cSort = { k: null, dir: -1 };
 function renderC3C(){ if (c3cMode === "matrix") renderC3CMatrix(); else renderC3CTrend(); }
 function deltaCell(v, prev){
   const hasPrev = prev !== null;
@@ -678,19 +688,33 @@ function deltaCell(v, prev){
 function renderC3CMatrix(){
   const fi = +$("c3c-fx").value;
   const [gname, fields] = FS_GROUPS[c3cGroup];
-  const rows = P.map(p => ({ p, cur: pstat51(p.id, fi), prev: fi < FX.length-1 ? pstat51(p.id, fi+1) : null }));
+  const allCols = FS_OUTPUT.concat(fields);
+  let rows = P.map(p => ({ p, cur: pstat51(p.id, fi), prev: fi < FX.length-1 ? pstat51(p.id, fi+1) : null }));
+  if (c3cSort.k) rows.sort((a,b)=>((a.cur[c3cSort.k]||0)-(b.cur[c3cSort.k]||0))*c3cSort.dir);
+  const th = ([k,l]) => `<th class="num" data-k="${k}" style="cursor:pointer" title="${k}">${l}${c3cSort.k===k?(c3cSort.dir===-1?" ▼":" ▲"):''}</th>`;
   const c = r => k => { const prev = r.prev ? r.prev[k] : null; return `<td class="num">${deltaCell(r.cur[k], prev)}</td>`; };
+  const topBy = k => { if(!k) return null; let best = null; rows.forEach(r=>{ if((r.cur[k]||0)>0 && (!best || r.cur[k]>best.cur[k])) best = r; }); return best; };
+  const posK = {Attack:"tries", Defence:"tackles", Kicking:"good_kicks", Lineout:"lineouts_secured"}[gname];
+  const negK = {Defence:"missed_tackles", Kicking:"bad_kicks", Discipline:"penalties_conceded", Handling:"knockons", Lineout:"lineouts_conceded"}[gname];
+  const lblOf = k => { const f = allCols.find(x=>x[0]===k); return f ? f[1] : k; };
+  const eye = [];
+  const tp = topBy(posK); if (tp) eye.push(`⭐ best: <b>${esc(tp.p.name)}</b> (${tp.cur[posK]} ${lblOf(posK)})`);
+  const tn = topBy(negK); if (tn) eye.push(`⚠ worst: <b>${esc(tn.p.name)}</b> (${tn.cur[negK]} ${lblOf(negK)})`);
   $("c3c-out").innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>#</th><th>XV/B</th>` +
-    FS_OUTPUT.map(([k,l])=>`<th class="num">${l}</th>`).join("") +
-    fields.map(([k,l])=>`<th class="num" title="${k}">${l}</th>`).join("") + `</tr></thead><tbody>` +
+    allCols.map(th).join("") + `</tr></thead><tbody>` +
     rows.map(r=>{
       const cc = c(r);
       return `<tr><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Players/${r.p.id}">${esc(r.p.name)}</a></td>`+
         `<td class="num">${r.p.slot}</td><td class="num">${r.p.slot<=15?"XV":"B"}</td>`+
-        cc("minutes_played") + cc("total_points") + cc("energy_after") +
-        fields.map(([k])=>cc(k)).join("") + `</tr>`;
+        allCols.map(([k])=>cc(k)).join("") + `</tr>`;
     }).join("") + `</tbody></table>` +
+    (eye.length ? `<p class="note"><b>Coach's eye:</b> ${eye.join(" · ")} — click any stat header to sort.</p>` : `<p class="note">Click any stat header to sort.</p>`) +
     `<p class="note">Game: ${esc(fxLabel(FX[fi]))} · Δ vs ${fi < FX.length-1 ? esc(fxLabel(FX[fi+1])) : "no previous game in the window"} · group: ${gname} · click a player for their full history.</p>`;
+  $("c3c-out").querySelectorAll("th[data-k]").forEach(h=>h.addEventListener("click",()=>{
+    const k = h.dataset.k;
+    if (c3cSort.k === k) c3cSort.dir *= -1; else c3cSort = { k, dir: -1 };
+    renderC3CMatrix();
+  }));
 }
 function renderC3CTrend(){
   const [gname, fields] = FS_GROUPS[c3cGroup];
@@ -713,6 +737,78 @@ function renderC3CTrend(){
       `<td class="num">${fmt(r.last)}</td><td class="num">${fd(r.last-r.prev)}</td><td class="num">${fmt(r.season)}</td></tr>`).join("") + `</tbody></table>` +
     `<p class="note">Trend across the whole cached window for one stat; season = sum of the window (sample). In the real card this reads the Match Cache — every viewed Fixture, permanently.</p>`;
   $("c3c-out").querySelectorAll(".spark20").forEach(el => spark(el, el.dataset.s.split(",").map(Number), 190));
+}
+// ─── C9 · player trends (coach lenses) ─────────────────────────────────────
+let c9Lens = "pen";
+const LENSES = [
+  { key:"pen", label:"Penalties", stat:"penalties_conceded",
+    head:`<th>YC/RC</th><th class="num">L5−F5</th>` },
+  { key:"lb", label:"Line breaks", stat:"linebreaks", head:`` },
+  { key:"tries", label:"Tries", stat:"tries", head:`<th class="num">Last 5/g</th>` },
+  { key:"def", label:"Defence", stat:"tackles", head:`<th class="num">Missed</th>` },
+  { key:"kick", label:"Kicking errors", stat:null, head:`<th class="num">Out full</th><th class="num">M goal-kicks</th>` },
+  { key:"shift", label:"Form shift", stat:"total_points", head:`<th class="num">First 5/g</th><th class="num">Last 5/g</th>` },
+  { key:"used", label:"Under-used", stat:"minutes_played", head:`<th class="num">Min</th><th class="num">Pts/30</th><th class="num">Tkl/30</th><th class="num">Mtr/30</th>` }
+];
+function renderC9(){
+  const L = LENSES.find(l=>l.key===c9Lens);
+  const o2n = []; for (let fi = FX.length-1; fi >= 0; fi--) o2n.push(fi);
+  const rows = P.map(p=>{
+    const games = o2n.map(fi => pstat51(p.id, fi));
+    const series = games.map(g => L.stat ? g[L.stat] : (g.bad_kicks + g.kicks_out_on_the_full));
+    const sum = series.reduce((a,b)=>a+b,0);
+    const nz = series.filter(v=>v>0).length;
+    const first5 = series.slice(0,5).reduce((a,b)=>a+b,0)/5;
+    const last5 = series.slice(-5).reduce((a,b)=>a+b,0)/5;
+    const mins = games.reduce((a,g)=>a+g.minutes_played,0);
+    const pts = games.reduce((a,g)=>a+g.total_points,0);
+    const tks = games.reduce((a,g)=>a+g.tackles,0);
+    const mts = games.reduce((a,g)=>a+g.metres_gained,0);
+    return { p, series, sum, nz, first5, last5, shift: last5-first5,
+      last: series[series.length-1], prev: series[series.length-2], mins,
+      p30: mins>0 ? pts/(mins/30) : 0, t30: mins>0 ? tks/(mins/30) : 0, m30: mins>0 ? mts/(mins/30) : 0,
+      yc: games.reduce((a,g)=>a+g.yellow_cards,0), rc: games.reduce((a,g)=>a+g.red_cards,0),
+      mt: games.reduce((a,g)=>a+g.missed_tackles,0),
+      of: games.reduce((a,g)=>a+g.kicks_out_on_the_full,0),
+      mu: games.reduce((a,g)=>a+g.missed_penalties+g.missed_dropgoals+g.missed_conversions,0) };
+  });
+  let sorted;
+  if (c9Lens==="shift") { sorted = rows.slice().sort((a,b)=>a.shift-b.shift); }
+  else if (c9Lens==="used") { sorted = rows.slice().sort((a,b)=>b.p30-a.p30); }
+  else { sorted = rows.slice().sort((a,b)=>b.sum-a.sum); }
+  const top = sorted[0];
+  const riser = rows.slice().sort((a,b)=>b.shift-a.shift)[0];
+  const drop = rows.slice().sort((a,b)=>a.shift-b.shift)[0];
+  const byMt = rows.slice().sort((a,b)=>b.mt-a.mt)[0];
+  const byMu = rows.slice().sort((a,b)=>b.mu-a.mu)[0];
+  let coach = "";
+  if (c9Lens==="pen") coach = `Most consistent offender: <b>${esc(top.p.name)}</b> — PC in ${top.nz}/20 games (${top.sum} total), last-5 vs first-5 ${top.shift>=0?"+":""}${top.shift.toFixed(1)}.`;
+  else if (c9Lens==="lb") coach = `Most consistent breaker: <b>${esc(top.p.name)}</b> — LB in ${top.nz}/20 games (${top.sum} total).`;
+  else if (c9Lens==="tries") coach = `Try source: <b>${esc(top.p.name)}</b> — ${top.sum} in 20 games (${top.nz}/20 scoring).`;
+  else if (c9Lens==="def") coach = `Workhorse: <b>${esc(top.p.name)}</b> — ${top.sum} tackles; most missed: <b>${esc(byMt.p.name)}</b> (${byMt.mt}).`;
+  else if (c9Lens==="kick") coach = `Sloppiest boot: <b>${esc(top.p.name)}</b> — ${top.sum} kick errors (bad + out on full); most missed goal-kicks: <b>${esc(byMu.p.name)}</b> (${byMu.mu}).`;
+  else if (c9Lens==="shift") coach = `Biggest decline: <b>${esc(drop.p.name)}</b> (${drop.first5.toFixed(1)} → ${drop.last5.toFixed(1)} pts/g); biggest riser: <b>${esc(riser.p.name)}</b> (${riser.first5.toFixed(1)} → ${riser.last5.toFixed(1)}).`;
+  else if (c9Lens==="used") coach = `Best output per 30 min: <b>${esc(top.p.name)}</b> (${top.mins} min total, ${top.p30.toFixed(1)} pts/30, ${top.t30.toFixed(1)} tkl/30) — bench output worth a start.`;
+  let extraCell = r => "";
+  if (c9Lens==="pen") extraCell = r => `<td class="num">${r.yc}/${r.rc}</td><td class="num ${r.shift>0?'delta-up':r.shift<0?'delta-down':''}">${r.shift>=0?"+":""}${r.shift.toFixed(1)}</td>`;
+  else if (c9Lens==="tries" || c9Lens==="lb") extraCell = r => `<td class="num">${r.last5.toFixed(1)}</td>`;
+  else if (c9Lens==="def") extraCell = r => `<td class="num">${r.mt}</td>`;
+  else if (c9Lens==="kick") extraCell = r => `<td class="num">${r.of}</td><td class="num">${r.mu}</td>`;
+  else if (c9Lens==="shift") extraCell = r => `<td class="num">${r.first5.toFixed(1)}</td><td class="num">${r.last5.toFixed(1)}</td>`;
+  else if (c9Lens==="used") extraCell = r => `<td class="num">${r.mins}</td><td class="num">${r.p30.toFixed(1)}</td><td class="num">${r.t30.toFixed(1)}</td><td class="num">${r.m30.toFixed(0)}</td>`;
+  $("c9-out").innerHTML = `<p class="note"><b>Coach's eye:</b> ${coach}</p>` +
+    `<table class="dt"><thead><tr><th>Player</th><th>${L.label} · 20 games</th><th class="num">In N/20</th><th class="num">Last</th><th class="num">Δ prev</th><th class="num">Total</th>${L.head}</tr></thead><tbody>` +
+    sorted.map(r=>{
+      const d = r.last - r.prev;
+      return `<tr><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Players/${r.p.id}">${esc(r.p.name)}</a>${r.p.slot>15?' <span class="pill p-neu">B</span>':""}</td>`+
+        `<td><span class="spark20" data-s="${r.series.join(",")}"></span></td>`+
+        `<td class="num">${r.nz}</td>`+
+        `<td class="num">${fmt(r.last)}</td>`+
+        `<td class="num"><span class="${d>0?'delta-up':d<0?'delta-down':''}">${d>0?'+':''}${d}</span></td>`+
+        `<td class="num">${fmt(r.sum)}</td>`+
+        extraCell(r) + `</tr>`;
+    }).join("") + `</tbody></table>`;
+  $("c9-out").querySelectorAll(".spark20").forEach(el => spark(el, el.dataset.s.split(",").map(Number), 190));
 }
 // ─── switching + init ──────────────────────────────────────────────────────
 document.querySelectorAll("section.card").forEach(sec => {
@@ -758,6 +854,12 @@ $("c3c-delta").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click"
 }));
 $("c3c-stat").addEventListener("change", renderC3C);
 renderC3C();
+$("c9-lens").innerHTML = LENSES.map(l=>`<button class="chip${l.key===c9Lens?' on':''}" data-l="${l.key}">${l.label}</button>`).join("");
+$("c9-lens").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
+  $("c9-lens").querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
+  c9Lens = ch.dataset.l; renderC9();
+}));
+renderC9();
 deltaTable($("c3a-table"), 3, true);
 deltaTable($("c3b-table"), 3, false);
 renderC4A(); renderC4Pills(); renderC4B(); renderC4C();
