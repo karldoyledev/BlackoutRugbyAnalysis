@@ -2,7 +2,7 @@
 
 **Repo**: karldoyledev/BlackoutRugbyAnalysis — this file is the local draft of the GitHub issue labelled `wayfinder:map`. Each ticket is a child issue (`Part of #<map>`, labels `wayfinder:grilling` / `wayfinder:task`), blocking edges are GitHub native `blocked_by` dependencies.
 
-**Tracker (live)**: Map = [#20](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20) · S1 #21 · S2 #23 · S3 #22 · S4 #27 · S5 #26 · S6 #25 · S7 #28 · S8 #24 · P1 #29 (closed). All 9 sub-issue links wired; edges restructured 2026-09-28 (see Notes). **Status**: P1 built & closed; frontier = S2 (load & snapshot model).
+**Tracker (live)**: Map = [#20](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20) · S1 #21 · S2 #23 · S3 #22 · S4 #27 · S5 #26 · S6 #25 · S7 #28 · S8 #24 · P1 #29 (closed). All 9 sub-issue links wired; edges restructured 2026-09-28 (see Notes). **Status**: P1 built & closed; cards unblocked from S2 (2026-09-28, card-first override) — frontier = S2 + S3–S7.
 
 ## Destination
 
@@ -14,6 +14,7 @@ A locked, per-card design for the /Squad page: for every visible card, its inten
 - **Card template**, resolved in order in every card ticket: intent (what question did you originally want it to answer) -> value (does it still earn its place) -> design (form, data source, interactions) -> prototype only if the form is contested.
 - Resolve tickets with **grilling**; at most one per session.
 - **Prototype-first override (2026-09-28, user decision)**: the user was unsure of the page's primary job and chose to prototype the cards and talk through them individually BEFORE deriving it. S1 is re-scoped as the derived synthesis (blocked by S3-S7, amends its original body on the ticket); P1 (#29) builds the judging artifact up front; card tickets grill against it. The card template's intent -> value -> design order stands; the prototype now precedes the conversation instead of graduating after it.
+- **Card-first unblocking (2026-09-28, user decision)**: the per-card conversations start immediately against the P1 artifact; S3-S7 no longer block on S2. S2 (load & snapshot model) now gates only S8, so the load-model decision still lands before the spec is assembled.
 - Language: **Player**, never "Member" (Context.md glossary; the legacy page was MemberStatsComparison).
 - Theme: D10 "command centre" constraints apply to any prototype.
 - Data rules in force: Match Cache strict cache-first patterns (Dashboard 2.0 decisions 11/20); SnapshotStore lifecycle untouched unless a card decision explicitly changes it; the live roster read (2 calls) is the only present-state source (CSR/form/energy/salary/age); PlayerSeasons cached per Player+season; squad window = last 20 completed fixtures (SquadWindowLast).
