@@ -94,6 +94,7 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
   .tag.on{border-color:var(--accent);color:var(--accent)}
   .toggle{position:fixed;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--hair);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--dim);display:flex;gap:8px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35);z-index:9}
   .toggle input{accent-color:var(--accent)}
+  .dlv{font-size:9.5px;line-height:1.15;margin-top:1px;font-variant-numeric:tabular-nums}
   footer{margin-top:26px;font-size:12px;color:var(--dim);text-align:center}
   footer a{color:var(--accent)}
 </style>
@@ -141,7 +142,7 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
 <section class="card" id="c3">
   <div class="cardhead">
     <div><h2>C3 · Squad changes</h2><p class="sub">Who changed, since when. Five snapshots exist in sample data (Aug 2 → Sep 21); today's card reads exactly the newest two.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c3a">Today</button><button class="chip" data-vp="c3b">B · Baseline + history</button></div>
+    <div class="chips"><button class="chip on" data-vp="c3a">Today</button><button class="chip" data-vp="c3b">B · Baseline + history</button><button class="chip" data-vp="c3c">C · Per-game matrix + trends</button></div>
   </div>
   <div class="vp on" id="c3a">
     <p class="vpname">Today — delta vs. your previous load (whenever that was)</p>
@@ -157,6 +158,18 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
     </div>
     <div id="c3b-table"></div>
     <p class="note">Baseline is a choice, not an accident. Each row keeps a five-capture CSR sparkline so "improving" and "declining" are visible at a glance; joined/left get their own sections; every delta that moved is shown. Player names link to Player History.</p>
+  </div>
+  <div class="vp" id="c3c">
+    <p class="vpname">C — Per-game squad matrix: every cached stat, Δ vs the last game, trend tab (your reshape)</p>
+    <div class="formbox" style="margin-bottom:6px">
+      <div class="field"><label>Game</label><select id="c3c-fx"></select></div>
+      <div class="segs" style="margin:0" id="c3c-mode"><button class="chip on" data-m="matrix">Matrix</button><button class="chip" data-m="trend">Trend</button></div>
+      <div class="segs" style="margin:0" id="c3c-delta"><button class="chip" data-d="val">Values</button><button class="chip on" data-d="both">Game + Δ</button><button class="chip" data-d="delta">Δ only</button></div>
+    </div>
+    <div class="segs" id="c3c-tabs"></div>
+    <div class="field" id="c3c-statwrap" style="display:none;margin:8px 0 2px"><label>Trend stat</label><select id="c3c-stat"></select></div>
+    <div id="c3c-out"></div>
+    <p class="note">Data shape = the live <b>r=fs&fixtureid=X&teamplayersstats=&lt;teamId&gt;</b> read — 51 fields per player per game, one API call covers all 23 slots, cached per viewed Fixture. Δ = this game minus the previous game in the window. Always-visible columns (D4): minutes, points, energy-after. Caps fields excluded (fs caps unreliable — r=ps owns caps). No per-fixture CSR exists in the API (CSR is current-state only, from the roster read).</p>
   </div>
   <div class="judge"><b>Judge C3</b> — What did you originally want: who joined/left, who improved or declined, or contract movement — all three? Is "since previous load" ever the right baseline, or must it be a choice? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/22">S3</a>.</div>
 </section>
@@ -388,6 +401,72 @@ function pstat(pid, fxIdx){ // deterministic pseudo per-player fixture stats
   const lb = Math.round(rnd()*2), it = Math.round(rnd()*rnd());
   return { tackles:tk, metres:mt, tries:tr, conv:cv, linebreaks:lb, intercepts:it, points: tr*5+cv*2 };
 }
+// ─── C3-C · full per-fixture field set (the 51-field fs shape) ─────────────
+const FS_GROUPS = [
+  ["Attack", [["tries","Tr"],["try_assists","TryA"],["metres_gained","Mtr"],["linebreaks","LB"],["beaten_defenders","Btn"]]],
+  ["Defence", [["tackles","Tkl"],["missed_tackles","M-Tkl"],["turnovers","TO"],["intercepts","Int"]]],
+  ["Kicking", [["kicks","Kk"],["good_kicks","G-Kk"],["bad_kicks","B-Kk"],["kicking_metres","K-Mtr"],["kicks_out_on_the_full","OF"],["up_and_unders","U&U"],["good_up_and_unders","G-U&U"],["bad_up_and_unders","B-U&U"],["conversions","Cv"],["missed_conversions","M-Cv"],["penalties","Pn"],["missed_penalties","M-Pn"],["dropgoals","DG"],["missed_dropgoals","M-DG"]]],
+  ["Handling", [["knockons","KO"],["handling_errors","HE"],["forward_passes","FP"]]],
+  ["Discipline", [["penalties_conceded","PC"],["yellow_cards","YC"],["red_cards","RC"],["fights","Ft"]]],
+  ["Lineout", [["lineouts_secured","Sec"],["lineouts_conceded","Con"],["lineouts_stolen","Stl"],["successful_lineout_throws","S-Thr"],["unsuccessful_lineout_throws","U-Thr"]]],
+  ["Other", [["injuries","Inj"],["ball_time","BallT"]]]
+];
+const FS_OUTPUT = [["minutes_played","Min"],["total_points","Pts"],["energy_after","E↓"]];
+function pstat51(pid, fxIdx){
+  const p = SNAPS[pid].p, rnd = mulberry32(7777 + pid*13 + fxIdx*29);
+  const fwd = /Prop|Hooker|Lock|Flanker|No\.8|Back row/.test(p.pos);
+  const lockish = /Lock|Flanker|No\.8|Back row/.test(p.pos), hooker = p.pos==="Hooker";
+  const start = p.slot <= 15;
+  const min = start ? (rnd()<0.75 ? 70+Math.floor(rnd()*11) : 52+Math.floor(rnd()*18)) : (rnd()<0.8 ? 6+Math.floor(rnd()*24) : 0);
+  const m = {};
+  m.minutes_played = min;
+  m.tries = Math.round(rnd()*rnd()*(fwd?1:2));
+  m.try_assists = Math.round(rnd()*rnd()*(fwd?0.4:1.2));
+  m.metres_gained = Math.round((fwd?8:25) + rnd()*(fwd?55:95));
+  m.linebreaks = Math.round(rnd()*rnd()*(fwd?0.6:1.6));
+  m.beaten_defenders = Math.round(rnd()*rnd()*(fwd?1:5));
+  m.tackles = fwd ? 3+Math.round(rnd()*7) : Math.round(rnd()*5);
+  m.missed_tackles = Math.round(rnd()*(fwd?3:2));
+  m.turnovers = Math.round(rnd()*rnd()*(fwd?2:1));
+  m.intercepts = Math.round(rnd()*rnd()*0.8);
+  const ka = kickers.has(pid) ? (p.pos==="Fly-half" ? 3+Math.floor(rnd()*5) : (p.pos==="Scrum-half" ? 1+Math.floor(rnd()*3) : Math.floor(rnd()*3))) : 0;
+  m.kicks = ka;
+  const outFull = ka ? Math.floor(rnd()*2) : 0;
+  m.kicks_out_on_the_full = outFull;
+  const good = Math.max(0, ka - outFull - Math.round(rnd()*Math.max(0,ka-outFull)));
+  m.good_kicks = good;
+  m.bad_kicks = Math.max(0, ka - outFull - good);
+  m.kicking_metres = ka ? Math.round(ka*(18+rnd()*22)) : 0;
+  m.up_and_unders = ka ? Math.floor(rnd()*3) : 0;
+  m.good_up_and_unders = m.up_and_unders ? Math.max(0, m.up_and_unders - Math.floor(rnd()*2)) : 0;
+  m.bad_up_and_unders = m.up_and_unders - m.good_up_and_unders;
+  const tr = FX[fxIdx].tr;
+  const goalKick = kickers.has(pid) && (p.pos==="Fly-half" || p.pos==="Full-back" || p.pos==="Scrum-half");
+  m.conversions = goalKick ? Math.max(0, Math.min(tr, Math.round(tr*(0.5+rnd()*0.4)))) : 0;
+  m.missed_conversions = goalKick ? Math.max(0, tr - m.conversions) : 0;
+  m.penalties = goalKick ? Math.floor(rnd()*3) : 0;
+  m.missed_penalties = goalKick ? Math.floor(rnd()*2) : 0;
+  m.dropgoals = rnd()<0.12 ? 1 : 0;
+  m.missed_dropgoals = m.dropgoals ? 0 : (rnd()<0.08 ? 1 : 0);
+  m.total_points = m.tries*5 + m.conversions*2 + m.penalties*3 + m.dropgoals*3;
+  m.knockons = Math.floor(rnd()*2);
+  m.handling_errors = Math.floor(rnd()*2);
+  m.forward_passes = rnd()<0.3 ? 1 : 0;
+  m.penalties_conceded = Math.floor(rnd()*3);
+  m.yellow_cards = rnd()<0.08 ? 1 : 0;
+  m.red_cards = 0;
+  m.fights = rnd()<0.05 ? 1 : 0;
+  m.lineouts_secured = lockish ? Math.floor(rnd()*4) : 0;
+  m.lineouts_conceded = lockish ? Math.floor(rnd()*2) : 0;
+  m.lineouts_stolen = lockish ? (rnd()<0.15?1:0) : 0;
+  m.successful_lineout_throws = hooker ? 4+Math.floor(rnd()*5) : 0;
+  m.unsuccessful_lineout_throws = hooker ? Math.floor(rnd()*2) : 0;
+  m.injuries = rnd()<0.06 ? 1 : 0;
+  m.ball_time = Math.round(min*0.55 + rnd()*30);
+  m.energy_before = Math.max(35, Math.min(100, p.energy + Math.round((rnd()-0.5)*4)));
+  m.energy_after = Math.max(25, m.energy_before - Math.round(min*0.09 + rnd()*4));
+  return m;
+}
 // ─── render helpers ─────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
@@ -425,12 +504,12 @@ function linesvg(el, series, labels, o){
   labels.forEach((lb,i)=>{ if (i%3===0 || i===labels.length-1) g += `<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle">${lb}</text>`; });
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">${g}</svg>`;
 }
-function spark(el, vals){
+function spark(el, vals, w){
   const vs = vals.filter(v=>v!==null);
   if (vs.length<2){ el.innerHTML=""; return; }
-  const W=76,H=20,min=Math.min(...vs),max=Math.max(...vs);
+  const W=w||76,H=20,min=Math.min(...vs),max=Math.max(...vs);
   const pts2 = vals.map((v,i)=> v===null?null:`${(i/(vals.length-1)*W).toFixed(1)},${(H-2-(v-min)/(max-min||1)*(H-4)).toFixed(1)}`).filter(Boolean).join(" ");
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:76px;height:20px"><polyline points="${pts2}" fill="none" stroke="var(--accent)" stroke-width="1.5"/></svg>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:${W}px;height:20px"><polyline points="${pts2}" fill="none" stroke="var(--accent)" stroke-width="1.5"/></svg>`;
 }
 function diststrip(el, vals, o){
   const min=Math.min(...vals), max=Math.max(...vals);
@@ -584,6 +663,57 @@ function renderC7(){
   $("c7b-table").innerHTML = `<table class="dt"><thead><tr><th>Date</th><th>Competition</th><th>Opponent</th><th>Result</th><th class="num">Margin</th><th></th></tr></thead><tbody>` +
     FX.map(f=>`<tr><td>${f.d}</td><td>${f.comp}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${fd(f.us-f.them)}</td><td><a href="#" style="color:var(--accent);text-decoration:none">Match Analysis →</a></td></tr>`).join("") + `</tbody></table>`;
 }
+// ─── C3-C · matrix + trend renderers ───────────────────────────────────────
+let c3cGroup = 0, c3cDelta = "both", c3cMode = "matrix";
+function renderC3C(){ if (c3cMode === "matrix") renderC3CMatrix(); else renderC3CTrend(); }
+function deltaCell(v, prev){
+  const hasPrev = prev !== null;
+  const d = hasPrev ? v - prev : null;
+  const cls = d===null ? "" : (d>0 ? "delta-up" : (d<0 ? "delta-down" : ""));
+  const dtxt = d===null ? "–" : (d>0 ? "+"+d : ""+d);
+  if (c3cDelta === "val") return fmt(v);
+  if (c3cDelta === "delta") return `<div class="dlv ${cls}">${dtxt}</div>`;
+  return `${fmt(v)}<div class="dlv ${cls}">${dtxt}</div>`;
+}
+function renderC3CMatrix(){
+  const fi = +$("c3c-fx").value;
+  const [gname, fields] = FS_GROUPS[c3cGroup];
+  const rows = P.map(p => ({ p, cur: pstat51(p.id, fi), prev: fi < FX.length-1 ? pstat51(p.id, fi+1) : null }));
+  const c = r => k => { const prev = r.prev ? r.prev[k] : null; return `<td class="num">${deltaCell(r.cur[k], prev)}</td>`; };
+  $("c3c-out").innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>#</th><th>XV/B</th>` +
+    FS_OUTPUT.map(([k,l])=>`<th class="num">${l}</th>`).join("") +
+    fields.map(([k,l])=>`<th class="num" title="${k}">${l}</th>`).join("") + `</tr></thead><tbody>` +
+    rows.map(r=>{
+      const cc = c(r);
+      return `<tr><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Players/${r.p.id}">${esc(r.p.name)}</a></td>`+
+        `<td class="num">${r.p.slot}</td><td class="num">${r.p.slot<=15?"XV":"B"}</td>`+
+        cc("minutes_played") + cc("total_points") + cc("energy_after") +
+        fields.map(([k])=>cc(k)).join("") + `</tr>`;
+    }).join("") + `</tbody></table>` +
+    `<p class="note">Game: ${esc(fxLabel(FX[fi]))} · Δ vs ${fi < FX.length-1 ? esc(fxLabel(FX[fi+1])) : "no previous game in the window"} · group: ${gname} · click a player for their full history.</p>`;
+}
+function renderC3CTrend(){
+  const [gname, fields] = FS_GROUPS[c3cGroup];
+  const allFields = [["Output", FS_OUTPUT]].concat(FS_GROUPS);
+  const sel = $("c3c-stat");
+  if (sel.dataset.group !== gname){
+    sel.innerHTML = allFields.map(([g, fs])=>`<optgroup label="${g}">` + fs.map(([k,l])=>`<option value="${k}" ${g===gname && k===fields[0][0] ? "selected":""}>${l}</option>`).join("") + `</optgroup>`).join("");
+    sel.dataset.group = gname;
+  }
+  const k = sel.value || fields[0][0];
+  const lbl = allFields.flatMap(([g,fs])=>fs).find(([kk])=>kk===k)[1];
+  const o2n = []; for (let fi = FX.length-1; fi >= 0; fi--) o2n.push(fi);
+  const rows = P.map(p=>{
+    const series = o2n.map(fi => pstat51(p.id, fi)[k]);
+    return { p, series, last: series[series.length-1], prev: series[series.length-2], season: series.reduce((a,b)=>a+b,0) };
+  });
+  $("c3c-out").innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>${esc(lbl)} · last 20 games</th><th class="num">Last</th><th class="num">Δ prev game</th><th class="num">Season</th></tr></thead><tbody>` +
+    rows.map(r=>`<tr><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Players/${r.p.id}">${esc(r.p.name)}</a></td>`+
+      `<td><span class="spark20" data-s="${r.series.join(",")}"></span></td>`+
+      `<td class="num">${fmt(r.last)}</td><td class="num">${fd(r.last-r.prev)}</td><td class="num">${fmt(r.season)}</td></tr>`).join("") + `</tbody></table>` +
+    `<p class="note">Trend across the whole cached window for one stat; season = sum of the window (sample). In the real card this reads the Match Cache — every viewed Fixture, permanently.</p>`;
+  $("c3c-out").querySelectorAll(".spark20").forEach(el => spark(el, el.dataset.s.split(",").map(Number), 190));
+}
 // ─── switching + init ──────────────────────────────────────────────────────
 document.querySelectorAll("section.card").forEach(sec => {
   const chips = sec.querySelectorAll(".chips .chip"), vps = sec.querySelectorAll(":scope > .vp");
@@ -612,6 +742,22 @@ document.querySelectorAll("#c5b .segs .chip").forEach(ch=>ch.addEventListener("c
   c5mode = ch.dataset.mode; $("c5-playerwrap").style.display = c5mode==="player" ? "" : "none"; renderC5B();
 }));
 fillFx("c5-fx", renderC5A); fillFx("c5-fx2", renderC5B); fillFx("c5-fx3", renderC5C);
+fillFx("c3c-fx", renderC3C);
+$("c3c-tabs").innerHTML = FS_GROUPS.map(([g],i)=>`<button class="chip${i===0?' on':''}" data-g="${i}">${g}</button>`).join("");
+$("c3c-tabs").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
+  $("c3c-tabs").querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
+  c3cGroup = +ch.dataset.g; renderC3C();
+}));
+$("c3c-mode").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
+  $("c3c-mode").querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
+  c3cMode = ch.dataset.m; $("c3c-statwrap").style.display = c3cMode==="trend" ? "" : "none"; renderC3C();
+}));
+$("c3c-delta").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
+  $("c3c-delta").querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
+  c3cDelta = ch.dataset.d; renderC3C();
+}));
+$("c3c-stat").addEventListener("change", renderC3C);
+renderC3C();
 deltaTable($("c3a-table"), 3, true);
 deltaTable($("c3b-table"), 3, false);
 renderC4A(); renderC4Pills(); renderC4B(); renderC4C();
