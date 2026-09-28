@@ -450,7 +450,7 @@ function linesvg(el, series, labels, o){
          `<text x="${L-6}" y="${gy+3}" text-anchor="end">${fmt(Math.round(max-(max-min)*k/4))}</text>`; }
   series.forEach(s=>{
     g += `<polyline points="${s.vals.map((v,i)=>x(i).toFixed(1)+","+y(v).toFixed(1)).join(" ")}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round"/>`;
-    s.vals.forEach((v,i)=>{ g += `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${s.color}"/>`; });
+    s.vals.forEach((v,i)=>{ g += `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${s.color}"><title>${labels[i]}: ${v}</title></circle>`; });
   });
   labels.forEach((lb,i)=>{ if (i%3===0 || i===labels.length-1) g += `<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle">${lb}</text>`; });
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">${g}</svg>`;
