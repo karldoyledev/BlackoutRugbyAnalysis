@@ -141,14 +141,14 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
 </section>
 <section class="card" id="c3">
   <div class="cardhead">
-    <div><h2>C3 - Game review</h2><p class="sub">The locked card: per-game squad matrix + trend tab. Every cached stat per player per game, d vs the last game, trends across the window.</p></div>
+    <div><h2>C3 - Game review</h2><p class="sub">The locked card: per-game squad matrix + trend tab. Every cached stat per player per game, delta vs the last game, trends across the window.</p></div>
   </div>
   <div class="vp on" id="c3c">
-    <p class="vpname">C - Per-game squad matrix: every cached stat, d vs the last game, trend tab (your reshape)</p>
+    <p class="vpname">C - Per-game squad matrix: every cached stat, delta vs the last game, trend tab (your reshape)</p>
     <div class="formbox" style="margin-bottom:6px">
       <div class="field"><label>Game</label><select id="c3c-fx"></select></div>
       <div class="segs" style="margin:0" id="c3c-mode"><button class="chip on" data-m="matrix">Matrix</button><button class="chip" data-m="trend">Trend</button></div>
-      <div class="segs" style="margin:0" id="c3c-delta"><button class="chip" data-d="val">Values</button><button class="chip on" data-d="both">Game + d</button><button class="chip" data-d="delta">d only</button></div>
+      <div class="segs" style="margin:0" id="c3c-delta"><button class="chip" data-d="val">Values</button><button class="chip on" data-d="both">Game + delta</button><button class="chip" data-d="delta">delta only</button></div>
     </div>
     <div class="segs" id="c3c-tabs"></div>
     <div class="field" id="c3c-statwrap" style="display:none;margin:8px 0 2px"><label>Trend stat</label><select id="c3c-stat"></select></div>
@@ -400,7 +400,7 @@ const FS_GROUPS = [
   ["Lineout", [["lineouts_secured","Sec"],["lineouts_conceded","Con"],["lineouts_stolen","Stl"],["successful_lineout_throws","S-Thr"],["unsuccessful_lineout_throws","U-Thr"]]],
   ["Other", [["injuries","Inj"],["ball_time","BallT"]]]
 ];
-const FS_OUTPUT = [["minutes_played","Min"],["total_points","Pts"],["energy_after","Ea+'"]];
+const FS_OUTPUT = [["minutes_played","Min"],["total_points","Pts"],["energy_after","E-after"]];
 function pstat51(pid, fxIdx){
   const p = SNAPS[pid].p, rnd = mulberry32(7777 + pid*13 + fxIdx*29);
   const fwd = /Prop|Hooker|Lock|Flanker|No\.8|Back row/.test(p.pos);
@@ -684,7 +684,7 @@ function renderC3CMatrix(){
         allCols.map(([k])=>cc(k)).join("") + `</tr>`;
     }).join("") + `</tbody></table>` +
     (eye.length ? `<p class="note"><b>Coach's eye:</b> ${eye.join(" - ")} - click any stat header to sort.</p>` : `<p class="note">Click any stat header to sort.</p>`) +
-    `<p class="note">Game: ${esc(fxLabel(FX[fi]))} - d vs ${fi < FX.length-1 ? esc(fxLabel(FX[fi+1])) : "no previous game in the window"} - group: ${gname} - click a player for their full history.</p>`;
+    `<p class="note">Game: ${esc(fxLabel(FX[fi]))} - delta vs ${fi < FX.length-1 ? esc(fxLabel(FX[fi+1])) : "no previous game in the window"} - group: ${gname} - click a player for their full history.</p>`;
   $("c3c-out").querySelectorAll("th[data-k]").forEach(h=>h.addEventListener("click",()=>{
     const k = h.dataset.k;
     if (c3cSort.k === k) c3cSort.dir *= -1; else c3cSort = { k, dir: -1 };
@@ -706,7 +706,7 @@ function renderC3CTrend(){
     const series = o2n.map(fi => pstat51(p.id, fi)[k]);
     return { p, series, last: series[series.length-1], prev: series[series.length-2], season: series.reduce((a,b)=>a+b,0) };
   });
-  $("c3c-out").innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>${esc(lbl)} - last 20 games</th><th class="num">Last</th><th class="num">d prev game</th><th class="num">Season</th></tr></thead><tbody>` +
+  $("c3c-out").innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>${esc(lbl)} - last 20 games</th><th class="num">Last</th><th class="num">delta prev game</th><th class="num">Season</th></tr></thead><tbody>` +
     rows.map(r=>`<tr><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Players/${r.p.id}">${esc(r.p.name)}</a></td>`+
       `<td><span class="spark20" data-s="${r.series.join(",")}"></span></td>`+
       `<td class="num">${fmt(r.last)}</td><td class="num">${fd(r.last-r.prev)}</td><td class="num">${fmt(r.season)}</td></tr>`).join("") + `</tbody></table>` +
