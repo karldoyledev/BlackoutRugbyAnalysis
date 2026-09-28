@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>/Squad card judging lab — P1 prototype</title>
+<title>/Squad card judging lab â€” P1 prototype</title>
 <!-- PROTOTYPE (throwaway; wayfinder map #20, ticket P1 #29). One question per card:
      "what did you originally want this card to answer, and which form delivers it?"
      Each /Squad card shows TODAY (as built) and alternative treatments; switch per
@@ -102,9 +102,9 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
 <body>
 <div class="wrap">
 <div class="intro">
-  <p class="kicker">P1 · card judging lab · wayfinder map <a class="accent" href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20">#20</a></p>
-  <p>This is not a redesign. It is the <b>evidence</b> for one: every visible /Squad card appears in its <b>Today</b> form (as built) next to alternative treatments. Judge each card individually — switch variants with the chips, stack them all with the bottom-right toggle.</p>
-  <p>For each card, answer three things: <span class="accent">what did you originally want it to answer?</span> · <span class="accent">does it earn its place?</span> · <span class="accent">which option is closest — or none?</span> Your answers land on the card's ticket (linked in each judge block); the page's primary job is derived from them, not assumed.</p>
+  <p class="kicker">P1 Â· card judging lab Â· wayfinder map <a class="accent" href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20">#20</a></p>
+  <p>This is not a redesign. It is the <b>evidence</b> for one: every visible /Squad card appears in its <b>Today</b> form (as built) next to alternative treatments. Judge each card individually â€” switch variants with the chips, stack them all with the bottom-right toggle.</p>
+  <p>For each card, answer three things: <span class="accent">what did you originally want it to answer?</span> Â· <span class="accent">does it earn its place?</span> Â· <span class="accent">which option is closest â€” or none?</span> Your answers land on the card's ticket (linked in each judge block); the page's primary job is derived from them, not assumed.</p>
   <div class="lab">
     <a href="#c1">C1 Controls</a><a href="#c3">C3 Squad changes</a><a href="#c4">C4 Player comparison</a><a href="#c5">C5 Fixture breakdown</a><a href="#c6">C6 Team trend</a><a href="#c7">C7 Fixtures table</a>
   </div>
@@ -113,21 +113,21 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
 
 <section class="card" id="c1">
   <div class="cardhead">
-    <div><h2>C1 · Control panel</h2><p class="sub">How data arrives, and what the top of the page is. Infrastructure — redesigned only as a consequence of this decision.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c1a">Today</button><button class="chip" data-vp="c1b">B · Club strip</button></div>
+    <div><h2>C1 Â· Control panel</h2><p class="sub">How data arrives, and what the top of the page is. Infrastructure â€” redesigned only as a consequence of this decision.</p></div>
+    <div class="chips"><button class="chip on" data-vp="c1a">Today</button><button class="chip" data-vp="c1b">B Â· Club strip</button></div>
   </div>
   <div class="vp on" id="c1a">
-    <p class="vpname">Today — manual load form (pre-Club-Link legacy)</p>
+    <p class="vpname">Today â€” manual load form (pre-Club-Link legacy)</p>
     <div class="formbox">
       <div class="field"><label>API endpoint</label><input type="text" value="https://rugby.example/api.php" disabled /></div>
       <div class="field"><label>Team ID</label><input type="text" value="2" disabled /></div>
       <div class="field"><label>Season</label><select disabled><option>Season 80</option></select></div>
       <div class="field"><label>&nbsp;</label><button class="btn">Load stats comparison</button></div>
     </div>
-    <p class="note">Nothing renders until you press the button. The endpoint/Team fields are dead weight — your credentials ride the Club Link; the Season list is hardcoded 50–80 with a default of <b>80</b>, while the API's current season is <b>62</b> — a stale legacy default (masked in practice by the loader's retry-without-season fallback). Nothing here says whose page this is.</p>
+    <p class="note">Nothing renders until you press the button. The endpoint/Team fields are dead weight â€” your credentials ride the Club Link; the Season list is hardcoded 50â€“80 with a default of <b>80</b>, while the API's current season is <b>62</b> â€” a stale legacy default (masked in practice by the loader's retry-without-season fallback). Nothing here says whose page this is.</p>
   </div>
   <div class="vp" id="c1b">
-    <p class="vpname">B — Club strip · page renders from cache on visit, capture is explicit</p>
+    <p class="vpname">B â€” Club strip Â· page renders from cache on visit, capture is explicit</p>
     <div class="clubstrip">
       <span class="club">Ashgrove RFC</span>
       <span class="tag on">Team CSR 71</span>
@@ -135,51 +135,35 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
       <select style="background:var(--side);color:var(--text);border:1px solid var(--hair);border-radius:6px;padding:6px 10px"><option>Season 62</option><option>Season 61</option><option>Season 60</option></select>
       <button class="btn">Capture squad</button>
     </div>
-    <p class="note">Arriving on the page renders everything cached immediately (no button required). <b>Capture squad</b> is the only live read: roster refresh (2 calls) + a Squad Snapshot save — the volatile present. The season select scopes aggregates. Cold start (no snapshot yet) shows a single "Capture squad" bootstrap panel, mirroring /Players.</p>
+    <p class="note">Arriving on the page renders everything cached immediately (no button required). <b>Capture squad</b> is the only live read: roster refresh (2 calls) + a Squad Snapshot save â€” the volatile present. The season select scopes aggregates. Cold start (no snapshot yet) shows a single "Capture squad" bootstrap panel, mirroring /Players.</p>
   </div>
-  <div class="judge"><b>Judge C1</b> — Is the control panel a tool (manual load) or a context strip (club + capture)? Which makes you want to visit the page? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/23">S2</a>.</div>
+  <div class="judge"><b>Judge C1</b> â€” Is the control panel a tool (manual load) or a context strip (club + capture)? Which makes you want to visit the page? â†’ resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/23">S2</a>.</div>
 </section>
 <section class="card" id="c3">
   <div class="cardhead">
-    <div><h2>C3 · Squad changes</h2><p class="sub">Who changed, since when. Five snapshots exist in sample data (Aug 2 → Sep 21); today's card reads exactly the newest two.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c3a">Today</button><button class="chip" data-vp="c3b">B · Baseline + history</button><button class="chip" data-vp="c3c">C · Per-game matrix + trends</button></div>
+    <div><h2>C3 Â· Game review</h2><p class="sub">The locked card: per-game squad matrix + trend tab. Every cached stat per player per game, Î” vs the last game, trends across the window.</p></div>
   </div>
-  <div class="vp on" id="c3a">
-    <p class="vpname">Today — delta vs. your previous load (whenever that was)</p>
-    <div id="c3a-table"></div>
-    <p class="note">Two loads five minutes apart and two loads three weeks apart render identically. The amber <span class="pill p-hidden">hidden in today's build</span> rows are players whose ONLY movement was salary or form — the current filter silently drops them. Performance deltas here compare season aggregates at capture time, so "played fixtures since the last load" reads as "the player changed".</p>
-  </div>
-  <div class="vp" id="c3b">
-    <p class="vpname">B — chosen baseline · salary &amp; form included · joined/left grouped · CSR history per player</p>
-    <div class="segs" id="c3-base">
-      <button class="chip on" data-base="prev">Since previous load (Sep 12 → Sep 21)</button>
-      <button class="chip" data-base="season">Since season start (Aug 2 → Sep 21)</button>
-      <button class="chip" data-base="net5">Net over 5 captures</button>
-    </div>
-    <div id="c3b-table"></div>
-    <p class="note">Baseline is a choice, not an accident. Each row keeps a five-capture CSR sparkline so "improving" and "declining" are visible at a glance; joined/left get their own sections; every delta that moved is shown. Player names link to Player History.</p>
-  </div>
-  <div class="vp" id="c3c">
-    <p class="vpname">C — Per-game squad matrix: every cached stat, Δ vs the last game, trend tab (your reshape)</p>
+  <div class="vp on" id="c3c">
+    <p class="vpname">C â€” Per-game squad matrix: every cached stat, Î” vs the last game, trend tab (your reshape)</p>
     <div class="formbox" style="margin-bottom:6px">
       <div class="field"><label>Game</label><select id="c3c-fx"></select></div>
       <div class="segs" style="margin:0" id="c3c-mode"><button class="chip on" data-m="matrix">Matrix</button><button class="chip" data-m="trend">Trend</button></div>
-      <div class="segs" style="margin:0" id="c3c-delta"><button class="chip" data-d="val">Values</button><button class="chip on" data-d="both">Game + Δ</button><button class="chip" data-d="delta">Δ only</button></div>
+      <div class="segs" style="margin:0" id="c3c-delta"><button class="chip" data-d="val">Values</button><button class="chip on" data-d="both">Game + Î”</button><button class="chip" data-d="delta">Î” only</button></div>
     </div>
     <div class="segs" id="c3c-tabs"></div>
     <div class="field" id="c3c-statwrap" style="display:none;margin:8px 0 2px"><label>Trend stat</label><select id="c3c-stat"></select></div>
     <div id="c3c-out"></div>
-    <p class="note">Data shape = the live <b>r=fs&fixtureid=X&teamplayersstats=&lt;teamId&gt;</b> read — 51 fields per player per game, one API call covers all 23 slots, cached per viewed Fixture. Δ = this game minus the previous game in the window. Always-visible columns (D4): minutes, points, energy-after. Caps fields excluded (fs caps unreliable — r=ps owns caps). No per-fixture CSR exists in the API (CSR is current-state only, from the roster read).</p>
+    <p class="note">Data shape = the live <b>r=fs&fixtureid=X&teamplayersstats=&lt;teamId&gt;</b> read â€” 51 fields per player per game, one API call covers all 23 slots, cached per viewed Fixture. Î” = this game minus the previous game in the window. Always-visible columns (D4): minutes, points, energy-after. Caps fields excluded (fs caps unreliable â€” r=ps owns caps). No per-fixture CSR exists in the API (CSR is current-state only, from the roster read).</p>
   </div>
-  <div class="judge"><b>Judge C3</b> — What did you originally want: who joined/left, who improved or declined, or contract movement — all three? Is "since previous load" ever the right baseline, or must it be a choice? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/22">S3</a>.</div>
+  <div class="judge"><b>S3 Â· RESOLVED 2026-09-28</b> â€” the snapshot-delta card (Today/B: load-over-load deltas, baseline chips) is retired; C3 is the per-game matrix + trend tab. Resolution: <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/22">S3</a>.</div>
 </section>
 <section class="card" id="c4">
   <div class="cardhead">
-    <div><h2>C4 · Player comparison</h2><p class="sub">The squad ranked. Today's selector mixes present-state attributes (CSR, energy, form, salary, age — the live read) with season aggregates in one ~40-stat list. (Sample data exposes 10 of them.)</p></div>
-    <div class="chips"><button class="chip on" data-vp="c4a">Today</button><button class="chip" data-vp="c4b">B · Curated tabs</button><button class="chip" data-vp="c4c">C · Squad scan</button></div>
+    <div><h2>C4 Â· Player comparison</h2><p class="sub">The squad ranked. Today's selector mixes present-state attributes (CSR, energy, form, salary, age â€” the live read) with season aggregates in one ~40-stat list. (Sample data exposes 10 of them.)</p></div>
+    <div class="chips"><button class="chip on" data-vp="c4a">Today</button><button class="chip" data-vp="c4b">B Â· Curated tabs</button><button class="chip" data-vp="c4c">C Â· Squad scan</button></div>
   </div>
   <div class="vp on" id="c4a">
-    <p class="vpname">Today — one dropdown, 23 ranked bars, no context</p>
+    <p class="vpname">Today â€” one dropdown, 23 ranked bars, no context</p>
     <div class="formbox" style="margin-bottom:6px">
       <div class="field"><label>Select stat</label><select id="c4-stat">
         <optgroup label="General (present-state, live read)"><option value="csr">CSR Rating</option><option value="energy">Energy</option><option value="form">Form</option><option value="salary">Salary</option><option value="age">Age</option></optgroup>
@@ -190,7 +174,7 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
     <p class="note">Switching from "Tackles" to "CSR" silently changes what the bars MEAN (a season's work vs. right now). A bar that says "14" never says whether 14 is good for this squad.</p>
   </div>
   <div class="vp" id="c4b">
-    <p class="vpname">B — curated tabs aligned to the app's 7 Stat Groups · median marker · top-5 emphasized</p>
+    <p class="vpname">B â€” curated tabs aligned to the app's 7 Stat Groups Â· median marker Â· top-5 emphasized</p>
     <div class="segs" id="c4-tabs">
       <button class="chip on" data-tab="general">General</button>
       <button class="chip" data-tab="attack">Attack</button>
@@ -200,10 +184,10 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
     </div>
     <div class="segs" id="c4-pills"></div>
     <div id="c4b-bars"></div>
-    <p class="note">Present-state (General) and season aggregates (the four Stat-Group tabs) no longer hide in one list — the tab tells you what kind of question you're asking. The amber line is the squad median: instantly visible is who is carrying and who is drifting.</p>
+    <p class="note">Present-state (General) and season aggregates (the four Stat-Group tabs) no longer hide in one list â€” the tab tells you what kind of question you're asking. The amber line is the squad median: instantly visible is who is carrying and who is drifting.</p>
   </div>
   <div class="vp" id="c4c">
-    <p class="vpname">C — squad scan: one stat, the whole distribution, above/below median</p>
+    <p class="vpname">C â€” squad scan: one stat, the whole distribution, above/below median</p>
     <div class="formbox" style="margin-bottom:2px">
       <div class="field"><label>Scan stat</label><select id="c4c-stat"><option value="points">Total Points</option><option value="tackles">Tackles</option><option value="metres">Metres Gained</option><option value="csr">CSR</option><option value="age">Age</option></select></div>
     </div>
@@ -213,26 +197,26 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
       <div><div class="hgrp">Above median</div><div id="c4c-above"></div></div>
       <div><div class="hgrp">Below median</div><div id="c4c-below"></div></div>
     </div>
-    <p class="note">Answers "where is my squad strong/weak" instead of "who is #1" — every player visible at once, clusters and gaps included.</p>
+    <p class="note">Answers "where is my squad strong/weak" instead of "who is #1" â€” every player visible at once, clusters and gaps included.</p>
   </div>
-  <div class="judge"><b>Judge C4</b> — What did you originally want: "who is my best X", "where is the squad strong/weak", or "who should I sell"? Does a 23-bar ranked chart answer that — or does B/C? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/27">S4</a>.</div>
+  <div class="judge"><b>Judge C4</b> â€” What did you originally want: "who is my best X", "where is the squad strong/weak", or "who should I sell"? Does a 23-bar ranked chart answer that â€” or does B/C? â†’ resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/27">S4</a>.</div>
 </section>
 <section class="card" id="c5">
   <div class="cardhead">
-    <div><h2>C5 · Fixture breakdown</h2><p class="sub">One Fixture at a time. Today: 7 silently-chosen metrics, team and players sharing one selector. Sample per-player fixture stats are generated (deterministic) for the 23 squad rows.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c5a">Today</button><button class="chip" data-vp="c5b">B · Split subject</button><button class="chip" data-vp="c5c">C · Fixture sheet</button></div>
+    <div><h2>C5 Â· Fixture breakdown</h2><p class="sub">One Fixture at a time. Today: 7 silently-chosen metrics, team and players sharing one selector. Sample per-player fixture stats are generated (deterministic) for the 23 squad rows.</p></div>
+    <div class="chips"><button class="chip on" data-vp="c5a">Today</button><button class="chip" data-vp="c5b">B Â· Split subject</button><button class="chip" data-vp="c5c">C Â· Fixture sheet</button></div>
   </div>
   <div class="vp on" id="c5a">
-    <p class="vpname">Today — team totals and one player's output render in the same shape</p>
+    <p class="vpname">Today â€” team totals and one player's output render in the same shape</p>
     <div class="formbox" style="margin-bottom:6px">
       <div class="field"><label>Week / game</label><select id="c5-fx"></select></div>
       <div class="field"><label>Subject</label><select id="c5-subject"></select></div>
     </div>
     <div id="c5a-bars" class="vbars"></div>
-    <p class="note">"Entire team" (78 tackles) and "G. Trent" (6 tackles) share an axis and a chart type. The 7 metrics were never justified — they cut across the Stat Groups used everywhere else in the app.</p>
+    <p class="note">"Entire team" (78 tackles) and "G. Trent" (6 tackles) share an axis and a chart type. The 7 metrics were never justified â€” they cut across the Stat Groups used everywhere else in the app.</p>
   </div>
   <div class="vp" id="c5b">
-    <p class="vpname">B — subject split: team mode shows top contributors per metric; player mode benchmarks vs. team average</p>
+    <p class="vpname">B â€” subject split: team mode shows top contributors per metric; player mode benchmarks vs. team average</p>
     <div class="formbox" style="margin-bottom:6px">
       <div class="field"><label>Week / game</label><select id="c5-fx2"></select></div>
       <div class="segs" style="margin:0"><button class="chip on" data-mode="team">Team</button><button class="chip" data-mode="player">Player</button></div>
@@ -242,72 +226,62 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
     <p class="note">Team mode answers "how did the team break down, and who drove it". Player mode answers "did X pull their weight vs. the team's average output".</p>
   </div>
   <div class="vp" id="c5c">
-    <p class="vpname">C — fixture sheet: the whole XV by Stat-Group columns, sortable</p>
+    <p class="vpname">C â€” fixture sheet: the whole XV by Stat-Group columns, sortable</p>
     <div class="formbox" style="margin-bottom:6px"><div class="field"><label>Week / game</label><select id="c5-fx3"></select></div></div>
     <div id="c5c-table"></div>
-    <p class="note">A table, not a chart — every player visible at once, columns grouped by Stat Group. Click a header to sort.</p>
+    <p class="note">A table, not a chart â€” every player visible at once, columns grouped by Stat Group. Click a header to sort.</p>
   </div>
-  <div class="judge"><b>Judge C5</b> — What did you originally want: "who did what in match N", "how did the team break down", or a selection aid for the next Fixture? Does it survive Player History owning per-Player trends and Match Analysis owning diagnosis? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/26">S5</a>.</div>
+  <div class="judge"><b>Judge C5</b> â€” What did you originally want: "who did what in match N", "how did the team break down", or a selection aid for the next Fixture? Does it survive Player History owning per-Player trends and Match Analysis owning diagnosis? â†’ resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/26">S5</a>.</div>
 </section>
 
 <section class="card" id="c6">
   <div class="cardhead">
-    <div><h2>C6 · Team trend</h2><p class="sub">The window as a series. Sample data: 20 completed Fixtures, Aug 8 → Sep 19, League + Cup mixed, W13 D2 L5.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c6a">Today</button><button class="chip" data-vp="c6b">B · Two series, time runs right</button><button class="chip" data-vp="c6c">C · Small multiples</button></div>
+    <div><h2>C6 Â· Team trend</h2><p class="sub">The window as a series. Sample data: 20 completed Fixtures, Aug 8 â†’ Sep 19, League + Cup mixed, W13 D2 L5.</p></div>
+    <div class="chips"><button class="chip on" data-vp="c6a">Today</button><button class="chip" data-vp="c6b">B Â· Two series, time runs right</button><button class="chip" data-vp="c6c">C Â· Small multiples</button></div>
   </div>
   <div class="vp on" id="c6a">
-    <p class="vpname">Today — 4 series, one axis, newest fixture on the LEFT (time runs backwards)</p>
+    <p class="vpname">Today â€” 4 series, one axis, newest fixture on the LEFT (time runs backwards)</p>
     <div class="legend"><span><i style="background:#4a94ad"></i>Tackles</span><span><i style="background:#f4b942"></i>Metres</span><span><i style="background:#2d8a58"></i>Tries</span><span><i style="background:#d86f2d"></i>Total Points</span></div>
     <div id="c6a-chart"></div>
-    <p class="note">The newest Fixture sits at the left edge — the trend reads backwards. Metres (hundreds) flattens tries and points into a straight line at the bottom. No competition or round context, though the window spans two competitions.</p>
+    <p class="note">The newest Fixture sits at the left edge â€” the trend reads backwards. Metres (hundreds) flattens tries and points into a straight line at the bottom. No competition or round context, though the window spans two competitions.</p>
   </div>
   <div class="vp" id="c6b">
-    <p class="vpname">B — oldest → newest (time runs right) · win/loss shading · 2 headline series</p>
+    <p class="vpname">B â€” oldest â†’ newest (time runs right) Â· win/loss shading Â· 2 headline series</p>
     <div class="legend"><span><i style="background:#4cc2ff"></i>Total points</span><span><i style="background:#d9b84a"></i>Tackles</span><span><i style="background:rgba(255,255,255,.25)"></i>W/L backdrop</span></div>
     <div id="c6b-chart"></div>
-    <p class="note">Two series that matter most for "are we trending well" — scoring output and defensive workload — over a background that shades wins green and losses red, so form is readable at a glance.</p>
+    <p class="note">Two series that matter most for "are we trending well" â€” scoring output and defensive workload â€” over a background that shades wins green and losses red, so form is readable at a glance.</p>
   </div>
   <div class="vp" id="c6c">
-    <p class="vpname">C — small multiples: four charts, each its own scale, time running right</p>
+    <p class="vpname">C â€” small multiples: four charts, each its own scale, time running right</p>
     <div class="splitcols" id="c6c-grid" style="flex-wrap:wrap"></div>
     <p class="note">No series competes for axis space; each metric's shape (streaks, dips, plateaus) is readable on its own terms.</p>
   </div>
-  <div class="judge"><b>Judge C6</b> — What did you originally want this to show: scoring form, workload, discipline — and is a multi-series line ever the right form for it here, or does Home's last-8 / Match Analysis already own that question? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/25">S6</a>.</div>
+  <div class="judge"><b>Judge C6</b> â€” What did you originally want this to show: scoring form, workload, discipline â€” and is a multi-series line ever the right form for it here, or does Home's last-8 / Match Analysis already own that question? â†’ resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/25">S6</a>.</div>
 </section>
 <section class="card" id="c7">
   <div class="cardhead">
-    <div><h2>C7 · Fixtures table</h2><p class="sub">The window as rows. Today: 12 columns, no links, overlapping Home (last-8 form), Match Analysis (per-Fixture detail) and C6 above it.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c7a">Today</button><button class="chip" data-vp="c7b">B · Slim + linked</button></div>
+    <div><h2>C7 Â· Fixtures table</h2><p class="sub">The window as rows. Today: 12 columns, no links, overlapping Home (last-8 form), Match Analysis (per-Fixture detail) and C6 above it.</p></div>
+    <div class="chips"><button class="chip on" data-vp="c7a">Today</button><button class="chip" data-vp="c7b">B Â· Slim + linked</button></div>
   </div>
   <div class="vp on" id="c7a">
-    <p class="vpname">Today — 12 columns of plain text, newest first</p>
+    <p class="vpname">Today â€” 12 columns of plain text, newest first</p>
     <div id="c7a-table"></div>
-    <p class="note">Four of these columns re-plot C6 as a chart above it. Nothing is clickable: the D7 resolution promised Squad page rows linking into Player History, and no cell links anywhere — not to Match Analysis, not to Players.</p>
+    <p class="note">Four of these columns re-plot C6 as a chart above it. Nothing is clickable: the D7 resolution promised Squad page rows linking into Player History, and no cell links anywhere â€” not to Match Analysis, not to Players.</p>
   </div>
   <div class="vp" id="c7b">
-    <p class="vpname">B — slim: date · competition · opponent · result · margin · every row links out</p>
+    <p class="vpname">B â€” slim: date Â· competition Â· opponent Â· result Â· margin Â· every row links out</p>
     <div id="c7b-table"></div>
-    <p class="note">The minimal column set for "what happened recently" — competition and round restore the context the window spans. Rows deep-link to Match Analysis; this card becomes a navigation surface instead of a duplicate of it. Per-player detail stays in Player History (linked from the squad rows elsewhere on the page).</p>
+    <p class="note">The minimal column set for "what happened recently" â€” competition and round restore the context the window spans. Rows deep-link to Match Analysis; this card becomes a navigation surface instead of a duplicate of it. Per-player detail stays in Player History (linked from the squad rows elsewhere on the page).</p>
   </div>
-  <div class="judge"><b>Judge C7</b> — What did you originally want: a scanable form sheet, a navigation hub into Fixtures/Players, or nothing (Home already shows recent results)? Which columns earn their place? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/28">S7</a>.</div>
+  <div class="judge"><b>Judge C7</b> â€” What did you originally want: a scanable form sheet, a navigation hub into Fixtures/Players, or nothing (Home already shows recent results)? Which columns earn their place? â†’ resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/28">S7</a>.</div>
 </section>
 
-<section class="card" id="c9">
-  <div class="cardhead">
-    <div><h2>C9 · Player trends (new card)</h2><p class="sub">The consistency half of your coaching questions: 20-game per-player views over the cached window. "Who is consistently…", "who's dropping", "who should play more".</p></div>
-  </div>
-  <div class="segs" id="c9-lens"></div>
-  <div id="c9-out"></div>
-  <p class="note">Every lens reads the same cached per-fixture stats (fs) — zero extra API calls for viewed games; the window is everything cached, permanently. Season-scoped totals and caps come from r=ps. "Costing me games" note: the API has no per-event link from a penalty to opposition points, so cost is read through counts + timing, not a direct attribution.</p>
-  <div class="judge"><b>Judge C9</b> — Do the lenses cover your coaching questions? Which lens would you live in? What's missing? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/31">S9</a>.</div>
-</section>
-
-<footer>P1 · judging artifact for <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20">map #20</a> — judge each card with its chips; answers land on S3–S7; <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/21">S1</a> then derives the page's primary job. All data sample. Throwaway: delete when the build lands.</footer>
+<footer>P1 Â· judging artifact for <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20">map #20</a> â€” judge each card with its chips; answers land on S3â€“S7; <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/21">S1</a> then derives the page's primary job. All data sample. Throwaway: delete when the build lands.</footer>
 
 <div class="toggle"><input type="checkbox" id="stackall" /><label for="stackall">Stack all variants</label></div>
 
 <script>
-// ─── Sample data (all invented) ─────────────────────────────────────────────
+// â”€â”€â”€ Sample data (all invented) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // players: [id, slot, name, pos, age, csr, salary, form, energy, caps,
 //           tackles, metres, tries, conv, dropg, pens, linebreaks, intercepts, kickm, beaten, assists]
 const squad = [
@@ -362,7 +336,7 @@ const FX = (()=>{ // 20 completed fixtures, newest first
   }
   return out;
 })();
-// five point-in-time Squad Snapshots (Aug 2 → Sep 21); h[i] = values at capture i (i=0 is season start)
+// five point-in-time Squad Snapshots (Aug 2 â†’ Sep 21); h[i] = values at capture i (i=0 is season start)
 const CAPS = ["Aug 2","Aug 16","Sep 2","Sep 12","Sep 21"];
 function snapHist(p){
   const rnd = mulberry32(4242+p.id), h = [];
@@ -384,7 +358,7 @@ function snapHist(p){
 }
 const SNAPS = {};
 // narrative specials: Faulkner (id 7) moves ONLY on salary (+250 at Sep 2 capture);
-// Maples (id 8) moves ONLY on form (+1 at the latest capture) — both are silently
+// Maples (id 8) moves ONLY on form (+1 at the latest capture) â€” both are silently
 // filtered out of today's delta table, which this prototype makes visible.
 function flatOrNormal(p, flatMode){
   const h = snapHist(p);
@@ -411,7 +385,7 @@ function pstat(pid, fxIdx){ // deterministic pseudo per-player fixture stats
   const lb = Math.round(rnd()*2), it = Math.round(rnd()*rnd());
   return { tackles:tk, metres:mt, tries:tr, conv:cv, linebreaks:lb, intercepts:it, points: tr*5+cv*2 };
 }
-// ─── C3-C · full per-fixture field set (the 51-field fs shape) ─────────────
+// â”€â”€â”€ C3-C Â· full per-fixture field set (the 51-field fs shape) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const FS_GROUPS = [
   ["Attack", [["tries","Tr"],["try_assists","TryA"],["metres_gained","Mtr"],["linebreaks","LB"],["beaten_defenders","Btn"]]],
   ["Defence", [["tackles","Tkl"],["missed_tackles","M-Tkl"],["turnovers","TO"],["intercepts","Int"]]],
@@ -421,7 +395,7 @@ const FS_GROUPS = [
   ["Lineout", [["lineouts_secured","Sec"],["lineouts_conceded","Con"],["lineouts_stolen","Stl"],["successful_lineout_throws","S-Thr"],["unsuccessful_lineout_throws","U-Thr"]]],
   ["Other", [["injuries","Inj"],["ball_time","BallT"]]]
 ];
-const FS_OUTPUT = [["minutes_played","Min"],["total_points","Pts"],["energy_after","E↓"]];
+const FS_OUTPUT = [["minutes_played","Min"],["total_points","Pts"],["energy_after","Eâ†“"]];
 function pstat51(pid, fxIdx){
   const p = SNAPS[pid].p, rnd = mulberry32(7777 + pid*13 + fxIdx*29);
   const fwd = /Prop|Hooker|Lock|Flanker|No\.8|Back row/.test(p.pos);
@@ -477,11 +451,11 @@ function pstat51(pid, fxIdx){
   m.energy_after = Math.max(25, m.energy_before - Math.round(min*0.09 + rnd()*4));
   return m;
 }
-// ─── render helpers ─────────────────────────────────────────────────────────
+// â”€â”€â”€ render helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
 const fmt = n => n.toLocaleString("en-US");
-function fd(v){ const s = v>0 ? "+"+fmt(v) : (v<0 ? "-"+fmt(Math.abs(v)) : "–");
+function fd(v){ const s = v>0 ? "+"+fmt(v) : (v<0 ? "-"+fmt(Math.abs(v)) : "â€“");
   return `<span class="${v>0?'delta-up':v<0?'delta-down':''}">${s}</span>`; }
 function median(a){ const s=[...a].sort((x,y)=>x-y); return s.length%2 ? s[(s.length-1)/2] : Math.round((s[s.length/2-1]+s[s.length/2])/2); }
 function hbars(el, rows, o){
@@ -526,44 +500,7 @@ function diststrip(el, vals, o){
   el.innerHTML = vals.map(v=>`<div class="dot" style="left:${((v-min)/(max-min||1)*96+2).toFixed(1)}%"></div>`).join("");
   o.axis.innerHTML = `<span style="left:2%">${fmt(min)}</span><span style="left:50%">median ${fmt(o.median)}</span><span style="left:98%">${fmt(max)}</span>`;
 }
-// ─── C3 · delta table ───────────────────────────────────────────────────────
-const DKEYS = ["csr","salary","form","energy","points","tries","tackles","metres","caps"];
-function deltaTable(el, base, todayFilter){
-  const rows = { joined:[], left:[], changed:[] };
-  Object.values(SNAPS).forEach(s => {
-    const prev = s.h[base], cur = s.h[4];
-    if (cur && !prev) { rows.joined.push(s); return; }
-    if (prev && !cur) { rows.left.push(s); return; }
-    if (prev && cur) rows.changed.push(s);
-  });
-  rows.changed.sort((a,b) =>
-    (Math.abs(b.h[4].csr-b.h[base].csr)+Math.abs(b.h[4].points-b.h[base].points)) -
-    (Math.abs(a.h[4].csr-a.h[base].csr)+Math.abs(a.h[4].points-a.h[base].points)));
-  const dcells = s => {
-    const prev = s.h[base], cur = s.h[4];
-    return "<td class='num'>"+DKEYS.map(k=>{
-      const v = (prev && cur) ? cur[k]-prev[k] : (cur ? cur[k] : -prev[k]);
-      return fd(v);
-    }).join("")+"</td>";
-  };
-  const sec = (title, list) => {
-    if (!list.length) return "";
-    return `<tr><td colspan="11" class="hgrp">${title} · ${list.length}</td></tr>` + list.map(s=>{
-      const prev = s.h[base], cur = s.h[4];
-      let hiddenTag = "", rowCls = "";
-      if (todayFilter && prev && cur){
-        const checked = ["csr","energy","points","tries","tackles","metres","caps"]; // salary & form are the two the real filter ignores
-        const onlySalaryForm = checked.every(k=>cur[k]-prev[k]===0) && (cur.salary-prev.salary!==0 || cur.form-prev.form!==0);
-        if (onlySalaryForm){ rowCls = ' class="row-hidden"'; hiddenTag = ' <span class="pill p-hidden">hidden in today\'s build</span>'; }
-      }
-      return `<tr${rowCls}><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Players/${s.p.id} (Player History)">${esc(s.p.name)}</a>${hiddenTag}</td>${dcells(s)}<td><span class="spark" data-pid="${s.p.id}"></span></td></tr>`;
-    }).join("");
-  };
-  el.innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>CSR</th><th>Salary</th><th>Form</th><th>Energy</th><th>Pts</th><th>Tr</th><th>Tk</th><th>Mt</th><th>Caps</th><th>CSR · 5 captures</th></tr></thead><tbody>` +
-    sec("Joined", rows.joined) + sec("Left", rows.left) + sec("Changed", rows.changed) + `</tbody></table>`;
-  el.querySelectorAll(".spark").forEach(sp => spark(sp, SNAPS[+sp.dataset.pid].h.map(x=>x ? x.csr : null)));
-}
-// ─── C4 · ranked comparison ────────────────────────────────────────────────
+// â”€â”€â”€ C4 Â· ranked comparison â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const STAT = { points:{l:"Total Points",get:p=>p.points}, tackles:{l:"Tackles",get:p=>p.tackles},
   metres:{l:"Metres Gained",get:p=>p.metres}, tries:{l:"Tries",get:p=>p.tries}, kickm:{l:"Kicking Metres",get:p=>p.kickm},
   csr:{l:"CSR Rating",get:p=>p.csr}, energy:{l:"Energy",get:p=>p.energy}, form:{l:"Form",get:p=>p.form},
@@ -579,7 +516,7 @@ let c4tab="general", c4pill="csr";
 const EXTRA_GET = { assists:p=>p.assists, beaten:p=>p.beaten, pens:p=>p.pens, conv:p=>p.conv, dropg:p=>p.dropg, caps:p=>p.caps };
 function renderC4A(){
   const k = $("c4-stat").value;
-  hbars($("c4a-bars"), P.map(p=>({l:p.name+" · "+p.pos, v:STAT[k].get(p)})).sort((a,b)=>b.v-a.v));
+  hbars($("c4a-bars"), P.map(p=>({l:p.name+" Â· "+p.pos, v:STAT[k].get(p)})).sort((a,b)=>b.v-a.v));
 }
 function renderC4Pills(){
   $("c4-pills").innerHTML = TABS[c4tab].map(([k,l])=>`<button class="chip${k===c4pill?' on':''}" data-pill="${k}">${l}</button>`).join("");
@@ -593,13 +530,13 @@ function renderC4B(){
 function renderC4C(){
   const k = $("c4c-stat").value, vals = P.map(p=>STAT[k].get(p)), med = median(vals);
   diststrip($("c4c-strip"), vals, {median:med, axis:$("c4c-axis")});
-  const line = p => `${esc(p.name)} · <b style="color:var(--text)">${fmt(STAT[k].get(p))}</b>`;
-  $("c4c-above").innerHTML = P.filter(p=>STAT[k].get(p)>=med).sort((a,b)=>STAT[k].get(b)-STAT[k].get(a)).map(line).join("<br/>") || "–";
-  $("c4c-below").innerHTML = P.filter(p=>STAT[k].get(p)<med).sort((a,b)=>STAT[k].get(b)-STAT[k].get(a)).map(line).join("<br/>") || "–";
+  const line = p => `${esc(p.name)} Â· <b style="color:var(--text)">${fmt(STAT[k].get(p))}</b>`;
+  $("c4c-above").innerHTML = P.filter(p=>STAT[k].get(p)>=med).sort((a,b)=>STAT[k].get(b)-STAT[k].get(a)).map(line).join("<br/>") || "â€“";
+  $("c4c-below").innerHTML = P.filter(p=>STAT[k].get(p)<med).sort((a,b)=>STAT[k].get(b)-STAT[k].get(a)).map(line).join("<br/>") || "â€“";
 }
-// ─── C5 · fixture breakdown ────────────────────────────────────────────────
+// â”€â”€â”€ C5 Â· fixture breakdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const MET7 = [["tackles","Tackles"],["metres","Metres"],["tries","Tries"],["conv","Conversions"],["linebreaks","Linebr."],["intercepts","Interc."],["points","Points"]];
-const fxLabel = f => f.d+" · "+f.opp+" · "+f.comp;
+const fxLabel = f => f.d+" Â· "+f.opp+" Â· "+f.comp;
 const teamOf = f => ({tackles:f.tk, metres:f.mt, tries:f.tr, conv:f.cv, linebreaks:f.lb, intercepts:f.it, points:f.us});
 function fillFx(id, fn){ const s=$(id); s.innerHTML = FX.map((f,i)=>`<option value="${i}">${fxLabel(f)}</option>`).join(""); s.addEventListener("change", fn); }
 function renderC5A(){
@@ -621,9 +558,9 @@ function renderC5B(){
       `<div class="vcol"><div class="vtrack"><div class="vbar" style="height:${(team[k]/wmax(k)*100).toFixed(1)}%"></div></div>`+
       `<div class="vnum">${fmt(team[k])}</div><div class="vlab">${l}</div></div>`).join("") + `</div>
       <div class="splitcols" style="margin-top:12px">
-        <div><div class="hgrp">Most tackles</div>${top3("tackles").map(c=>`<div class="contrib"><b>${esc(c.n)}</b> · ${c.v}</div>`).join("")}</div>
-        <div><div class="hgrp">Most metres</div>${top3("metres").map(c=>`<div class="contrib"><b>${esc(c.n)}</b> · ${c.v}</div>`).join("")}</div>
-        <div><div class="hgrp">Most points</div>${top3("points").map(c=>`<div class="contrib"><b>${esc(c.n)}</b> · ${c.v}</div>`).join("")}</div>
+        <div><div class="hgrp">Most tackles</div>${top3("tackles").map(c=>`<div class="contrib"><b>${esc(c.n)}</b> Â· ${c.v}</div>`).join("")}</div>
+        <div><div class="hgrp">Most metres</div>${top3("metres").map(c=>`<div class="contrib"><b>${esc(c.n)}</b> Â· ${c.v}</div>`).join("")}</div>
+        <div><div class="hgrp">Most points</div>${top3("points").map(c=>`<div class="contrib"><b>${esc(c.n)}</b> Â· ${c.v}</div>`).join("")}</div>
       </div>`;
   } else {
     const pid = +$("c5-player").value, q = pstat(pid,fi);
@@ -632,7 +569,7 @@ function renderC5B(){
       return `<div class="vcol"><div class="vtrack"><div class="vbar" style="height:${(q[k]/maxv*100).toFixed(1)}%"></div>`+
         `<i class="avgline" style="bottom:${(avg/maxv*100).toFixed(1)}%" title="squad average"></i></div>`+
         `<div class="vnum">${fmt(q[k])}</div><div class="vlab">${l}</div></div>`;
-    }).join("") + `</div><p class="note">Amber line = the squad's average per-member output for that metric — ${esc(SNAPS[pid].p.name)} vs. the team in ${esc(fxLabel(FX[fi]))}.</p>`;
+    }).join("") + `</div><p class="note">Amber line = the squad's average per-member output for that metric â€” ${esc(SNAPS[pid].p.name)} vs. the team in ${esc(fxLabel(FX[fi]))}.</p>`;
   }
 }
 let c5cSort = {k:"slot", dir:1};
@@ -641,7 +578,7 @@ function renderC5C(){
   const rows = P.map(p=>({p, s:pstat(p.id,fi)}));
   const val = r => c5cSort.k==="slot" ? r.p.slot : r.s[c5cSort.k];
   rows.sort((a,b)=>(val(a)-val(b))*c5cSort.dir);
-  const th = (k,l) => `<th class="num" data-k="${k}" style="cursor:pointer">${l}${c5cSort.k===k?(c5cSort.dir>0?" ▲":" ▼"):''}</th>`;
+  const th = (k,l) => `<th class="num" data-k="${k}" style="cursor:pointer">${l}${c5cSort.k===k?(c5cSort.dir>0?" â–²":" â–¼"):''}</th>`;
   $("c5c-table").innerHTML = `<table class="dt"><thead><tr><th colspan="2">Player</th><th colspan="4" class="hgrp">Attack</th><th colspan="2" class="hgrp">Defence</th><th class="hgrp">Handling</th></tr>`+
     `<tr><th>Name</th><th>#</th>${th("metres","Mt")}${th("tries","Tr")}${th("conv","Cv")}${th("points","Pts")}${th("tackles","Tk")}${th("intercepts","It")}${th("linebreaks","Lb")}</tr></thead><tbody>` +
     rows.map(r=>`<tr><td>${esc(r.p.name)}</td><td class="num">${r.p.slot}</td><td class="num">${fmt(r.s.metres)}</td><td class="num">${r.s.tries}</td><td class="num">${r.s.conv}</td><td class="num">${r.s.points}</td><td class="num">${r.s.tackles}</td><td class="num">${r.s.intercepts}</td><td class="num">${r.s.linebreaks}</td></tr>`).join("") +
@@ -650,7 +587,7 @@ function renderC5C(){
     const k=h.dataset.k; c5cSort = {k, dir: c5cSort.k===k ? -c5cSort.dir : -1}; renderC5C();
   }));
 }
-// ─── C6 · team trend ───────────────────────────────────────────────────────
+// â”€â”€â”€ C6 Â· team trend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderC6(){
   const o2n = [...FX].reverse(), labels = o2n.map(f=>f.d);
   linesvg($("c6a-chart"), [
@@ -664,23 +601,23 @@ function renderC6(){
   $("c6c-grid").innerHTML = minis.map(([t,k,c])=>`<div class="mini" style="flex:1 1 44%"><h4>${t}</h4><div id="mini-${k}"></div></div>`).join("");
   minis.forEach(([t,k,c])=> linesvg($("mini-"+k), [{color:c, vals:o2n.map(f=>f[k])}], labels, {}));
 }
-// ─── C7 · fixtures table ───────────────────────────────────────────────────
+// â”€â”€â”€ C7 Â· fixtures table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderC7(){
-  const resPill = f => `<span class="pill ${f.res==="W"?"p-win":f.res==="L"?"p-loss":"p-neu"}">${f.us}–${f.them} (${f.res})</span>`;
+  const resPill = f => `<span class="pill ${f.res==="W"?"p-win":f.res==="L"?"p-loss":"p-neu"}">${f.us}â€“${f.them} (${f.res})</span>`;
   const oppCell = f => esc(f.opp)+(f.bot?' <span class="pill p-bot">BOT</span>':"");
   $("c7a-table").innerHTML = `<table class="dt"><thead><tr><th>Date</th><th>Opponent</th><th>Result</th><th class="num">Tackles</th><th class="num">Metres</th><th class="num">Tries</th><th class="num">Conv</th><th class="num">Drop G</th><th class="num">Pens</th><th class="num">YC</th><th class="num">RC</th><th class="num">Linebr</th><th class="num">Interc</th></tr></thead><tbody>` +
     FX.map(f=>`<tr><td>${f.d}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${f.tk}</td><td class="num">${fmt(f.mt)}</td><td class="num">${f.tr}</td><td class="num">${f.cv}</td><td class="num">0</td><td class="num">${f.pn}</td><td class="num">${f.yc}</td><td class="num">${f.rc}</td><td class="num">${f.lb}</td><td class="num">${f.it}</td></tr>`).join("") + `</tbody></table>`;
   $("c7b-table").innerHTML = `<table class="dt"><thead><tr><th>Date</th><th>Competition</th><th>Opponent</th><th>Result</th><th class="num">Margin</th><th></th></tr></thead><tbody>` +
-    FX.map(f=>`<tr><td>${f.d}</td><td>${f.comp}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${fd(f.us-f.them)}</td><td><a href="#" style="color:var(--accent);text-decoration:none">Match Analysis →</a></td></tr>`).join("") + `</tbody></table>`;
+    FX.map(f=>`<tr><td>${f.d}</td><td>${f.comp}</td><td>${oppCell(f)}</td><td>${resPill(f)}</td><td class="num">${fd(f.us-f.them)}</td><td><a href="#" style="color:var(--accent);text-decoration:none">Match Analysis â†’</a></td></tr>`).join("") + `</tbody></table>`;
 }
-// ─── C3-C · matrix + trend renderers ───────────────────────────────────────
+// â”€â”€â”€ C3-C Â· matrix + trend renderers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let c3cGroup = 0, c3cDelta = "both", c3cMode = "matrix", c3cSort = { k: null, dir: -1 };
 function renderC3C(){ if (c3cMode === "matrix") renderC3CMatrix(); else renderC3CTrend(); }
 function deltaCell(v, prev){
   const hasPrev = prev !== null;
   const d = hasPrev ? v - prev : null;
   const cls = d===null ? "" : (d>0 ? "delta-up" : (d<0 ? "delta-down" : ""));
-  const dtxt = d===null ? "–" : (d>0 ? "+"+d : ""+d);
+  const dtxt = d===null ? "â€“" : (d>0 ? "+"+d : ""+d);
   if (c3cDelta === "val") return fmt(v);
   if (c3cDelta === "delta") return `<div class="dlv ${cls}">${dtxt}</div>`;
   return `${fmt(v)}<div class="dlv ${cls}">${dtxt}</div>`;
@@ -691,15 +628,15 @@ function renderC3CMatrix(){
   const allCols = FS_OUTPUT.concat(fields);
   let rows = P.map(p => ({ p, cur: pstat51(p.id, fi), prev: fi < FX.length-1 ? pstat51(p.id, fi+1) : null }));
   if (c3cSort.k) rows.sort((a,b)=>((a.cur[c3cSort.k]||0)-(b.cur[c3cSort.k]||0))*c3cSort.dir);
-  const th = ([k,l]) => `<th class="num" data-k="${k}" style="cursor:pointer" title="${k}">${l}${c3cSort.k===k?(c3cSort.dir===-1?" ▼":" ▲"):''}</th>`;
+  const th = ([k,l]) => `<th class="num" data-k="${k}" style="cursor:pointer" title="${k}">${l}${c3cSort.k===k?(c3cSort.dir===-1?" â–¼":" â–²"):''}</th>`;
   const c = r => k => { const prev = r.prev ? r.prev[k] : null; return `<td class="num">${deltaCell(r.cur[k], prev)}</td>`; };
   const topBy = k => { if(!k) return null; let best = null; rows.forEach(r=>{ if((r.cur[k]||0)>0 && (!best || r.cur[k]>best.cur[k])) best = r; }); return best; };
   const posK = {Attack:"tries", Defence:"tackles", Kicking:"good_kicks", Lineout:"lineouts_secured"}[gname];
   const negK = {Defence:"missed_tackles", Kicking:"bad_kicks", Discipline:"penalties_conceded", Handling:"knockons", Lineout:"lineouts_conceded"}[gname];
   const lblOf = k => { const f = allCols.find(x=>x[0]===k); return f ? f[1] : k; };
   const eye = [];
-  const tp = topBy(posK); if (tp) eye.push(`⭐ best: <b>${esc(tp.p.name)}</b> (${tp.cur[posK]} ${lblOf(posK)})`);
-  const tn = topBy(negK); if (tn) eye.push(`⚠ worst: <b>${esc(tn.p.name)}</b> (${tn.cur[negK]} ${lblOf(negK)})`);
+  const tp = topBy(posK); if (tp) eye.push(`â­ best: <b>${esc(tp.p.name)}</b> (${tp.cur[posK]} ${lblOf(posK)})`);
+  const tn = topBy(negK); if (tn) eye.push(`âš  worst: <b>${esc(tn.p.name)}</b> (${tn.cur[negK]} ${lblOf(negK)})`);
   $("c3c-out").innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>#</th><th>XV/B</th>` +
     allCols.map(th).join("") + `</tr></thead><tbody>` +
     rows.map(r=>{
@@ -708,8 +645,8 @@ function renderC3CMatrix(){
         `<td class="num">${r.p.slot}</td><td class="num">${r.p.slot<=15?"XV":"B"}</td>`+
         allCols.map(([k])=>cc(k)).join("") + `</tr>`;
     }).join("") + `</tbody></table>` +
-    (eye.length ? `<p class="note"><b>Coach's eye:</b> ${eye.join(" · ")} — click any stat header to sort.</p>` : `<p class="note">Click any stat header to sort.</p>`) +
-    `<p class="note">Game: ${esc(fxLabel(FX[fi]))} · Δ vs ${fi < FX.length-1 ? esc(fxLabel(FX[fi+1])) : "no previous game in the window"} · group: ${gname} · click a player for their full history.</p>`;
+    (eye.length ? `<p class="note"><b>Coach's eye:</b> ${eye.join(" Â· ")} â€” click any stat header to sort.</p>` : `<p class="note">Click any stat header to sort.</p>`) +
+    `<p class="note">Game: ${esc(fxLabel(FX[fi]))} Â· Î” vs ${fi < FX.length-1 ? esc(fxLabel(FX[fi+1])) : "no previous game in the window"} Â· group: ${gname} Â· click a player for their full history.</p>`;
   $("c3c-out").querySelectorAll("th[data-k]").forEach(h=>h.addEventListener("click",()=>{
     const k = h.dataset.k;
     if (c3cSort.k === k) c3cSort.dir *= -1; else c3cSort = { k, dir: -1 };
@@ -731,86 +668,14 @@ function renderC3CTrend(){
     const series = o2n.map(fi => pstat51(p.id, fi)[k]);
     return { p, series, last: series[series.length-1], prev: series[series.length-2], season: series.reduce((a,b)=>a+b,0) };
   });
-  $("c3c-out").innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>${esc(lbl)} · last 20 games</th><th class="num">Last</th><th class="num">Δ prev game</th><th class="num">Season</th></tr></thead><tbody>` +
+  $("c3c-out").innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>${esc(lbl)} Â· last 20 games</th><th class="num">Last</th><th class="num">Î” prev game</th><th class="num">Season</th></tr></thead><tbody>` +
     rows.map(r=>`<tr><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Players/${r.p.id}">${esc(r.p.name)}</a></td>`+
       `<td><span class="spark20" data-s="${r.series.join(",")}"></span></td>`+
       `<td class="num">${fmt(r.last)}</td><td class="num">${fd(r.last-r.prev)}</td><td class="num">${fmt(r.season)}</td></tr>`).join("") + `</tbody></table>` +
-    `<p class="note">Trend across the whole cached window for one stat; season = sum of the window (sample). In the real card this reads the Match Cache — every viewed Fixture, permanently.</p>`;
+    `<p class="note">Trend across the whole cached window for one stat; season = sum of the window (sample). In the real card this reads the Match Cache â€” every viewed Fixture, permanently.</p>`;
   $("c3c-out").querySelectorAll(".spark20").forEach(el => spark(el, el.dataset.s.split(",").map(Number), 190));
 }
-// ─── C9 · player trends (coach lenses) ─────────────────────────────────────
-let c9Lens = "pen";
-const LENSES = [
-  { key:"pen", label:"Penalties", stat:"penalties_conceded",
-    head:`<th>YC/RC</th><th class="num">L5−F5</th>` },
-  { key:"lb", label:"Line breaks", stat:"linebreaks", head:`` },
-  { key:"tries", label:"Tries", stat:"tries", head:`<th class="num">Last 5/g</th>` },
-  { key:"def", label:"Defence", stat:"tackles", head:`<th class="num">Missed</th>` },
-  { key:"kick", label:"Kicking errors", stat:null, head:`<th class="num">Out full</th><th class="num">M goal-kicks</th>` },
-  { key:"shift", label:"Form shift", stat:"total_points", head:`<th class="num">First 5/g</th><th class="num">Last 5/g</th>` },
-  { key:"used", label:"Under-used", stat:"minutes_played", head:`<th class="num">Min</th><th class="num">Pts/30</th><th class="num">Tkl/30</th><th class="num">Mtr/30</th>` }
-];
-function renderC9(){
-  const L = LENSES.find(l=>l.key===c9Lens);
-  const o2n = []; for (let fi = FX.length-1; fi >= 0; fi--) o2n.push(fi);
-  const rows = P.map(p=>{
-    const games = o2n.map(fi => pstat51(p.id, fi));
-    const series = games.map(g => L.stat ? g[L.stat] : (g.bad_kicks + g.kicks_out_on_the_full));
-    const sum = series.reduce((a,b)=>a+b,0);
-    const nz = series.filter(v=>v>0).length;
-    const first5 = series.slice(0,5).reduce((a,b)=>a+b,0)/5;
-    const last5 = series.slice(-5).reduce((a,b)=>a+b,0)/5;
-    const mins = games.reduce((a,g)=>a+g.minutes_played,0);
-    const pts = games.reduce((a,g)=>a+g.total_points,0);
-    const tks = games.reduce((a,g)=>a+g.tackles,0);
-    const mts = games.reduce((a,g)=>a+g.metres_gained,0);
-    return { p, series, sum, nz, first5, last5, shift: last5-first5,
-      last: series[series.length-1], prev: series[series.length-2], mins,
-      p30: mins>0 ? pts/(mins/30) : 0, t30: mins>0 ? tks/(mins/30) : 0, m30: mins>0 ? mts/(mins/30) : 0,
-      yc: games.reduce((a,g)=>a+g.yellow_cards,0), rc: games.reduce((a,g)=>a+g.red_cards,0),
-      mt: games.reduce((a,g)=>a+g.missed_tackles,0),
-      of: games.reduce((a,g)=>a+g.kicks_out_on_the_full,0),
-      mu: games.reduce((a,g)=>a+g.missed_penalties+g.missed_dropgoals+g.missed_conversions,0) };
-  });
-  let sorted;
-  if (c9Lens==="shift") { sorted = rows.slice().sort((a,b)=>a.shift-b.shift); }
-  else if (c9Lens==="used") { sorted = rows.slice().sort((a,b)=>b.p30-a.p30); }
-  else { sorted = rows.slice().sort((a,b)=>b.sum-a.sum); }
-  const top = sorted[0];
-  const riser = rows.slice().sort((a,b)=>b.shift-a.shift)[0];
-  const drop = rows.slice().sort((a,b)=>a.shift-b.shift)[0];
-  const byMt = rows.slice().sort((a,b)=>b.mt-a.mt)[0];
-  const byMu = rows.slice().sort((a,b)=>b.mu-a.mu)[0];
-  let coach = "";
-  if (c9Lens==="pen") coach = `Most consistent offender: <b>${esc(top.p.name)}</b> — PC in ${top.nz}/20 games (${top.sum} total), last-5 vs first-5 ${top.shift>=0?"+":""}${top.shift.toFixed(1)}.`;
-  else if (c9Lens==="lb") coach = `Most consistent breaker: <b>${esc(top.p.name)}</b> — LB in ${top.nz}/20 games (${top.sum} total).`;
-  else if (c9Lens==="tries") coach = `Try source: <b>${esc(top.p.name)}</b> — ${top.sum} in 20 games (${top.nz}/20 scoring).`;
-  else if (c9Lens==="def") coach = `Workhorse: <b>${esc(top.p.name)}</b> — ${top.sum} tackles; most missed: <b>${esc(byMt.p.name)}</b> (${byMt.mt}).`;
-  else if (c9Lens==="kick") coach = `Sloppiest boot: <b>${esc(top.p.name)}</b> — ${top.sum} kick errors (bad + out on full); most missed goal-kicks: <b>${esc(byMu.p.name)}</b> (${byMu.mu}).`;
-  else if (c9Lens==="shift") coach = `Biggest decline: <b>${esc(drop.p.name)}</b> (${drop.first5.toFixed(1)} → ${drop.last5.toFixed(1)} pts/g); biggest riser: <b>${esc(riser.p.name)}</b> (${riser.first5.toFixed(1)} → ${riser.last5.toFixed(1)}).`;
-  else if (c9Lens==="used") coach = `Best output per 30 min: <b>${esc(top.p.name)}</b> (${top.mins} min total, ${top.p30.toFixed(1)} pts/30, ${top.t30.toFixed(1)} tkl/30) — bench output worth a start.`;
-  let extraCell = r => "";
-  if (c9Lens==="pen") extraCell = r => `<td class="num">${r.yc}/${r.rc}</td><td class="num ${r.shift>0?'delta-up':r.shift<0?'delta-down':''}">${r.shift>=0?"+":""}${r.shift.toFixed(1)}</td>`;
-  else if (c9Lens==="tries" || c9Lens==="lb") extraCell = r => `<td class="num">${r.last5.toFixed(1)}</td>`;
-  else if (c9Lens==="def") extraCell = r => `<td class="num">${r.mt}</td>`;
-  else if (c9Lens==="kick") extraCell = r => `<td class="num">${r.of}</td><td class="num">${r.mu}</td>`;
-  else if (c9Lens==="shift") extraCell = r => `<td class="num">${r.first5.toFixed(1)}</td><td class="num">${r.last5.toFixed(1)}</td>`;
-  else if (c9Lens==="used") extraCell = r => `<td class="num">${r.mins}</td><td class="num">${r.p30.toFixed(1)}</td><td class="num">${r.t30.toFixed(1)}</td><td class="num">${r.m30.toFixed(0)}</td>`;
-  $("c9-out").innerHTML = `<p class="note"><b>Coach's eye:</b> ${coach}</p>` +
-    `<table class="dt"><thead><tr><th>Player</th><th>${L.label} · 20 games</th><th class="num">In N/20</th><th class="num">Last</th><th class="num">Δ prev</th><th class="num">Total</th>${L.head}</tr></thead><tbody>` +
-    sorted.map(r=>{
-      const d = r.last - r.prev;
-      return `<tr><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Players/${r.p.id}">${esc(r.p.name)}</a>${r.p.slot>15?' <span class="pill p-neu">B</span>':""}</td>`+
-        `<td><span class="spark20" data-s="${r.series.join(",")}"></span></td>`+
-        `<td class="num">${r.nz}</td>`+
-        `<td class="num">${fmt(r.last)}</td>`+
-        `<td class="num"><span class="${d>0?'delta-up':d<0?'delta-down':''}">${d>0?'+':''}${d}</span></td>`+
-        `<td class="num">${fmt(r.sum)}</td>`+
-        extraCell(r) + `</tr>`;
-    }).join("") + `</tbody></table>`;
-  $("c9-out").querySelectorAll(".spark20").forEach(el => spark(el, el.dataset.s.split(",").map(Number), 190));
-}
-// ─── switching + init ──────────────────────────────────────────────────────
+// â”€â”€â”€ switching + init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 document.querySelectorAll("section.card").forEach(sec => {
   const chips = sec.querySelectorAll(".chips .chip"), vps = sec.querySelectorAll(":scope > .vp");
   chips.forEach(ch => ch.addEventListener("click", () => {
@@ -819,10 +684,6 @@ document.querySelectorAll("section.card").forEach(sec => {
   }));
 });
 $("stackall").addEventListener("change", e => document.body.classList.toggle("showall", e.target.checked));
-$("c3-base").querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
-  $("c3-base").querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
-  deltaTable($("c3b-table"), ch.dataset.base==="prev" ? 3 : (ch.dataset.base==="season" ? 0 : 1), false);
-}));
 $("c4-stat").addEventListener("change", renderC4A);
 $("c4-tabs").querySelectorAll(".chip").forEach(ch => ch.addEventListener("click", () => {
   $("c4-tabs").querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
@@ -854,14 +715,6 @@ $("c3c-delta").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click"
 }));
 $("c3c-stat").addEventListener("change", renderC3C);
 renderC3C();
-$("c9-lens").innerHTML = LENSES.map(l=>`<button class="chip${l.key===c9Lens?' on':''}" data-l="${l.key}">${l.label}</button>`).join("");
-$("c9-lens").querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
-  $("c9-lens").querySelectorAll(".chip").forEach(c=>c.classList.remove("on")); ch.classList.add("on");
-  c9Lens = ch.dataset.l; renderC9();
-}));
-renderC9();
-deltaTable($("c3a-table"), 3, true);
-deltaTable($("c3b-table"), 3, false);
 renderC4A(); renderC4Pills(); renderC4B(); renderC4C();
 renderC5A(); renderC5B(); renderC5C();
 renderC6(); renderC7();
