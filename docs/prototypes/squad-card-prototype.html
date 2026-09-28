@@ -467,7 +467,7 @@ function deltaTable(el, base, todayFilter){
         const onlySalaryForm = checked.every(k=>cur[k]-prev[k]===0) && (cur.salary-prev.salary!==0 || cur.form-prev.form!==0);
         if (onlySalaryForm){ rowCls = ' class="row-hidden"'; hiddenTag = ' <span class="pill p-hidden">hidden in today\'s build</span>'; }
       }
-      return `<tr${rowCls}><td>${esc(s.p.name)}${hiddenTag}</td>${dcells(s)}<td><span class="spark" data-pid="${s.p.id}"></span></td></tr>`;
+      return `<tr${rowCls}><td><a href="#" style="color:var(--accent);text-decoration:none" title="-> /Players/${s.p.id} (Player History)">${esc(s.p.name)}</a>${hiddenTag}</td>${dcells(s)}<td><span class="spark" data-pid="${s.p.id}"></span></td></tr>`;
     }).join("");
   };
   el.innerHTML = `<table class="dt"><thead><tr><th>Player</th><th>CSR</th><th>Salary</th><th>Form</th><th>Energy</th><th>Pts</th><th>Tr</th><th>Tk</th><th>Mt</th><th>Caps</th><th>CSR · 5 captures</th></tr></thead><tbody>` +
