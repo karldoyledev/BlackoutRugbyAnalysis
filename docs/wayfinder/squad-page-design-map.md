@@ -2,7 +2,7 @@
 
 **Repo**: karldoyledev/BlackoutRugbyAnalysis — this file is the local draft of the GitHub issue labelled `wayfinder:map`. Each ticket is a child issue (`Part of #<map>`, labels `wayfinder:grilling` / `wayfinder:task`), blocking edges are GitHub native `blocked_by` dependencies.
 
-**Tracker (live)**: Map = [#20](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20) · S1 #21 · S2 #23 · S3 #22 · S4 #27 · S5 #26 · S6 #25 · S7 #28 · S8 #24 · P1 #29. All 9 sub-issue links wired; edges restructured 2026-09-28 (see Notes). **Status**: frontier = P1 (card judging prototype) + S2 (load & snapshot model).
+**Tracker (live)**: Map = [#20](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20) · S1 #21 · S2 #23 · S3 #22 · S4 #27 · S5 #26 · S6 #25 · S7 #28 · S8 #24 · P1 #29 (closed). All 9 sub-issue links wired; edges restructured 2026-09-28 (see Notes). **Status**: P1 built & closed; frontier = S2 (load & snapshot model).
 
 ## Destination
 
@@ -23,7 +23,7 @@ A locked, per-card design for the /Squad page: for every visible card, its inten
 
 ## Decisions so far
 
-(none yet - the map is freshly charted)
+- [P1 — Prototype the Squad cards for judging (static HTML, sample data)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/29): built — `docs/prototypes/squad-card-prototype.html` on branch `prototype/squad-card-design`; per-card Today-vs-B/C variants with judge prompts; verdicts deferred to the card tickets S3-S7, which grill against this artifact.
 
 ## Not yet specified
 
