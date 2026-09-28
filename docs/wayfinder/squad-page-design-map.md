@@ -26,6 +26,7 @@ A locked, per-card design for the /Squad page: for every visible card, its inten
 
 - [P1 — Prototype the Squad cards for judging (static HTML, sample data)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/29): built — `docs/prototypes/squad-card-prototype.html` on branch `prototype/squad-card-design`; per-card Today-vs-B/C variants with judge prompts; verdicts deferred to the card tickets S3-S7, which grill against this artifact.
 - [P2 — Prototype C3 as the per-game squad matrix](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/30): built — C3 gains the "Per-game matrix + trends" variant (D4 field map, Δ vs last game, trend tab); the user's reshape of the card; verdicts still land on S3.
+- [P3 — Prototype the trends card (C9) + C3 matrix upgrades](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/32): built — C3 matrix gains click-to-sort + per-group Coach's-eye standouts; new C9 "Player trends" card section with 7 coach lenses (Penalties, Line breaks, Tries, Defence, Kicking errors, Form shift, Under-used); verdicts land on S3 and S9.
 
 ## Not yet specified
 
