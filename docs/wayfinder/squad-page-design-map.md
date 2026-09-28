@@ -2,7 +2,7 @@
 
 **Repo**: karldoyledev/BlackoutRugbyAnalysis — this file is the local draft of the GitHub issue labelled `wayfinder:map`. Each ticket is a child issue (`Part of #<map>`, labels `wayfinder:grilling` / `wayfinder:task`), blocking edges are GitHub native `blocked_by` dependencies.
 
-**Tracker (live)**: Map = [#20](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20) · S1 #21 · S2 #23 · S3 #22 · S4 #27 · S5 #26 · S6 #25 · S7 #28 · S8 #24 · P1 #29 (closed). All 9 sub-issue links wired; edges restructured 2026-09-28 (see Notes). **Status**: P1 built & closed; cards unblocked from S2 (2026-09-28, card-first override) — frontier = S2 + S3–S7.
+**Tracker (live)**: Map = [#20](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/20) · S1 #21 · S2 #23 · S3 #22 · S4 #27 · S5 #26 · S6 #25 · S7 #28 · S8 #24 · P1 #29 (closed). All 9 sub-issue links wired; edges restructured 2026-09-28 (see Notes). **Status**: S3 + S9 resolved (C3 = Game review: per-game matrix + trends); frontier = S2, S4, S5, S6, S7.
 
 ## Destination
 
@@ -24,9 +24,11 @@ A locked, per-card design for the /Squad page: for every visible card, its inten
 
 ## Decisions so far
 
-- [P1 — Prototype the Squad cards for judging (static HTML, sample data)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/29): built — `docs/prototypes/squad-card-prototype.html` on branch `prototype/squad-card-design`; per-card Today-vs-B/C variants with judge prompts; verdicts deferred to the card tickets S3-S7, which grill against this artifact.
-- [P2 — Prototype C3 as the per-game squad matrix](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/30): built — C3 gains the "Per-game matrix + trends" variant (D4 field map, Δ vs last game, trend tab); the user's reshape of the card; verdicts still land on S3.
-- [P3 — Prototype the trends card (C9) + C3 matrix upgrades](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/32): built — C3 matrix gains click-to-sort + per-group Coach's-eye standouts; new C9 "Player trends" card section with 7 coach lenses (Penalties, Line breaks, Tries, Defence, Kicking errors, Form shift, Under-used); verdicts land on S3 and S9.
+- [S3 - Card C3 (Squad changes since the previous load)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/22): RESOLVED 2026-09-28 - the snapshot-delta card is RETIRED; C3 becomes "Game review": per-game squad matrix (7 Stat-Group tabs on D4's field map, delta vs the previous game, click-to-sort, per-group Coach's-eye standouts) + a Trend tab over any field. Data = Match Cache PlayerFixture rows; zero extra calls for cached games.
+- [S9 - Card C9 (Player trends)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/31): CLOSED as superseded - the consistency/coach-lens views fold into C3's Trend tab; no separate card.
+- [P3 - Prototype the trends card (C9) + C3 matrix upgrades](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/32): built - C3 matrix gains click-to-sort + per-group Coach's-eye standouts; C9 lens section prototyped then retired by the S3/S9 verdicts.
+- [P2 - Prototype C3 as the per-game squad matrix](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/30): built - C3 gains the per-game matrix variant (D4 field map, delta vs last game, trend tab).
+- [P1 - Prototype the Squad cards for judging (static HTML, sample data)](https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/29): built - docs/prototypes/squad-card-prototype.html on branch prototype/squad-card-design; per-card Today-vs-B/C variants; verdicts land on the card tickets.
 
 ## Not yet specified
 
