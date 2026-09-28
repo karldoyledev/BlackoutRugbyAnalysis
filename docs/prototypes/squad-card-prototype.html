@@ -236,27 +236,14 @@ table.dt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;m
 
 <section class="card" id="c6">
   <div class="cardhead">
-    <div><h2>C6 Â· Team trend</h2><p class="sub">The window as a series. Sample data: 20 completed Fixtures, Aug 8 â†’ Sep 19, League + Cup mixed, W13 D2 L5.</p></div>
-    <div class="chips"><button class="chip on" data-vp="c6a">Today</button><button class="chip" data-vp="c6b">B Â· Two series, time runs right</button><button class="chip" data-vp="c6c">C Â· Small multiples</button></div>
+    <div><h2>C6 · Team review</h2><p class="sub">Eight team trends over the cached window — each chart its own scale, time running left→right (oldest → newest). Small-multiples only; Today/B retired.</p></div>
   </div>
-  <div class="vp on" id="c6a">
-    <p class="vpname">Today â€” 4 series, one axis, newest fixture on the LEFT (time runs backwards)</p>
-    <div class="legend"><span><i style="background:#4a94ad"></i>Tackles</span><span><i style="background:#f4b942"></i>Metres</span><span><i style="background:#2d8a58"></i>Tries</span><span><i style="background:#d86f2d"></i>Total Points</span></div>
-    <div id="c6a-chart"></div>
-    <p class="note">The newest Fixture sits at the left edge â€” the trend reads backwards. Metres (hundreds) flattens tries and points into a straight line at the bottom. No competition or round context, though the window spans two competitions.</p>
+  <div class="vp on">
+    <div class="legend"><span><i style="background:#4cc2ff"></i>Us</span><span><i style="background:#ff6b6b"></i>Opponent</span></div>
+    <div class="splitcols" id="c6-grid" style="flex-wrap:wrap"></div>
+    <p class="note">Source: the bare <b>r=fs&amp;fixtureid=X</b> team blocks (58 fields per side, plus half-time blocks), cached per viewed Fixture as TeamFixtureStat rows — zero extra API calls. Possession, territory and minutes-in-22 render as shares of the fixture total (raw units unverified). Half-time blocks allow a future 1st/2nd-half split.</p>
   </div>
-  <div class="vp" id="c6b">
-    <p class="vpname">B â€” oldest â†’ newest (time runs right) Â· win/loss shading Â· 2 headline series</p>
-    <div class="legend"><span><i style="background:#4cc2ff"></i>Total points</span><span><i style="background:#d9b84a"></i>Tackles</span><span><i style="background:rgba(255,255,255,.25)"></i>W/L backdrop</span></div>
-    <div id="c6b-chart"></div>
-    <p class="note">Two series that matter most for "are we trending well" â€” scoring output and defensive workload â€” over a background that shades wins green and losses red, so form is readable at a glance.</p>
-  </div>
-  <div class="vp" id="c6c">
-    <p class="vpname">C â€” small multiples: four charts, each its own scale, time running right</p>
-    <div class="splitcols" id="c6c-grid" style="flex-wrap:wrap"></div>
-    <p class="note">No series competes for axis space; each metric's shape (streaks, dips, plateaus) is readable on its own terms.</p>
-  </div>
-  <div class="judge"><b>Judge C6</b> â€” What did you originally want this to show: scoring form, workload, discipline â€” and is a multi-series line ever the right form for it here, or does Home's last-8 / Match Analysis already own that question? â†’ resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/25">S6</a>.</div>
+  <div class="judge"><b>Judge C6</b> — eight charts as proposed; swap any? → resolution lands on <a href="https://github.com/karldoyledev/BlackoutRugbyAnalysis/issues/25">S6</a>.</div>
 </section>
 <section class="card" id="c7">
   <div class="cardhead">
@@ -316,22 +303,34 @@ P.forEach(p => p.points = p.tries*5 + p.conv*2 + p.dropg*3 + p.pens*3);
 const departed = {id:90,slot:0,name:"L. Whitfield",pos:"Flanker",age:28,csr:57,salary:17800,form:1,energy:0,caps:95,
   tackles:59,metres:510,tries:2,conv:0,dropg:0,pens:0,linebreaks:1,intercepts:0,kickm:0,beaten:3,assists:0,points:10};
 function mulberry32(s){return function(){s|=0;s=(s+0x6D2B79F5)|0;let t=Math.imul(s^(s>>>15),1|s);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296}}
-const FX = (()=>{ // 20 completed fixtures, newest first
+const FX = (()=>{ // 20 completed fixtures, newest first; team fields mirror the bare r=fs team blocks
   const rnd = mulberry32(8080), opps = ["Riverton Kestrels","Old Harbor Mariners","Northgate Bears","Calder Falcons","Eastwick Wanderers","Port Mawr Dockers","Silverton Stags","Kingsbridge Athletic","Westreach Hounds","Dunmore Celtic"], bots = ["Gravel Rangers","Ashvale Colts"];
   const out = []; let d = new Date(2026,8,19); // Sep 19 2026, going back weekly
   for (let i=0;i<20;i++){
     const bot = i%7===3, oname = bot ? "Bot: "+bots[i%2] : opps[i%opps.length];
     const roll = rnd(), res = roll<0.62?"W":(roll<0.72?"D":"L");
+    const strong = res==="W", mid = res==="D";
     let us, them;
     if (res==="W"){ us = 17+Math.floor(rnd()*22); them = 3+Math.floor(rnd()*Math.max(4,us-8)); }
     else if (res==="D"){ us = 13+Math.floor(rnd()*9); them = us; }
     else { them = 17+Math.floor(rnd()*22); us = 3+Math.floor(rnd()*Math.max(4,them-8)); }
+    const ours = 2650 + Math.floor(rnd()*900) + (strong?350:mid?120:0);
+    const theirs = 2650 + Math.floor(rnd()*900) + (!strong?350:mid?120:0);
+    const m22 = 1550 + Math.floor(rnd()*900) + (strong?320:0), om22 = 1550 + Math.floor(rnd()*900) + (!strong?320:0);
+    const loW = 7+Math.floor(rnd()*8) + (strong?3:0), loL = 1+Math.floor(rnd()*5) + (!strong?2:0);
+    const scW = 7+Math.floor(rnd()*8) + (strong?3:0), scL = 1+Math.floor(rnd()*4) + (!strong?2:0);
     out.push({ i, d: d.toLocaleDateString("en-US",{month:"short",day:"numeric"}),
       comp: i<3 ? "Cup R"+(4-i) : "League R"+(17-(i-3)),
       opp: oname.replace("Bot: ",""), bot, res, us, them,
       tk: 58+Math.floor(rnd()*38), mt: 1150+Math.floor(rnd()*950), tr: Math.max(1,Math.round(us/7)), cv: Math.max(0,Math.round(us/7)-1),
       lb: 2+Math.floor(rnd()*8), it: Math.floor(rnd()*3), pn: Math.floor(rnd()*3),
-      yc: rnd()<0.22?1:0, rc: rnd()<0.05?1:0 });
+      yc: rnd()<0.22?1:0, rc: rnd()<0.05?1:0,
+      poss: ours, oposs: theirs,
+      terr: 2500 + Math.floor(rnd()*1100) + (strong?300:0), oterr: 2500 + Math.floor(rnd()*1100) + (!strong?300:0),
+      m22, om22,
+      loW, loL, scW, scL,
+      pc: 5+Math.floor(rnd()*9) + (strong?0:3), pw: 5+Math.floor(rnd()*8) + (strong?2:0),
+      to: 2+Math.floor(rnd()*5) + (strong?2:0), toc: 2+Math.floor(rnd()*6) + (!strong?3:0) });
     d = new Date(d.getTime()-7*864e5);
   }
   return out;
@@ -588,20 +587,26 @@ function renderC5C(){
   }));
 }
 // â”€â”€â”€ C6 Â· team trend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── C6 · team review (8 small multiples) ────────────────
 function renderC6(){
   const o2n = [...FX].reverse(), labels = o2n.map(f=>f.d);
-  linesvg($("c6a-chart"), [
-    {color:"#4a94ad", vals:FX.map(f=>f.tk)}, {color:"#f4b942", vals:FX.map(f=>f.mt)},
-    {color:"#2d8a58", vals:FX.map(f=>f.tr)}, {color:"#d86f2d", vals:FX.map(f=>f.us)}
-  ], FX.map(f=>f.d), {});
-  linesvg($("c6b-chart"), [
-    {color:"#4cc2ff", vals:o2n.map(f=>f.us)}, {color:"#d9b84a", vals:o2n.map(f=>f.tk)}
-  ], labels, {wl:o2n.map(f=>f.res)});
-  const minis = [["Total points","us","#4cc2ff"],["Tackles","tk","#d9b84a"],["Metres gained","mt","#93a4bd"],["Tries","tr","#3ddc84"]];
-  $("c6c-grid").innerHTML = minis.map(([t,k,c])=>`<div class="mini" style="flex:1 1 44%"><h4>${t}</h4><div id="mini-${k}"></div></div>`).join("");
-  minis.forEach(([t,k,c])=> linesvg($("mini-"+k), [{color:c, vals:o2n.map(f=>f[k])}], labels, {}));
+  const v = k => o2n.map(f=>f[k]);
+  const r1 = x => Math.round(x*10)/10;
+  const share = (a,b) => o2n.map(f => r1(f[a]/(f[a]+f[b])*100));
+  const US = "#4cc2ff", THEM = "#ff6b6b";
+  const charts = [
+    { t:"Points for / against", s:[{color:US, vals:v("us")},{color:THEM, vals:v("them")}] },
+    { t:"Possession %", s:[{color:US, vals:share("poss","oposs")}] },
+    { t:"Territory %", s:[{color:US, vals:share("terr","oterr")}] },
+    { t:"Lineout win %", s:[{color:US, vals:share("loW","loL")}] },
+    { t:"Scrum win %", s:[{color:US, vals:share("scW","scL")}] },
+    { t:"Penalties conceded / won", s:[{color:THEM, vals:v("pc")},{color:US, vals:v("pw")}] },
+    { t:"Turnovers conceded / won", s:[{color:THEM, vals:v("toc")},{color:US, vals:v("to")}] },
+    { t:"Minutes in 22 %", s:[{color:US, vals:share("m22","om22")}] }
+  ];
+  $("c6-grid").innerHTML = charts.map((c,i)=>`<div class="mini" style="flex:1 1 44%"><h4>${c.t}</h4><div id="c6m-${i}"></div></div>`).join("");
+  charts.forEach((c,i)=> linesvg($("c6m-"+i), c.s, labels, {}));
 }
-// â”€â”€â”€ C7 Â· fixtures table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderC7(){
   const resPill = f => `<span class="pill ${f.res==="W"?"p-win":f.res==="L"?"p-loss":"p-neu"}">${f.us}â€“${f.them} (${f.res})</span>`;
   const oppCell = f => esc(f.opp)+(f.bot?' <span class="pill p-bot">BOT</span>':"");
