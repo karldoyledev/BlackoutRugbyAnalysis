@@ -132,6 +132,51 @@ body {
   margin-bottom: 0.5rem;
 }
 
+/* C3 Game review (#35): the controls row, the Stat-Group tabs and the sortable
+   column headers. Layout only — the theme sweep is its own effort. */
+.game-review-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.game-review-controls label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.stat-group-tabs {
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.stat-group-tabs .nav-link {
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(17, 33, 43, 0.06);
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.stat-group-tabs .nav-link.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.game-review-table .sort-link {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.game-review-table .sort-link:hover,
+.game-review-table .sort-link:focus {
+  text-decoration: underline;
+}
+
 .dashboard-form {
   display: grid;
   gap: 1rem;

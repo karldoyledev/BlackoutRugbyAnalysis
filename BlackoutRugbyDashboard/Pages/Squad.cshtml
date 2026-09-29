@@ -7,6 +7,17 @@
     var gameStats = Model.GameStatsList;
     var fixtureBreakdowns = Model.FixtureBreakdowns;
     var loadedSeason = Model.Season;
+
+    // C3 Game review (S3, #35): the selection is query-string state, so tabs and
+    // column sorts are plain links and the card works without script.
+    var reviewTab = GameReviewMatrix.KeyFor(Model.SelectedGroup);
+    var reviewGame = Model.SelectedFixtureId;
+    var reviewDir = Model.SortDescending ? "desc" : "asc";
+    string SortUrl(string key) =>
+        $"?game={reviewGame}&tab={reviewTab}&sort={key}&dir={(Model.SortKey == key && !Model.SortDescending ? "desc" : "asc")}";
+    string SortMarker(string key) =>
+        Model.SortKey == key ? (Model.SortDescending ? " ▼" : " ▲") : string.Empty;
+    string TabUrl(string key) => $"?game={reviewGame}&tab={key}";
 }
 
 @* C1 as the club strip (S2): whose page this is — club name, Team CSR, the season
@@ -47,6 +58,12 @@
     @* The page's only live read (S2): an explicit press performs the roster read,
        saves a Squad Snapshot and re-renders. Arriving here fetches nothing. *@
     <form method="post" asp-page-handler="Capture" class="button-row">
+        @* The Game review selection survives the capture, so the page comes back
+           to the game and tab you were reading. *@
+        <input type="hidden" name="game" value="@reviewGame" />
+        <input type="hidden" name="tab" value="@reviewTab" />
+        <input type="hidden" name="sort" value="@Model.SortKey" />
+        <input type="hidden" name="dir" value="@reviewDir" />
         <button type="submit" class="btn btn-primary action-button">Capture squad</button>
     </form>
 
@@ -99,89 +116,103 @@
 
 @if (!Model.IsColdStart)
 {
-@if (Model.SnapshotComparison is { } comparison)
-{
-    @* Snapshot comparison revival (D-Squad Q5/Q10): the fully-built
-       TeamSnapshotComparison engine finally rendered — "what changed since
-       you last looked", point-in-time roster deltas. *@
+    @* C3 Game review (S3, #35): one cached Fixture, every squad slot, the locked
+       seven Stat-Group tabs. Cache-only — the Match Cache's PlayerFixture rows and
+       the latest capture, nothing fetched; tabs and column sorts are links. *@
     <section class="table-panel">
         <div class="section-heading">
-            <h2>Squad changes since the previous load</h2>
-            <p>
-                Point-in-time snapshot comparison:
-                @comparison.PreviousCapturedAtUtc.ToLocalTime().ToString("MMM d, HH:mm")
-                →
-                @comparison.CurrentCapturedAtUtc.ToLocalTime().ToString("MMM d, HH:mm").
-            </p>
-        </div>
-        <div class="table-responsive">
-            <table class="table dashboard-table compact-table">
-                <thead>
-                    <tr>
-                        <th>Player</th>
-                        <th>Change</th>
-                        <th>CSR</th>
-                        <th>Salary</th>
-                        <th>Form</th>
-                        <th>Energy</th>
-                        <th>Points</th>
-                        <th>Tries</th>
-                        <th>Tackles</th>
-                        <th>Metres</th>
-                        <th>Caps</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach (var change in comparison.PlayerChanges)
-                {
-                    <tr>
-                        <td>@change.Name</td>
-                        <td>
-                            @if (change.IsNewPlayer)
-                            {
-                                <span class="pill success-pill">joined</span>
-                            }
-                            else if (change.IsRemovedPlayer)
-                            {
-                                <span class="pill warning-pill">left</span>
-                            }
-                            else
-                            {
-                                <span class="pill neutral-pill">changed</span>
-                            }
-                        </td>
-                        <td>@SquadModel.FormatDelta(change.DeltaCsr)</td>
-                        <td>@SquadModel.FormatDelta(change.DeltaSalary)</td>
-                        <td>@SquadModel.FormatDelta(change.DeltaForm)</td>
-                        <td>@SquadModel.FormatDelta(change.DeltaEnergy)</td>
-                        <td>@SquadModel.FormatDelta(change.DeltaTotalPoints)</td>
-                        <td>@SquadModel.FormatDelta(change.DeltaTries)</td>
-                        <td>@SquadModel.FormatDelta(change.DeltaTackles)</td>
-                        <td>@SquadModel.FormatDelta(change.DeltaMetresGained)</td>
-                        <td>@SquadModel.FormatDelta(change.DeltaTotalCaps)</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    </section>
-}
-else
-{
-    @* Per-card empty state (S2): the changes card needs two captures to compare —
-       say so rather than rendering an empty table. *@
-    <section class="table-panel">
-        <div class="section-heading">
-            <h2>Squad changes since the previous capture</h2>
-            @if (Model.HasCapture)
+            <h2>Game review</h2>
+            @if (Model.GameRows.Any())
             {
-                <p>One Squad Snapshot so far — the changes appear once a second capture has something to compare against.</p>
+                <p>
+                    Every cached stat for one game, by Stat Group —
+                    @Model.GameContext. XV/Bench, minutes, points and energy-after
+                    stay visible on every tab.
+                </p>
             }
             else
             {
-                <p>No Squad Snapshot yet — Capture squad records one, and the changes appear from the second capture onwards.</p>
+                <p>No cached games yet — open a Fixture and it lands here.</p>
             }
         </div>
+
+        @if (Model.GameRows.Any())
+        {
+            <form method="get" class="game-review-controls">
+                <label>
+                    <span>Game</span>
+                    <select name="game" class="form-control" onchange="this.form.submit()">
+                        @foreach (var choice in Model.GameChoices)
+                        {
+                            <option value="@choice.FixtureId" selected="@(choice.FixtureId == Model.SelectedFixtureId)">@choice.Label</option>
+                        }
+                    </select>
+                </label>
+                <input type="hidden" name="tab" value="@reviewTab" />
+                <input type="hidden" name="sort" value="@Model.SortKey" />
+                <input type="hidden" name="dir" value="@reviewDir" />
+                <noscript>
+                    <button type="submit" class="btn btn-outline-secondary action-button">Show</button>
+                </noscript>
+            </form>
+
+            <ul class="nav nav-pills stat-group-tabs">
+                @foreach (var group in GameReviewMatrix.Groups)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(group == Model.SelectedGroup ? "active" : string.Empty)"
+                           href="@TabUrl(GameReviewMatrix.KeyFor(group))">@GameReviewMatrix.TitleFor(group)</a>
+                    </li>
+                }
+            </ul>
+
+            <div class="table-responsive">
+                <table class="table dashboard-table compact-table game-review-table">
+                    <thead>
+                        <tr>
+                            <th title="Squad slot: 1-15 the XV, 16-23 the bench">Slot</th>
+                            <th>Player</th>
+                            <th>XV</th>
+                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.MinutesKey)" title="Minutes played">Min@(SortMarker(GameReviewMatrix.MinutesKey))</a></th>
+                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.PointsKey)" title="Points">Pts@(SortMarker(GameReviewMatrix.PointsKey))</a></th>
+                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.EnergyAfterKey)" title="Energy after the game">E-after@(SortMarker(GameReviewMatrix.EnergyAfterKey))</a></th>
+                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.CsrKey)" title="CSR from the latest Squad Snapshot — blank when the Player is not in it">CSR@(SortMarker(GameReviewMatrix.CsrKey))</a></th>
+                            @foreach (var field in Model.GroupFields)
+                            {
+                                <th title="@field.Title"><a class="sort-link" href="@SortUrl(field.Key)">@field.Label@(SortMarker(field.Key))</a></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var row in Model.GameRows)
+                    {
+                        <tr>
+                            <td>@row.Slot</td>
+                            <td>@row.Name</td>
+                            <td>
+                                @if (row.IsBench)
+                                {
+                                    <span class="pill neutral-pill">Bench</span>
+                                }
+                                else
+                                {
+                                    <span class="pill success-pill">XV</span>
+                                }
+                            </td>
+                            <td>@row.Minutes</td>
+                            <td>@row.Points</td>
+                            <td>@row.EnergyAfter</td>
+                            <td>@(row.Csr is { } csr ? csr.ToString() : "—")</td>
+                            @foreach (var value in row.Values)
+                            {
+                                <td>@value</td>
+                            }
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
     </section>
 }
 

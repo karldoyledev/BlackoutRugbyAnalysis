@@ -135,7 +135,6 @@ public class SquadPageReaderTests
         Assert.Equal(0, page.Season);
         Assert.Empty(page.Window);
         Assert.Null(page.Capture);
-        Assert.Null(page.Comparison);
     }
 
     [Fact]
@@ -187,7 +186,7 @@ public class SquadPageReaderTests
     }
 
     [Fact]
-    public async Task ReadAsync_Capture_IsTheLatestSnapshotAndFeedsTheComparisonCard()
+    public async Task ReadAsync_Capture_IsTheLatestSnapshotAndFeedsThePresentStateColumns()
     {
         var (reader, db, snapshotRoot) = BuildReader();
         db.Fixtures.Add(CachedFixture(1003, season: 62, round: 2, startUnix: 1_789_824_900, finishUnix: 1_789_830_000));
@@ -206,13 +205,12 @@ public class SquadPageReaderTests
 
         Assert.Equal("Ashgrove RFC", page.ClubName); // the capture names the club while no TeamFact is cached
         Assert.Equal(55, Assert.Single(page.Capture!.Players).Csr);
-        Assert.Equal(5, Assert.Single(page.Comparison!.PlayerChanges).DeltaCsr);
         Assert.Equal(12, page.SeasonStats[7].Tackles);
         Assert.False(page.IsColdStart);
     }
 
     [Fact]
-    public async Task ReadAsync_OneCapture_HasNoComparisonYet()
+    public async Task ReadAsync_OneCapture_IsStillSomethingToRender()
     {
         var (reader, _, snapshotRoot) = BuildReader();
         WriteCapture(snapshotRoot, new DateTime(2026, 9, 20, 8, 0, 0, DateTimeKind.Utc), (7, "Faulkner", 55));
@@ -220,7 +218,6 @@ public class SquadPageReaderTests
         var page = await reader.ReadAsync(TeamId);
 
         Assert.NotNull(page.Capture);
-        Assert.Null(page.Comparison);
         Assert.False(page.IsColdStart); // a capture is something to render, even with an empty window
         Assert.Equal(0, page.Season);
         Assert.Empty(page.SeasonStats);

@@ -6,7 +6,8 @@ namespace BlackoutRugbyDashboard.Services;
 /// <summary>
 /// Everything a plain visit to /Squad renders: the club strip's identity, the
 /// cached window of completed Fixtures, and the latest Squad Snapshot (S2 load
-/// model, build slice #33).
+/// model, build slice #33). The snapshot-comparison read retired with the card it
+/// fed (C3, #35 — the Game review matrix replaced it).
 /// </summary>
 public sealed record SquadPageData(
     int TeamId,
@@ -18,8 +19,7 @@ public sealed record SquadPageData(
     IReadOnlyList<SquadFixtureRows> Window,
     IReadOnlyDictionary<int, string> TeamNames,
     TeamSnapshot? Capture,
-    IReadOnlyDictionary<int, PlayerStatistics> SeasonStats,
-    TeamSnapshotComparison? Comparison)
+    IReadOnlyDictionary<int, PlayerStatistics> SeasonStats)
 {
     /// <summary>Nothing cached at all — no completed Fixture and no Squad
     /// Snapshot: the page's bootstrap empty state, never a silent live read.</summary>
@@ -59,8 +59,6 @@ public class SquadPageReader(MatchCacheService cache, SnapshotStore snapshots)
             : await cache.GetCachedPlayerSeasonsAsync(
                 capture.Players.Select(player => player.Id).ToList(), season, cancellationToken);
 
-        var comparison = await snapshots.GetLatestComparisonAsync(teamId);
-
         return new SquadPageData(
             teamId,
             ResolveClubName(teamId, teamFact, capture),
@@ -71,8 +69,7 @@ public class SquadPageReader(MatchCacheService cache, SnapshotStore snapshots)
             orderedRows,
             teamNames,
             capture,
-            seasonStats,
-            comparison);
+            seasonStats);
     }
 
     /// <summary>The clue we hold about whose page this is: a captured team read,
