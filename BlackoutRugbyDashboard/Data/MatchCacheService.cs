@@ -528,6 +528,20 @@ public class MatchCacheService(
     }
 
     /// <summary>
+    /// The newest captured TeamFacts row for one team: the club strip's identity
+    /// (name, Team CSR, bot flag) with zero API calls. Null when no team read has
+    /// been cached yet — capture-on-seen fills it as windows are viewed.
+    /// </summary>
+    public async Task<TeamFactRow?> GetLatestTeamFactAsync(
+        int teamId, CancellationToken cancellationToken = default)
+    {
+        return await db.TeamFacts
+            .Where(fact => fact.TeamId == teamId)
+            .OrderByDescending(fact => fact.CapturedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>
     /// Cached season statistics only — no refresh (degraded loads never touch
     /// the API for ps).
     /// </summary>

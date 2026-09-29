@@ -1,361 +1,156 @@
-using System.Net.Http;
-using System.Net.Sockets;
 using BlackoutRugbyDashboard.Data;
 using BlackoutRugbyDashboard.Models;
 using BlackoutRugbyDashboard.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Options;
 
 namespace BlackoutRugbyDashboard.Pages;
 
 /// <summary>
-/// The Squad page (cache-first, D-Squad): "Load stats comparison" is a
-/// write-through Match Cache load — one live fixtures discovery read fills the
-/// D1 entry scope for fixtures missing from the cache (FillFixtureAsync's
-/// scope), then every completed fixture in the window renders from cached rows.
-/// The roster read stays live (2 calls — CSR/form/energy/age are the volatile
-/// present) and each successful load saves a SnapshotStore point-in-time
-/// snapshot plus renders its comparison with the previous load. Season
-/// aggregates (ps) cache point-in-time in PlayerSeasons and refresh only when
-/// the window reveals a newer completed fixture. Live-read failures degrade to
-/// cache where the data is immutable (cached window, cached season stats);
-/// credential/API rejections take D3's decision-2 hard-error panel; transport
-/// failures replay the last roster snapshot with a warning banner.
+/// The Squad page (D-Squad, S2 load model): a plain GET renders the club strip
+/// (club name, Team CSR, derived season) and every card from the Match Cache and
+/// the latest Squad Snapshot — zero API calls, because this model holds no API
+/// client at all. The legacy control panel (API endpoint field, Team ID field, the
+/// hardcoded Season 50–80 list and the Load POST) is deleted; the page's only live
+/// read is the explicit Capture squad action. With nothing cached the page shows
+/// the bootstrap empty state instead of fetching anything on load. D3's failure
+/// patterns still own the banner and the hard-error panel with one button to
+/// Settings.
 /// </summary>
 public class SquadModel : ClubLinkedPageModel
 {
-    private const int SquadWindowLast = 20;
-
-    private readonly MatchCacheService _cache;
-    private readonly SnapshotStore _snapshots;
-    private readonly IBlackoutRugbyApiClient _apiClient;
+    private readonly SquadPageReader _reader;
     private readonly BlackoutRugbyResponseAdapter _adapter;
     private readonly ApiLogger _apiLogger;
-    private readonly DashboardDefaultsOptions _dashboardDefaults;
     private readonly ILogger<SquadModel> _logger;
 
     public SquadModel(
-        MatchCacheService cache,
-        SnapshotStore snapshots,
-        IBlackoutRugbyApiClient apiClient,
+        SquadPageReader reader,
         BlackoutRugbyResponseAdapter adapter,
         ApiLogger apiLogger,
-        IOptions<DashboardDefaultsOptions> dashboardDefaults,
         ClubLinkService clubLinks,
         ILogger<SquadModel> logger) : base(clubLinks)
     {
-        _cache = cache;
-        _snapshots = snapshots;
-        _apiClient = apiClient;
+        _reader = reader;
         _adapter = adapter;
         _apiLogger = apiLogger;
-        _dashboardDefaults = dashboardDefaults.Value;
         _logger = logger;
-        Input = CreateRequestFromDefaults();
     }
 
-    [BindProperty]
-    public TeamDashboardRequest Input { get; set; }
+    /// <summary>C1 as the club strip: the club's identity and derived season.</summary>
+    public ClubStrip Club { get; private set; } = new();
+
+    /// <summary>The season the page's aggregates are scoped to: the newest cached
+    /// Fixture's season, 0 when nothing is cached yet.</summary>
+    public int Season => Club.Season;
+
+    /// <summary>True when the club has nothing cached at all (no completed Fixture
+    /// and no Squad Snapshot): the bootstrap empty state, never a silent fetch.</summary>
+    public bool IsColdStart { get; private set; }
+
+    /// <summary>True when a Squad Snapshot exists — the comparison card's source.</summary>
+    public bool HasCapture { get; private set; }
 
     public TeamDashboardViewModel? Dashboard { get; private set; }
     public List<GameStats> GameStatsList { get; private set; } = new();
     public List<FixtureBreakdown> FixtureBreakdowns { get; private set; } = new();
+    public TeamSnapshotComparison? SnapshotComparison { get; private set; }
     public string? StatusMessage { get; private set; }
     public string? WarningMessage { get; private set; }
     public string? ErrorMessage { get; private set; }
     public string ApiLogsJson { get; private set; } = "[]";
-    public TeamSnapshotComparison? SnapshotComparison { get; private set; }
-    public bool SnapshotSaved { get; private set; }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        Input = CreateRequestFromDefaults();
-    }
-
-    public async Task<IActionResult> OnPostLoadAsync()
-    {
-        ApplyDefaultsIfMissing();
-        ApplyLinkedMemberCredentials();
-        ModelState.Clear();
-
-        if (!TryValidateModel(Input, nameof(Input)))
-        {
-            return Page();
-        }
-
         _apiLogger.Clear();
         StatusMessage = null;
         WarningMessage = null;
         ErrorMessage = null;
         SnapshotComparison = null;
-        SnapshotSaved = false;
         Dashboard = null;
+        HasCapture = false;
+        IsColdStart = false;
         GameStatsList = new List<GameStats>();
         FixtureBreakdowns = new List<FixtureBreakdown>();
 
+        var teamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
+
         try
         {
-            var warnings = new List<string>();
+            var page = await _reader.ReadAsync(teamId);
 
-            var window = await LoadWindowAsync(warnings);
-            var roster = await LoadRosterAsync(warnings);
-            var seasonStats = await LoadSeasonStatsAsync(roster, window, warnings);
+            Club = new ClubStrip
+            {
+                TeamId = teamId,
+                Name = page.ClubName,
+                TeamCsr = page.TeamCsr,
+                IsBot = page.ClubIsBot,
+                Season = page.Season
+            };
+            IsColdStart = page.IsColdStart;
+            HasCapture = page.Capture is not null;
+            SnapshotComparison = page.Comparison;
 
-            Dashboard = BuildDashboardViewModel(roster, seasonStats.Stats);
-            FixtureBreakdowns = BuildFixtureBreakdowns(window);
+            _apiLogger.LogCache(
+                "match-cache/fixtures",
+                $"{page.Window.Count} completed cached Fixture(s) rendered from the Match Cache — no API call");
+            _apiLogger.LogCache(
+                "match-cache/playerstatistics",
+                $"{page.SeasonStats.Count}/{page.Capture?.Players.Count ?? 0} season read(s) served from cache");
+
+            Dashboard = BuildDashboardViewModel(page);
+            FixtureBreakdowns = BuildFixtureBreakdowns(page);
             GameStatsList = FixtureBreakdowns
                 .Select(item => item.TeamStats)
                 .OrderByDescending(item => item.Date)
                 .ToList();
 
-            if (!roster.Degraded && Dashboard.Players.Count > 0)
-            {
-                await _snapshots.SaveSnapshotAsync(Dashboard);
-                SnapshotSaved = true;
-                SnapshotComparison = await _snapshots.GetLatestComparisonAsync(Input.TeamId);
-            }
+            // The cold start speaks for itself in the bootstrap panel — the banner
+            // is for the warm page, where "what came from where" needs saying.
+            StatusMessage = page.IsColdStart ? null : BuildStatusMessage(page);
 
-            StatusMessage = BuildStatusMessage(window, seasonStats, roster);
-            if (warnings.Count > 0)
+            if (page.Capture is { Players.Count: > 0 } capture
+                && page.Season > 0
+                && page.SeasonStats.Count < capture.Players.Count)
             {
-                WarningMessage = string.Join(" ", warnings);
+                WarningMessage =
+                    $"{capture.Players.Count - page.SeasonStats.Count} of {capture.Players.Count} players have no cached Season {page.Season} statistics yet — those aggregate columns read the captured values instead.";
             }
-        }
-        catch (SquadHardError hardError)
-        {
-            _logger.LogWarning("Squad load stopped with a hard error: {Message}", hardError.Message);
-            ErrorMessage = hardError.Message;
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Failed to load squad dashboard for team {TeamId}", Input.TeamId);
-            ErrorMessage = $"The Squad load failed unexpectedly: {exception.Message}";
+            _logger.LogError(exception, "The Squad page failed to render from cache for team {TeamId}", teamId);
+            ErrorMessage = $"The Squad page could not read its cached data: {exception.Message}";
         }
 
         ApiLogsJson = _apiLogger.GetLogsJson();
-        return Page();
-    }
-    /// <summary>D3: the Member Key rides the Club Link, never the form.</summary>
-    private void ApplyLinkedMemberCredentials()
-    {
-        var credentials = ClubLinks.ResolveCurrentMemberCredentials();
-        if (credentials is null)
-        {
-            return;
-        }
-
-        Input.MemberId = credentials.MemberId;
-        Input.MemberKey = credentials.MemberKey;
     }
 
     /// <summary>
-    /// The window phase: live discovery read + write-through fill. Transport
-    /// failure degrades to the cached window (completed fixtures are immutable
-    /// — the cached rows are the same fact live would have returned); an empty
-    /// cache plus a failed read is a hard error.
-    /// </summary>
-    private async Task<SquadWindow> LoadWindowAsync(ICollection<string> warnings)
-    {
-        try
-        {
-            var fill = await _cache.FillSquadWindowAsync(Input.TeamId, Input.Season, SquadWindowLast, Input.BaseEndpoint, _apiLogger);
-            if (fill.Failed > 0)
-            {
-                warnings.Add($"{fill.Failed} fixture fill attempt(s) failed — they retry on your next load.");
-            }
 
-            var rows = await _cache.GetSquadWindowRowsAsync(fill.CompletedRows.Select(row => row.FixtureId).ToList(), Input.TeamId);
-            var newestCompletedUtc = fill.CompletedRows.Count == 0
-                ? (DateTime?)null
-                : DateTimeOffset.FromUnixTimeSeconds(fill.CompletedRows.Max(row => row.MatchFinishUnix)).UtcDateTime;
-
-            foreach (var entry in rows.Values)
-            {
-                if (entry.Players.Count > 0)
-                {
-                    _apiLogger.LogCache(
-                        $"match-cache/fixturestats?fixtureId={entry.Fixture.FixtureId}",
-                        $"{entry.Players.Count} player rows + team stats rendered from cache");
-                }
-            }
-
-            return new SquadWindow(
-                fill.Fixtures,
-                OrderRows(rows.Values),
-                newestCompletedUtc,
-                fill.Completed,
-                fill.NewlyCached,
-                fill.AlreadyCached,
-                fill.Failed,
-                Degraded: false,
-                new Dictionary<int, string>());
-        }
-        catch (Exception exception) when (IsTransportFailure(exception))
-        {
-            _logger.LogWarning(exception, "Fixtures read failed; degrading to the cached window for team {TeamId}", Input.TeamId);
-
-            var cachedRows = await _cache.GetCachedWindowAsync(Input.TeamId, Input.Season, SquadWindowLast);
-            if (cachedRows.Count == 0)
-            {
-                cachedRows = await _cache.GetCachedWindowAsync(Input.TeamId, 0, SquadWindowLast);
-            }
-
-            if (cachedRows.Count == 0)
-            {
-                throw new SquadHardError(
-                    $"The live fixtures read failed ({exception.Message}) and the Match Cache holds no completed fixtures yet — there is nothing to display. Try again once the game API is reachable.");
-            }
-
-            warnings.Add("The live fixtures read failed — showing the Match Cache's stored window instead.");
-            var rows = await _cache.GetSquadWindowRowsAsync(cachedRows.Select(row => row.FixtureId).ToList(), Input.TeamId);
-            var teamNames = await _cache.GetTeamNamesAsync(cachedRows.SelectMany(row => new[] { row.HomeTeamId, row.GuestTeamId }));
-            var newestCompletedUtc = DateTimeOffset.FromUnixTimeSeconds(cachedRows.Max(row => row.MatchFinishUnix)).UtcDateTime;
-
-            return new SquadWindow(
-                Array.Empty<Fixture>(),
-                OrderRows(rows.Values),
-                newestCompletedUtc,
-                cachedRows.Count,
-                0,
-                cachedRows.Count,
-                0,
-                Degraded: true,
-                teamNames);
-        }
-    }
-
-    private static IReadOnlyList<SquadFixtureRows> OrderRows(IEnumerable<SquadFixtureRows> rows) =>
-        rows.OrderByDescending(entry => entry.Fixture.MatchStartUnix).ToList();
-    /// <summary>
-    /// The roster phase: always live (CSR/form/energy/age are the volatile
-    /// present, never replayed as such). Credential/API rejections take D3's
-    /// hard-error contract; transport failures replay the last snapshot with a
-    /// warning — and with no snapshot on record, that is a hard error too.
-    /// </summary>
-    private async Task<SquadRoster> LoadRosterAsync(ICollection<string> warnings)
-    {
-        try
-        {
-            var teamsXml = await ReadLiveAsync(
-                () => _apiClient.GetTeamsAsync(teamId: Input.TeamId),
-                $"{Input.BaseEndpoint}/teams?teamId={Input.TeamId}");
-            var playersXml = await ReadLiveAsync(
-                () => _apiClient.GetPlayersAsync(teamId: Input.TeamId),
-                $"{Input.BaseEndpoint}/players?teamId={Input.TeamId}");
-
-            var apiError = _adapter.ExtractResponseError(teamsXml) ?? _adapter.ExtractResponseError(playersXml);
-            if (!string.IsNullOrWhiteSpace(apiError))
-            {
-                throw new SquadHardError(ClassifyApiError(apiError));
-            }
-
-            var team = _adapter.ParseTeam(teamsXml);
-            return new SquadRoster(
-                team?.Name,
-                team?.CountryIso ?? string.Empty,
-                _adapter.ParsePlayers(playersXml),
-                Degraded: false,
-                null);
-        }
-        catch (SquadHardError)
-        {
-            throw;
-        }
-        catch (Exception exception) when (IsTransportFailure(exception))
-        {
-            _logger.LogWarning(exception, "Roster read failed; replaying the last snapshot for team {TeamId}", Input.TeamId);
-            var snapshot = await _snapshots.GetLatestAsync(Input.TeamId);
-            if (snapshot is null || snapshot.Players.Count == 0)
-            {
-                throw new SquadHardError(
-                    $"The live roster read failed ({exception.Message}) and no previous squad snapshot exists to fall back on. Try again once the game API is reachable.");
-            }
-
-            warnings.Add(
-                $"The live roster read failed — showing the squad as captured {snapshot.CapturedAtUtc.ToLocalTime():MMM d, HH:mm} (age and recent pops unavailable).");
-            return new SquadRoster(
-                snapshot.TeamName,
-                string.Empty,
-                snapshot.Players
-                    .Select(player => new Player(
-                        player.Id,
-                        player.Name,
-                        0,
-                        player.Csr,
-                        player.Salary,
-                        player.Form,
-                        player.Energy,
-                        Array.Empty<string>()))
-                    .ToList(),
-                Degraded: true,
-                snapshot);
-        }
-    }
-
-    /// <summary>One live read with the page's request/response logging shape.</summary>
-    private async Task<string> ReadLiveAsync(Func<Task<string>> read, string url)
-    {
-        _apiLogger.LogRequest("GET", url);
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        var xml = await read();
-        _apiLogger.LogResponse(url, 200, Truncate(xml), sw.ElapsedMilliseconds);
-        return xml;
-    }
 
     /// <summary>
-    /// The season-stats phase: cache with event-driven refresh. Degraded loads
-    /// read the cache only — no ps refresh while the live API is down.
+    /// The comparison card's source (C4, unchanged in shape): present-state values
+    /// (CSR, salary, form, energy) come from the latest Squad Snapshot, and the
+    /// aggregates from the cached season reads — falling back to the values stored
+    /// with the Snapshot where a player's season read is not cached. Age is not
+    /// captured yet, so it stays unknown rather than being invented.
     /// </summary>
-    private async Task<SeasonStatsOutcome> LoadSeasonStatsAsync(SquadRoster roster, SquadWindow window, ICollection<string> warnings)
+    private TeamDashboardViewModel BuildDashboardViewModel(SquadPageData page)
     {
-        var playerIds = roster.Players.Select(player => player.Id).ToList();
-        if (playerIds.Count == 0)
-        {
-            return new SeasonStatsOutcome(new Dictionary<int, PlayerStatistics>(), 0, 0, 0, 0);
-        }
+        var captured = page.Capture?.Players ?? new List<PlayerSnapshotRecord>();
+        var stats = page.SeasonStats;
 
-        if (roster.Degraded)
-        {
-            var cached = await _cache.GetCachedPlayerSeasonsAsync(playerIds, Input.Season);
-            var missing = playerIds.Count - cached.Count;
-            if (missing > 0)
-            {
-                warnings.Add($"{missing} player season read(s) are not cached yet — those stat columns read zero.");
-            }
-
-            _apiLogger.LogCache(
-                "match-cache/playerstatistics",
-                $"{cached.Count}/{playerIds.Count} season reads served from cache (degraded load — no refresh)");
-            return new SeasonStatsOutcome(cached, playerIds.Count, cached.Count, 0, 0);
-        }
-
-        var result = await _cache.GetOrRefreshPlayerSeasonsAsync(playerIds, Input.Season, window.NewestCompletedUtc, Input.BaseEndpoint, _apiLogger);
-        _apiLogger.LogCache(
-            "match-cache/playerstatistics",
-            $"{result.Stats.Count}/{playerIds.Count} season reads served from cache ({result.Refreshed} refreshed live this load)");
-        if (result.Failed > 0)
-        {
-            warnings.Add(
-                $"{result.Failed} player season read(s) failed ({result.FirstError}) — cached values were kept where available.");
-        }
-
-        return new SeasonStatsOutcome(result.Stats, playerIds.Count, result.Served, result.Refreshed, result.Failed);
-    }
-    private TeamDashboardViewModel BuildDashboardViewModel(SquadRoster roster, IReadOnlyDictionary<int, PlayerStatistics> stats)
-    {
-        var players = roster.Players;
-        if (players.Count == 0)
+        if (captured.Count == 0)
         {
             return new TeamDashboardViewModel
             {
-                TeamId = Input.TeamId,
-                TeamName = roster.TeamName ?? $"Team {Input.TeamId}",
-                CountryIso = roster.CountryIso
+                TeamId = page.TeamId,
+                TeamName = page.ClubName,
+                CountryIso = page.CountryIso
             };
         }
 
-        var dashboardPlayers = players
+        var dashboardPlayers = captured
             .Select(player =>
             {
                 stats.TryGetValue(player.Id, out var season);
@@ -364,18 +159,19 @@ public class SquadModel : ClubLinkedPageModel
                 {
                     Id = player.Id,
                     Name = player.Name,
-                    Age = player.Age,
+                    Age = 0,
                     Csr = player.Csr,
                     Salary = player.Salary,
                     Form = player.Form,
                     Energy = player.Energy,
-                    Tackles = season?.Tackles ?? 0,
-                    MetresGained = season?.MetresGained ?? 0,
-                    Tries = season?.Tries ?? 0,
+                    Tackles = season?.Tackles ?? player.Tackles,
+                    MetresGained = season?.MetresGained ?? player.MetresGained,
+                    Tries = season?.Tries ?? player.Tries,
+                    TotalPoints = season?.TotalPoints ?? player.TotalPoints,
+                    TotalCaps = season?.TotalCaps ?? player.TotalCaps,
                     Conversions = season?.Conversions ?? 0,
                     DropGoals = season?.DropGoals ?? 0,
                     Penalties = season?.Penalties ?? 0,
-                    TotalPoints = season?.TotalPoints ?? 0,
                     YellowCards = season?.YellowCards ?? 0,
                     RedCards = season?.RedCards ?? 0,
                     Linebreaks = season?.Linebreaks ?? 0,
@@ -408,7 +204,6 @@ public class SquadModel : ClubLinkedPageModel
                     KicksOutOnTheFull = season?.KicksOutOnTheFull ?? 0,
                     BallTime = season?.BallTime ?? 0,
                     PenaltyTime = season?.PenaltyTime ?? 0,
-                    TotalCaps = season?.TotalCaps ?? 0,
                     LeagueCaps = season?.LeagueCaps ?? 0,
                     FriendlyCaps = season?.FriendlyCaps ?? 0,
                     CupCaps = season?.CupCaps ?? 0,
@@ -416,8 +211,7 @@ public class SquadModel : ClubLinkedPageModel
                     NationalCaps = season?.NationalCaps ?? 0,
                     WorldCupCaps = season?.WorldCupCaps ?? 0,
                     UnderTwentyWorldCupCaps = season?.UnderTwentyWorldCupCaps ?? 0,
-                    OtherCaps = season?.OtherCaps ?? 0,
-                    RecentPops = player.RecentPops
+                    OtherCaps = season?.OtherCaps ?? 0
                 };
             })
             .OrderByDescending(player => player.TotalPoints)
@@ -426,11 +220,11 @@ public class SquadModel : ClubLinkedPageModel
 
         return new TeamDashboardViewModel
         {
-            TeamId = Input.TeamId,
-            TeamName = roster.TeamName ?? $"Team {Input.TeamId}",
-            CountryIso = roster.CountryIso,
+            TeamId = page.TeamId,
+            TeamName = page.ClubName,
+            CountryIso = page.CountryIso,
             PlayerCount = dashboardPlayers.Count,
-            AverageAge = RoundAverage(dashboardPlayers.Select(player => player.Age)),
+            AverageAge = RoundAverage(dashboardPlayers.Select(player => player.Age)), // age is not captured yet
             AverageCsr = RoundAverage(dashboardPlayers.Select(player => player.Csr)),
             AverageForm = RoundAverage(dashboardPlayers.Select(player => player.Form)),
             AverageEnergy = RoundAverage(dashboardPlayers.Select(player => player.Energy)),
@@ -442,14 +236,15 @@ public class SquadModel : ClubLinkedPageModel
             Players = dashboardPlayers
         };
     }
-    private List<FixtureBreakdown> BuildFixtureBreakdowns(SquadWindow window)
+
+    private List<FixtureBreakdown> BuildFixtureBreakdowns(SquadPageData page)
     {
         var breakdowns = new List<FixtureBreakdown>();
         var playerNames = (Dashboard?.Players ?? Array.Empty<PlayerDashboardItem>())
             .GroupBy(player => player.Id)
             .ToDictionary(group => group.Key, group => group.First().Name);
 
-        foreach (var entry in window.Rows)
+        foreach (var entry in page.Window)
         {
             if (entry.Players.Count == 0)
             {
@@ -461,7 +256,7 @@ public class SquadModel : ClubLinkedPageModel
             {
                 FixtureId = entry.Fixture.FixtureId,
                 Label = BuildFixtureLabel(entry.Fixture.Season, entry.Fixture.Round, entry.Fixture.Competition, GameDate(entry.Fixture)),
-                TeamStats = BuildGameStats(window, entry, playerStats),
+                TeamStats = BuildGameStats(page, entry, playerStats),
                 PlayerStats = playerStats
             });
         }
@@ -470,29 +265,23 @@ public class SquadModel : ClubLinkedPageModel
     }
 
     /// <summary>
-    /// Builds one fixture's GameStats from the cached rows. Normal loads take
-    /// names/scores from the discovery read's parsed fixtures; degraded loads
-    /// fall back to TeamFacts names and the cached summary's points.
+    /// Builds one fixture's GameStats from the cached rows: the opponent's name
+    /// from the captured TeamFacts, the score from the cached Match Summary. A
+    /// Fixture whose summary was never cached is left without a result rather
+    /// than being reported as a 0–0 draw.
     /// </summary>
-    private GameStats BuildGameStats(SquadWindow window, SquadFixtureRows entry, IReadOnlyList<FixturePlayerStatistics> playerStats)
+    private GameStats BuildGameStats(SquadPageData page, SquadFixtureRows entry, IReadOnlyList<FixturePlayerStatistics> playerStats)
     {
         var row = entry.Fixture;
-        var isHome = row.HomeTeamId == Input.TeamId;
+        var isHome = row.HomeTeamId == page.TeamId;
         var opponentId = isHome ? row.GuestTeamId : row.HomeTeamId;
-        var display = window.DisplayFixture(row.FixtureId);
 
-        var opponent = display is not null
-            ? (isHome ? display.AwayTeamName : display.HomeTeamName)
-            : window.TeamNames.TryGetValue(opponentId, out var cachedName) && !string.IsNullOrWhiteSpace(cachedName)
-                ? cachedName
-                : $"Team {opponentId}";
+        var opponent = page.TeamNames.TryGetValue(opponentId, out var cachedName) && !string.IsNullOrWhiteSpace(cachedName)
+            ? cachedName
+            : $"Team {opponentId}";
 
-        var score = display is not null
-            ? (isHome ? display.HomeScore : display.AwayScore)
-            : entry.Summary is null ? 0 : (isHome ? entry.Summary.HomePoints : entry.Summary.GuestPoints);
-        var oppositionScore = display is not null
-            ? (isHome ? display.AwayScore : display.HomeScore)
-            : entry.Summary is null ? 0 : (isHome ? entry.Summary.GuestPoints : entry.Summary.HomePoints);
+        var score = entry.Summary is null ? 0 : isHome ? entry.Summary.HomePoints : entry.Summary.GuestPoints;
+        var oppositionScore = entry.Summary is null ? 0 : isHome ? entry.Summary.GuestPoints : entry.Summary.HomePoints;
 
         return new GameStats
         {
@@ -504,7 +293,9 @@ public class SquadModel : ClubLinkedPageModel
             Opponent = opponent,
             Score = score,
             OppositionScore = oppositionScore,
-            Result = score > oppositionScore ? "W" : score < oppositionScore ? "L" : "D",
+            Result = entry.Summary is null
+                ? string.Empty
+                : score > oppositionScore ? "W" : score < oppositionScore ? "L" : "D",
             Tackles = playerStats.Sum(item => item.Tackles),
             MetresGained = playerStats.Sum(item => item.MetresGained),
             Tries = playerStats.Sum(item => item.Tries),
@@ -545,47 +336,21 @@ public class SquadModel : ClubLinkedPageModel
         var competitionLabel = string.IsNullOrWhiteSpace(competition) ? string.Empty : $" {competition}";
         return $"{seasonLabel}, {roundLabel}{competitionLabel} - {date:MMM d}";
     }
-    private string BuildStatusMessage(SquadWindow window, SeasonStatsOutcome seasonStats, SquadRoster roster)
+    /// <summary>
+    /// The page's honesty line (D3's partial-load pattern, cache-first): what came
+    /// from where, and that nothing was fetched. The capture's own freshness is
+    /// the Capture squad action's business.
+    /// </summary>
+    private static string BuildStatusMessage(SquadPageData page)
     {
-        var windowPart = window.Degraded
-            ? $"{window.Completed} fixtures from the cached window (live read failed)"
-            : $"{window.Completed} fixtures in window: {window.AlreadyCached} from cache, {window.NewlyCached} fetched live"
-              + (window.Failed > 0 ? $", {window.Failed} fill attempts failed" : string.Empty);
-        var seasonPart = seasonStats.Refreshed > 0
-            ? $"{seasonStats.Stats.Count}/{seasonStats.Requested} season reads cached ({seasonStats.Refreshed} refreshed)"
-            : $"{seasonStats.Stats.Count}/{seasonStats.Requested} season reads cached";
-        var rosterPart = roster.Degraded ? "roster replayed from the last snapshot" : "roster live";
-        return $"Squad loaded — {windowPart} · {seasonPart} · {rosterPart}";
+        var windowPart = page.Window.Count == 0
+            ? "no completed Fixture cached yet"
+            : $"{page.Window.Count} cached completed Fixture(s)";
+        var capturePart = page.Capture is null
+            ? "no Squad Snapshot yet"
+            : $"squad from the latest capture ({page.Capture.Players.Count} player(s))";
+        return $"Rendered from the Match Cache — {windowPart} · {capturePart}. No API call was made.";
     }
-
-    /// <summary>D3's failure-class rule, page-flavored: the exact upstream error
-    /// strings are not live-verified, so classification keys on the error text
-    /// with a defensive fallback (see ClubLinkService for the prior art).</summary>
-    private static string ClassifyApiError(string errorText)
-    {
-        var text = errorText.Trim();
-        var normalized = text.ToLowerInvariant();
-        if (normalized.Contains("no data requested"))
-        {
-            return "The game API answered 'No data requested' — a recorded transient state. Wait a moment and load again.";
-        }
-        if (normalized.Contains("key") || normalized.Contains("credential") || normalized.Contains("password"))
-        {
-            return $"The API rejected your Member Key ({text}). It changes whenever the in-game password changes — re-link from Settings, then load again.";
-        }
-        if (normalized.Contains("member") || normalized.Contains("user"))
-        {
-            return $"The API rejected the member credentials ({text}). Re-link from Settings if your Member ID changed.";
-        }
-        return $"The API rejected the read ({text}). If your Member Key changed, re-link from Settings.";
-    }
-
-    /// <summary>Connectivity-class failures degrade; anything else is a hard error.</summary>
-    private static bool IsTransportFailure(Exception exception) =>
-        exception is HttpRequestException or TaskCanceledException or SocketException;
-
-    private static string? Truncate(string? value) =>
-        value?.Length > 3000 ? value[..3000] + "\n... (truncated)" : value;
 
     public static string FormatDelta(int value) =>
         value > 0 ? $"+{value}" : value.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -597,60 +362,27 @@ public class SquadModel : ClubLinkedPageModel
             ? 0
             : Math.Round((decimal)list.Average(), 1, MidpointRounding.AwayFromZero);
     }
-    private TeamDashboardRequest CreateRequestFromDefaults()
-    {
-        var link = ClubLinks.GetLinkState();
-        return new TeamDashboardRequest
-        {
-            BaseEndpoint = _dashboardDefaults.BaseEndpoint,
-            TeamId = link?.TeamId ?? 0,
-            Season = 80
-        };
-    }
+}
 
-    private void ApplyDefaultsIfMissing()
-    {
-        if (string.IsNullOrEmpty(Input.BaseEndpoint))
-        {
-            Input.BaseEndpoint = _dashboardDefaults.BaseEndpoint;
-        }
-        if (Input.TeamId == 0)
-        {
-            Input.TeamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
-        }
-    }
+/// <summary>
+/// C1 as the club strip: whose page this is (club name, Team CSR, bot flag) and
+/// the season the aggregates are scoped to. Every value is cache-derived — the
+/// strip makes no API calls; the Capture squad action is the page's only read.
+/// </summary>
+public class ClubStrip
+{
+    public int TeamId { get; init; }
 
-    /// <summary>The classified hard error: D3's decision-2 panel owns the recovery.</summary>
-    private sealed class SquadHardError(string message) : Exception(message);
+    public string Name { get; init; } = string.Empty;
 
-    private sealed record SquadWindow(
-        IReadOnlyList<Fixture> Fixtures,
-        IReadOnlyList<SquadFixtureRows> Rows,
-        DateTime? NewestCompletedUtc,
-        int Completed,
-        int NewlyCached,
-        int AlreadyCached,
-        int Failed,
-        bool Degraded,
-        IReadOnlyDictionary<int, string> TeamNames)
-    {
-        public Fixture? DisplayFixture(int fixtureId) =>
-            Fixtures.FirstOrDefault(fixture => fixture.Id == fixtureId);
-    }
+    /// <summary>The captured Team CSR, or null when no team read is cached yet.</summary>
+    public int? TeamCsr { get; init; }
 
-    private sealed record SquadRoster(
-        string? TeamName,
-        string CountryIso,
-        IReadOnlyList<Player> Players,
-        bool Degraded,
-        TeamSnapshot? Snapshot);
+    public bool IsBot { get; init; }
 
-    private sealed record SeasonStatsOutcome(
-        IReadOnlyDictionary<int, PlayerStatistics> Stats,
-        int Requested,
-        int Served,
-        int Refreshed,
-        int Failed);
+    /// <summary>The derived season: the newest cached Fixture's season, 0 when the
+    /// Match Cache holds no completed Fixture yet.</summary>
+    public int Season { get; init; }
 }
 
 public class FixtureBreakdown

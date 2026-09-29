@@ -2,10 +2,8 @@ using System.Net.Http;
 using BlackoutRugbyDashboard.Data;
 using BlackoutRugbyDashboard.Models;
 using BlackoutRugbyDashboard.Services;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Xunit;
 
 namespace BlackoutRugbyDashboard.Tests;
@@ -259,16 +257,6 @@ public class SquadCacheTests
 /// <summary>The SnapshotStore's revived comparison (Q5/Q10): save → latest → delta.</summary>
 public class SnapshotStoreTests
 {
-    private sealed class FakeEnvironment(string contentRoot) : IWebHostEnvironment
-    {
-        public string WebRootPath { get; set; } = string.Empty;
-        public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
-        public string ApplicationName { get; set; } = "tests";
-        public string EnvironmentName { get; set; } = "Development";
-        public string ContentRootPath { get; set; } = contentRoot;
-        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
-    }
-
     private static TeamDashboardViewModel BuildDashboard(int tackles) => new()
     {
         TeamId = 7,
@@ -296,7 +284,7 @@ public class SnapshotStoreTests
     public async Task Snapshots_SaveLatestAndCompare()
     {
         var root = Path.Combine(Path.GetTempPath(), "snaptest-" + Guid.NewGuid().ToString("N"));
-        var store = new SnapshotStore(new FakeEnvironment(root));
+        var store = new SnapshotStore(new TestEnvironment(root));
 
         await store.SaveSnapshotAsync(BuildDashboard(tackles: 10));
         Assert.Null(await store.GetLatestComparisonAsync(7)); // one snapshot, nothing to compare

@@ -82,6 +82,11 @@ builder.Services.AddScoped<IMemberKeyProtector, MemberKeyProtector>();
 builder.Services.AddScoped<ClubLinkService>();
 builder.Services.AddScoped<MatchCacheService>();
 
+// The Squad page's cache read (S2 load model): the window, the club strip and the
+// latest Squad Snapshot, with no API client in the graph — a plain GET cannot
+// read the game API. The Capture squad action is the page's only live read.
+builder.Services.AddScoped<SquadPageReader>();
+
 // The per-request default client (D3): developer credentials plus the signed-in
 // User's linked member credentials — developer-only when anonymous or unlinked.
 // Member credentials never come from configuration again (secrets scrub).

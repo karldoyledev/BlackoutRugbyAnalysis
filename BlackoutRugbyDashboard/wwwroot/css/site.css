@@ -99,6 +99,39 @@ body {
   backdrop-filter: blur(8px);
 }
 
+/* C1 as the club strip (S2): the club's identity on the left, the one explicit
+   action on the right. Layout only — the theme sweep is its own effort. */
+.club-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.club-strip .club-name {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.bootstrap-panel {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+}
+
+.bootstrap-panel h2 {
+  margin-bottom: 0.5rem;
+}
+
 .dashboard-form {
   display: grid;
   gap: 1rem;
