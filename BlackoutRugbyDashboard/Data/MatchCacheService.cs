@@ -127,20 +127,7 @@ public class MatchCacheService(
             var capturedAt = DateTime.UtcNow;
             foreach (var team in adapter.ParseTeams(teamsXml))
             {
-                db.TeamFacts.Add(new TeamFactRow
-                {
-                    TeamId = team.Id,
-                    CapturedAt = capturedAt,
-                    Name = team.Name,
-                    CountryIso = team.CountryIso,
-                    Bot = team.Bot,
-                    AverageTop15Csr = team.AverageTop15Csr,
-                    RankingPoints = team.RankingPoints,
-                    LeagueId = team.LeagueId,
-                    RegionalRank = team.RegionalRank,
-                    NationalRank = team.NationalRank,
-                    WorldRank = team.WorldRank
-                });
+                db.TeamFacts.Add(ToTeamFactRow(team, capturedAt));
             }
         }
 
@@ -252,6 +239,11 @@ public class MatchCacheService(
     /// fallback), then the D1 entry scope for every completed fixture missing
     /// from the cache. The fetch phase runs throttled-concurrent (HTTP + raw
     /// archive only); the DbContext is touched in the sequential persist phase.
+    /// Uncalled since #34: the Squad page renders what is cached and its Capture
+    /// squad action reads the roster only, so Fixtures land in the cache as pages
+    /// are opened. Kept as the append-only window fill (its 5-call entry scope is
+    /// still the D1 contract, covered by SquadCacheTests) rather than deleted,
+    /// because it is the only path that backfills a window in one go.
     /// </summary>
     public async Task<SquadWindowFillResult> FillSquadWindowAsync(
         int teamId,
@@ -359,6 +351,9 @@ public class MatchCacheService(
     /// exists than a row's FetchedAt (the event-driven staleness rule) or the
     /// row is missing. A failed fetch keeps the cached row and is counted for
     /// the caller's warning — a stale season read beats a broken page.
+    /// Uncalled since #34: Capture squad reads the cached rows only (it is the
+    /// 2-call roster read, never a per-player refresh), and the /Players index is
+    /// the page D7 gives this refresh to. Kept as that path's primitive.
     /// </summary>
     public async Task<PlayerSeasonRefreshResult> GetOrRefreshPlayerSeasonsAsync(
         IReadOnlyList<int> playerIds,
@@ -526,6 +521,34 @@ public class MatchCacheService(
             .GroupBy(fact => fact.TeamId)
             .ToDictionary(group => group.Key, group => group.OrderByDescending(fact => fact.CapturedAt).First().Name);
     }
+
+    /// <summary>
+    /// Persists one point-in-time TeamFact — the Capture squad roster read's `t`
+    /// parse. No window fill captures the club's own team (Home's batch read takes
+    /// opponents, and the Squad page no longer fills at all), so this is the writer
+    /// that makes the club strip's Team CSR real on a club that has never opened a
+    /// Fixture. Append-only: history is the point (D1).
+    /// </summary>
+    public async Task SaveTeamFactAsync(TeamFact fact, CancellationToken cancellationToken = default)
+    {
+        db.TeamFacts.Add(ToTeamFactRow(fact, DateTime.UtcNow));
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static TeamFactRow ToTeamFactRow(TeamFact team, DateTime capturedAt) => new()
+    {
+        TeamId = team.Id,
+        CapturedAt = capturedAt,
+        Name = team.Name,
+        CountryIso = team.CountryIso,
+        Bot = team.Bot,
+        AverageTop15Csr = team.AverageTop15Csr,
+        RankingPoints = team.RankingPoints,
+        LeagueId = team.LeagueId,
+        RegionalRank = team.RegionalRank,
+        NationalRank = team.NationalRank,
+        WorldRank = team.WorldRank
+    };
 
     /// <summary>
     /// The newest captured TeamFacts row for one team: the club strip's identity

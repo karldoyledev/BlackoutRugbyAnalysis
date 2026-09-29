@@ -18,7 +18,12 @@ public class SnapshotStore
         Directory.CreateDirectory(_snapshotRoot);
     }
 
-    public async Task SaveSnapshotAsync(TeamDashboardViewModel dashboard)
+    /// <summary>
+    /// Saves a Squad Snapshot (the Capture squad action's point in time) and
+    /// returns what was written, so the caller can report when the capture
+    /// happened without re-reading the folder.
+    /// </summary>
+    public async Task<TeamSnapshot> SaveSnapshotAsync(TeamDashboardViewModel dashboard)
     {
         var snapshot = new TeamSnapshot
         {
@@ -33,6 +38,7 @@ public class SnapshotStore
                 Salary = player.Salary,
                 Form = player.Form,
                 Energy = player.Energy,
+                Age = player.Age,
                 TotalPoints = player.TotalPoints,
                 Tries = player.Tries,
                 Tackles = player.Tackles,
@@ -46,6 +52,7 @@ public class SnapshotStore
         var filePath = Path.Combine(folder, $"{snapshot.CapturedAtUtc:yyyyMMdd-HHmmss}.json");
         var json = JsonSerializer.Serialize(snapshot, JsonOptions);
         await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
+        return snapshot;
     }
 
     public async Task<TeamSnapshotComparison?> GetLatestComparisonAsync(int teamId)

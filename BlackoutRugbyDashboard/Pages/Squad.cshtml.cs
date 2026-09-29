@@ -1,36 +1,45 @@
 using BlackoutRugbyDashboard.Data;
 using BlackoutRugbyDashboard.Models;
 using BlackoutRugbyDashboard.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace BlackoutRugbyDashboard.Pages;
 
 /// <summary>
 /// The Squad page (D-Squad, S2 load model): a plain GET renders the club strip
-/// (club name, Team CSR, derived season) and every card from the Match Cache and
-/// the latest Squad Snapshot — zero API calls, because this model holds no API
-/// client at all. The legacy control panel (API endpoint field, Team ID field, the
-/// hardcoded Season 50–80 list and the Load POST) is deleted; the page's only live
-/// read is the explicit Capture squad action. With nothing cached the page shows
-/// the bootstrap empty state instead of fetching anything on load. D3's failure
-/// patterns still own the banner and the hard-error panel with one button to
-/// Settings.
+/// (club name, Team CSR, derived season, when the last capture happened) and every
+/// card from the Match Cache and the latest Squad Snapshot — zero API calls, because
+/// the render path (<see cref="SquadPageReader"/>) holds no API client at all. The
+/// legacy control panel (API endpoint field, Team ID field, the hardcoded Season
+/// 50–80 list and the Load POST) is deleted; the page's only live read is the
+/// explicit Capture squad action (<see cref="SquadCaptureService"/>, reached from
+/// the Capture POST handler alone). With nothing cached the page shows the bootstrap
+/// empty state instead of fetching anything on load. D3's failure patterns still own
+/// the banner and the hard-error panel with one button to Settings.
 /// </summary>
 public class SquadModel : ClubLinkedPageModel
 {
+    /// <summary>D3 on a failed capture: the render survives it, so the page says so.</summary>
+    private const string CachedDataStillRenders =
+        "The cards below still render from the Match Cache and your last capture.";
+
     private readonly SquadPageReader _reader;
+    private readonly SquadCaptureService _captures;
     private readonly BlackoutRugbyResponseAdapter _adapter;
     private readonly ApiLogger _apiLogger;
     private readonly ILogger<SquadModel> _logger;
 
     public SquadModel(
         SquadPageReader reader,
+        SquadCaptureService captures,
         BlackoutRugbyResponseAdapter adapter,
         ApiLogger apiLogger,
         ClubLinkService clubLinks,
         ILogger<SquadModel> logger) : base(clubLinks)
     {
         _reader = reader;
+        _captures = captures;
         _adapter = adapter;
         _apiLogger = apiLogger;
         _logger = logger;
@@ -59,7 +68,46 @@ public class SquadModel : ClubLinkedPageModel
     public string? ErrorMessage { get; private set; }
     public string ApiLogsJson { get; private set; } = "[]";
 
-    public async Task OnGetAsync()
+    /// <summary>
+    /// The cache-first render — what a plain GET does (no capture), and what every
+    /// Capture press re-runs (with that capture's outcome).
+    /// </summary>
+    public Task OnGetAsync() => RenderAsync(capture: null);
+
+    /// <summary>
+    /// Capture squad (S2, #34): the page's one live action — the roster read
+    /// (2 calls), the Squad Snapshot it saves, and the club's own TeamFact — and
+    /// then the same cache-first render, so the page shows the values just read.
+    /// It bootstraps the cold start with no other step. D3 owns the failures: a
+    /// rejection panels and deep-links to Settings, a transport failure replays
+    /// the last capture as a warning, and in both cases the cached cards stand.
+    /// </summary>
+    public async Task<IActionResult> OnPostCaptureAsync()
+    {
+        var teamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
+        var capture = await _captures.CaptureAsync(teamId);
+
+        await RenderAsync(capture);
+
+        if (capture.SavedSnapshot)
+        {
+            StatusMessage = Join(capture.Message, StatusMessage);
+        }
+        else if (capture.IsHardError)
+        {
+            ErrorMessage = capture.Message;
+            WarningMessage = Join(CachedDataStillRenders, WarningMessage);
+        }
+        else
+        {
+            WarningMessage = Join(capture.Message, WarningMessage);
+        }
+
+        ApiLogsJson = _apiLogger.GetLogsJson();
+        return Page();
+    }
+
+    private async Task RenderAsync(SquadCaptureResult? capture)
     {
         _apiLogger.Clear();
         StatusMessage = null;
@@ -84,7 +132,9 @@ public class SquadModel : ClubLinkedPageModel
                 Name = page.ClubName,
                 TeamCsr = page.TeamCsr,
                 IsBot = page.ClubIsBot,
-                Season = page.Season
+                Season = page.Season,
+                CapturedAtUtc = page.Capture?.CapturedAtUtc,
+                CapturedPlayerCount = page.Capture?.Players.Count ?? 0
             };
             IsColdStart = page.IsColdStart;
             HasCapture = page.Capture is not null;
@@ -106,14 +156,15 @@ public class SquadModel : ClubLinkedPageModel
 
             // The cold start speaks for itself in the bootstrap panel — the banner
             // is for the warm page, where "what came from where" needs saying.
-            StatusMessage = page.IsColdStart ? null : BuildStatusMessage(page);
+            StatusMessage = page.IsColdStart ? null : BuildStatusMessage(page, capture);
 
-            if (page.Capture is { Players.Count: > 0 } capture
-                && page.Season > 0
-                && page.SeasonStats.Count < capture.Players.Count)
+            if (page.Capture is { Players.Count: > 0 } latestCapture
+                && page.SeasonStats.Count < latestCapture.Players.Count)
             {
-                WarningMessage =
-                    $"{capture.Players.Count - page.SeasonStats.Count} of {capture.Players.Count} players have no cached Season {page.Season} statistics yet — those aggregate columns read the captured values instead.";
+                var missing = latestCapture.Players.Count - page.SeasonStats.Count;
+                WarningMessage = page.Season > 0
+                    ? $"{missing} of {latestCapture.Players.Count} players have no cached Season {page.Season} statistics yet — those aggregate columns read the captured values instead."
+                    : $"{missing} of {latestCapture.Players.Count} players have no cached season statistics yet — the aggregate columns stay at the captured values until season reads are cached.";
             }
         }
         catch (Exception exception)
@@ -126,14 +177,10 @@ public class SquadModel : ClubLinkedPageModel
     }
 
     /// <summary>
-
-
-    /// <summary>
     /// The comparison card's source (C4, unchanged in shape): present-state values
-    /// (CSR, salary, form, energy) come from the latest Squad Snapshot, and the
+    /// (CSR, salary, form, energy, age) come from the latest Squad Snapshot, and the
     /// aggregates from the cached season reads — falling back to the values stored
-    /// with the Snapshot where a player's season read is not cached. Age is not
-    /// captured yet, so it stays unknown rather than being invented.
+    /// with the Snapshot where a player's season read is not cached.
     /// </summary>
     private TeamDashboardViewModel BuildDashboardViewModel(SquadPageData page)
     {
@@ -159,7 +206,7 @@ public class SquadModel : ClubLinkedPageModel
                 {
                     Id = player.Id,
                     Name = player.Name,
-                    Age = 0,
+                    Age = player.Age,
                     Csr = player.Csr,
                     Salary = player.Salary,
                     Form = player.Form,
@@ -224,7 +271,7 @@ public class SquadModel : ClubLinkedPageModel
             TeamName = page.ClubName,
             CountryIso = page.CountryIso,
             PlayerCount = dashboardPlayers.Count,
-            AverageAge = RoundAverage(dashboardPlayers.Select(player => player.Age)), // age is not captured yet
+            AverageAge = RoundAverage(dashboardPlayers.Select(player => player.Age)),
             AverageCsr = RoundAverage(dashboardPlayers.Select(player => player.Csr)),
             AverageForm = RoundAverage(dashboardPlayers.Select(player => player.Form)),
             AverageEnergy = RoundAverage(dashboardPlayers.Select(player => player.Energy)),
@@ -338,18 +385,33 @@ public class SquadModel : ClubLinkedPageModel
     }
     /// <summary>
     /// The page's honesty line (D3's partial-load pattern, cache-first): what came
-    /// from where, and that nothing was fetched. The capture's own freshness is
-    /// the Capture squad action's business.
+    /// from where. A plain GET (no capture outcome) also says that arriving made no
+    /// API call; a saved capture names the snapshot as the one just made; a failed
+    /// one says only that this render fetched nothing — the banner beside it already
+    /// owns what went wrong.
     /// </summary>
-    private static string BuildStatusMessage(SquadPageData page)
+    private static string BuildStatusMessage(SquadPageData page, SquadCaptureResult? capture)
     {
+        var captured = capture?.SavedSnapshot == true;
         var windowPart = page.Window.Count == 0
             ? "no completed Fixture cached yet"
             : $"{page.Window.Count} cached completed Fixture(s)";
         var capturePart = page.Capture is null
             ? "no Squad Snapshot yet"
-            : $"squad from the latest capture ({page.Capture.Players.Count} player(s))";
-        return $"Rendered from the Match Cache — {windowPart} · {capturePart}. No API call was made.";
+            : captured
+                ? $"squad from the capture just made ({page.Capture.Players.Count} player(s))"
+                : $"squad from the latest capture ({page.Capture.Players.Count} player(s))";
+        var closing = capture is null
+            ? " No API call was made."
+            : captured ? string.Empty : " This render fetched nothing.";
+        return $"Rendered from the Match Cache — {windowPart} · {capturePart}.{closing}";
+    }
+
+    /// <summary>Joins the non-blank parts of one banner line, or null when none survive.</summary>
+    private static string? Join(params string?[] parts)
+    {
+        var kept = parts.Where(part => !string.IsNullOrWhiteSpace(part)).ToList();
+        return kept.Count == 0 ? null : string.Join(" ", kept);
     }
 
     public static string FormatDelta(int value) =>
@@ -383,6 +445,13 @@ public class ClubStrip
     /// <summary>The derived season: the newest cached Fixture's season, 0 when the
     /// Match Cache holds no completed Fixture yet.</summary>
     public int Season { get; init; }
+
+    /// <summary>When the latest Squad Snapshot was made — the freshness answer the
+    /// page owes (S2/#34) — or null when nothing has been captured yet.</summary>
+    public DateTime? CapturedAtUtc { get; init; }
+
+    /// <summary>How many players that capture held.</summary>
+    public int CapturedPlayerCount { get; init; }
 }
 
 public class FixtureBreakdown

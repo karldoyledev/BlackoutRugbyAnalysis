@@ -83,9 +83,15 @@ builder.Services.AddScoped<ClubLinkService>();
 builder.Services.AddScoped<MatchCacheService>();
 
 // The Squad page's cache read (S2 load model): the window, the club strip and the
-// latest Squad Snapshot, with no API client in the graph — a plain GET cannot
-// read the game API. The Capture squad action is the page's only live read.
+// latest Squad Snapshot, with no API client in its own graph — a plain GET cannot
+// read the game API through it. The Capture squad action is the page's only read.
 builder.Services.AddScoped<SquadPageReader>();
+
+// The Squad page's one live action (S2 load model, #34): the roster read (2
+// calls), the Squad Snapshot it saves, and the club's own TeamFact. The only
+// class in the page's graph that holds an API client, and it is reached from the
+// Capture POST handler alone.
+builder.Services.AddScoped<SquadCaptureService>();
 
 // The per-request default client (D3): developer credentials plus the signed-in
 // User's linked member credentials — developer-only when anonymous or unlinked.

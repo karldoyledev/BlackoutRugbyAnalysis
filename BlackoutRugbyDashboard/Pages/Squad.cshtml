@@ -29,14 +29,26 @@
             {
                 <span class="pill warning-pill">BOT</span>
             }
+            @* Freshness is answerable at a glance (S2/#34): when the roster values the
+               present-state columns render were captured — never captured at all is
+               its own answer. *@
+            @if (Model.Club.CapturedAtUtc is { } capturedAt)
+            {
+                <span class="pill neutral-pill" title="Squad Snapshot of @Model.Club.CapturedPlayerCount player(s) — the present-state values this page renders">
+                    Captured @capturedAt.ToLocalTime().ToString("MMM d, HH:mm")
+                </span>
+            }
+            else
+            {
+                <span class="pill warning-pill">Not captured yet</span>
+            }
         </div>
     </div>
-    <div class="button-row">
-        <button type="button" class="btn btn-primary action-button" disabled
-                title="Capture squad arrives with build slice #34">
-            Capture squad
-        </button>
-    </div>
+    @* The page's only live read (S2): an explicit press performs the roster read,
+       saves a Squad Snapshot and re-renders. Arriving here fetches nothing. *@
+    <form method="post" asp-page-handler="Capture" class="button-row">
+        <button type="submit" class="btn btn-primary action-button">Capture squad</button>
+    </form>
 
     @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
     {
@@ -79,10 +91,9 @@
             roster (CSR, form, energy, salary, age). From then on every visit costs nothing, and
             games land in the cache as you open Fixtures.
         </p>
-        <button type="button" class="btn btn-primary action-button" disabled
-                title="Capture squad arrives with build slice #34">
-            Capture squad
-        </button>
+        <form method="post" asp-page-handler="Capture">
+            <button type="submit" class="btn btn-primary action-button">Capture squad</button>
+        </form>
     </section>
 }
 

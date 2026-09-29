@@ -25,6 +25,11 @@ public class PlayerSnapshotRecord
 
     public int Energy { get; init; }
 
+    /// <summary>Age as captured by the roster read (added in #34, the Capture
+    /// squad slice): the comparison card's Age option reads it and the player's
+    /// age is part of the volatile present, so it is captured, never derived.</summary>
+    public int Age { get; init; }
+
     public int TotalPoints { get; init; }
 
     public int Tries { get; init; }
