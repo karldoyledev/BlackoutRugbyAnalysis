@@ -8,16 +8,28 @@
     var fixtureBreakdowns = Model.FixtureBreakdowns;
     var loadedSeason = Model.Season;
 
-    // C3 Game review (S3, #35): the selection is query-string state, so tabs and
-    // column sorts are plain links and the card works without script.
+    // C3 Game review (S3, #35 + #36): the whole selection — the game, the tab, the
+    // mode and the column sort — is query-string state, so every control is a plain
+    // link and the card works without script.
     var reviewTab = GameReviewMatrix.KeyFor(Model.SelectedGroup);
     var reviewGame = Model.SelectedFixtureId;
     var reviewDir = Model.SortDescending ? "desc" : "asc";
+    var reviewMode = GameReviewMatrix.KeyFor(Model.Mode);
     string SortUrl(string key) =>
-        $"?game={reviewGame}&tab={reviewTab}&sort={key}&dir={(Model.SortKey == key && !Model.SortDescending ? "desc" : "asc")}";
+        $"?game={reviewGame}&tab={reviewTab}&mode={reviewMode}&sort={key}&dir={(Model.SortKey == key && !Model.SortDescending ? "desc" : "asc")}";
     string SortMarker(string key) =>
         Model.SortKey == key ? (Model.SortDescending ? " ▼" : " ▲") : string.Empty;
-    string TabUrl(string key) => $"?game={reviewGame}&tab={key}";
+    string TabUrl(string key) => $"?game={reviewGame}&tab={key}&mode={reviewMode}";
+    // Switching the mode keeps the game, the tab and the column sort you were reading.
+    string ModeUrl(DeltaMode mode) =>
+        $"?game={reviewGame}&tab={reviewTab}&mode={GameReviewMatrix.KeyFor(mode)}"
+        + (Model.SortKey is null ? string.Empty : $"&sort={Model.SortKey}&dir={reviewDir}");
+    // Why a cell reads as a dash: no previous game at all, or this Player is not in it.
+    string DeltaTitle(int? delta) => delta is null
+        ? Model.PreviousFixtureId is null
+            ? "No previous game in the cached window"
+            : "Not in the previous game's squad — nothing to compare"
+        : "Movement against the previous cached game";
 }
 
 @* C1 as the club strip (S2): whose page this is — club name, Team CSR, the season
@@ -59,11 +71,12 @@
        saves a Squad Snapshot and re-renders. Arriving here fetches nothing. *@
     <form method="post" asp-page-handler="Capture" class="button-row">
         @* The Game review selection survives the capture, so the page comes back
-           to the game and tab you were reading. *@
+           to the game, tab and mode you were reading. *@
         <input type="hidden" name="game" value="@reviewGame" />
         <input type="hidden" name="tab" value="@reviewTab" />
         <input type="hidden" name="sort" value="@Model.SortKey" />
         <input type="hidden" name="dir" value="@reviewDir" />
+        <input type="hidden" name="mode" value="@reviewMode" />
         <button type="submit" class="btn btn-primary action-button">Capture squad</button>
     </form>
 
@@ -116,9 +129,11 @@
 
 @if (!Model.IsColdStart)
 {
-    @* C3 Game review (S3, #35): one cached Fixture, every squad slot, the locked
-       seven Stat-Group tabs. Cache-only — the Match Cache's PlayerFixture rows and
-       the latest capture, nothing fetched; tabs and column sorts are links. *@
+    @* C3 Game review (S3, #35 + #36): one cached Fixture, every squad slot, the
+       locked seven Stat-Group tabs, every stat cell carrying its movement against
+       the previous cached game in three display modes, and each tab opening with
+       its Coach's eye. Cache-only — the Match Cache's PlayerFixture rows and the
+       latest capture, nothing fetched; tabs, modes and column sorts are links. *@
     <section class="table-panel">
         <div class="section-heading">
             <h2>Game review</h2>
@@ -126,7 +141,16 @@
             {
                 <p>
                     Every cached stat for one game, by Stat Group —
-                    @Model.GameContext. XV/Bench, minutes, points and energy-after
+                    @Model.GameContext.
+                    @if (Model.PreviousGameContext is { } previousGame)
+                    {
+                        <text>Deltas read against @previousGame.</text>
+                    }
+                    else
+                    {
+                        <text>No previous game in the window, so every delta is a dash.</text>
+                    }
+                    XV/Bench, minutes, points and energy-after
                     stay visible on every tab.
                 </p>
             }
@@ -151,10 +175,50 @@
                 <input type="hidden" name="tab" value="@reviewTab" />
                 <input type="hidden" name="sort" value="@Model.SortKey" />
                 <input type="hidden" name="dir" value="@reviewDir" />
+                <input type="hidden" name="mode" value="@reviewMode" />
                 <noscript>
                     <button type="submit" class="btn btn-outline-secondary action-button">Show</button>
                 </noscript>
             </form>
+
+            @* How the cells read (S3): the value, the value with its movement, or
+               the movement alone — carried on every link, so the choice stays put
+               while you move between games, tabs and sorts. *@
+            <div class="delta-mode-tabs" role="group" aria-label="Stat display mode">
+                <span class="delta-mode-label">Show</span>
+                @foreach (var mode in new[] { DeltaMode.Values, DeltaMode.Both, DeltaMode.Delta })
+                {
+                    <a class="delta-mode @(Model.Mode == mode ? "active" : string.Empty)"
+                       href="@ModeUrl(mode)"
+                       title="@(mode switch
+                                {
+                                    DeltaMode.Values => "The game's value only",
+                                    DeltaMode.Both => "The game's value with its movement against the previous game",
+                                    _ => "The movement against the previous game only"
+                                })">@(mode switch { DeltaMode.Values => "Values", DeltaMode.Both => "Game + delta", _ => "Delta only" })</a>
+                }
+            </div>
+
+            @* The Coach's eye (S3): the tab's headline metric's standout and its
+               adverse metric's worst offender, both linking into Player History.
+               A tab whose metrics scored nothing — or that judges on nothing —
+               opens with the sort hint alone rather than a made-up name. *@
+            <p class="coach-eye">
+                @if (Model.CoachEye.Any())
+                {
+                    <strong>Coach's eye:</strong>
+                    @foreach (var item in Model.CoachEye)
+                    {
+                        <span class="coach-eye-item @(item.IsAdverse ? "is-adverse" : "is-standout")"
+                              title="@(item.IsAdverse ? $"Worst offender — {item.Label} ({item.Value})" : $"Standout — {item.Label} ({item.Value})")">
+                            @(item.IsAdverse ? "worst" : "best"):
+                            <a href="/Players/@item.PlayerId">@item.PlayerName</a>
+                            (@item.Value @item.Label)
+                        </span>
+                    }
+                }
+                click any column header to sort.
+            </p>
 
             <ul class="nav nav-pills stat-group-tabs">
                 @foreach (var group in GameReviewMatrix.Groups)
@@ -199,13 +263,24 @@
                                     <span class="pill success-pill">XV</span>
                                 }
                             </td>
-                            <td>@row.Minutes</td>
-                            <td>@row.Points</td>
-                            <td>@row.EnergyAfter</td>
-                            <td>@(row.Csr is { } csr ? csr.ToString() : "—")</td>
-                            @foreach (var value in row.Values)
+                            @* The cells read per the chosen mode: delta-only mode hides
+                               the value, values mode hides the movement, and the CSR
+                               column (present state, no per-Fixture history) always shows
+                               what it has rather than a dash that would read as "no
+                               movement". *@
+                            @foreach (var cell in row.Cells)
                             {
-                                <td>@value</td>
+                                <td class="num">
+                                    @if (Model.Mode != DeltaMode.Delta || !cell.TracksHistory)
+                                    {
+                                        @cell.Text
+                                    }
+                                    @if (cell.TracksHistory && Model.Mode != DeltaMode.Values)
+                                    {
+                                        <span class="cell-delta @GameReviewMatrix.DeltaClass(cell.Delta)"
+                                              title="@DeltaTitle(cell.Delta)">@GameReviewMatrix.DeltaText(cell.Delta)</span>
+                                    }
+                                </td>
                             }
                         </tr>
                     }

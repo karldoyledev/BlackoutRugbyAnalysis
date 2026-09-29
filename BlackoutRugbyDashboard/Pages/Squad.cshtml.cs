@@ -64,10 +64,11 @@ public class SquadModel : ClubLinkedPageModel
     public List<FixtureBreakdown> FixtureBreakdowns { get; private set; } = new();
 
     /// <summary>
-    /// The Game review card (C3, #35): the cached Fixtures as choices (newest
-    /// first), the chosen Fixture, its Stat-Group tab and the column sort. The
-    /// whole selection rides the query string, so the card is server-rendered and
-    /// every tab and column is a link — no script needed to sort.
+    /// The Game review card (C3, #35 + #36): the cached Fixtures as choices (newest
+    /// first), the chosen Fixture, its Stat-Group tab, the column sort and how every
+    /// stat cell reads (value, value + movement, movement alone). The whole
+    /// selection rides the query string, so the card is server-rendered and every
+    /// tab, mode and column is a link — no script needed to sort or to switch.
     /// </summary>
     public IReadOnlyList<GameChoice> GameChoices { get; private set; } = Array.Empty<GameChoice>();
     public int? SelectedFixtureId { get; private set; }
@@ -77,8 +78,27 @@ public class SquadModel : ClubLinkedPageModel
     public string? SortKey { get; private set; }
     public bool SortDescending { get; private set; }
 
+    /// <summary>How the matrix's cells read (S3, #36).</summary>
+    public DeltaMode Mode { get; private set; } = GameReviewMatrix.DefaultMode;
+
     /// <summary>The chosen Fixture in words: when, what competition, against whom, and how it went.</summary>
     public string? GameContext { get; private set; }
+
+    /// <summary>
+    /// The baseline game the deltas read against (S3, #36): the next completed
+    /// Fixture back in the cached window, in the same words as
+    /// <see cref="GameContext"/>. Null when the chosen Fixture is the oldest one
+    /// cached — then every delta is a dash and the page says why.
+    /// </summary>
+    public int? PreviousFixtureId { get; private set; }
+    public string? PreviousGameContext { get; private set; }
+
+    /// <summary>
+    /// The Coach's eye for the chosen game and tab (#36): the standout on the tab's
+    /// headline metric, then the worst offender on its adverse metric. Empty when
+    /// nothing qualifies — the line then offers the sort hint alone.
+    /// </summary>
+    public IReadOnlyList<CoachEyeItem> CoachEye { get; private set; } = Array.Empty<CoachEyeItem>();
 
     public string? StatusMessage { get; private set; }
     public string? WarningMessage { get; private set; }
@@ -90,8 +110,8 @@ public class SquadModel : ClubLinkedPageModel
     /// Capture press re-runs (with that capture's outcome). The Game review
     /// selection arrives as query-string state on both.
     /// </summary>
-    public Task OnGetAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null) =>
-        RenderAsync(capture: null, game, tab, sort, dir);
+    public Task OnGetAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null) =>
+        RenderAsync(capture: null, game, tab, sort, dir, mode);
 
     /// <summary>
     /// Capture squad (S2, #34): the page's one live action — the roster read
@@ -101,12 +121,12 @@ public class SquadModel : ClubLinkedPageModel
     /// rejection panels and deep-links to Settings, a transport failure replays
     /// the last capture as a warning, and in both cases the cached cards stand.
     /// </summary>
-    public async Task<IActionResult> OnPostCaptureAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null)
+    public async Task<IActionResult> OnPostCaptureAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null)
     {
         var teamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
         var capture = await _captures.CaptureAsync(teamId);
 
-        await RenderAsync(capture, game, tab, sort, dir);
+        await RenderAsync(capture, game, tab, sort, dir, mode);
 
         if (capture.SavedSnapshot)
         {
@@ -127,7 +147,7 @@ public class SquadModel : ClubLinkedPageModel
     }
 
     private async Task RenderAsync(
-        SquadCaptureResult? capture, int? game = null, string? tab = null, string? sort = null, string? dir = null)
+        SquadCaptureResult? capture, int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null)
     {
         _apiLogger.Clear();
         StatusMessage = null;
@@ -140,12 +160,16 @@ public class SquadModel : ClubLinkedPageModel
         FixtureBreakdowns = new List<FixtureBreakdown>();
         GameChoices = Array.Empty<GameChoice>();
         GameRows = Array.Empty<GameReviewRow>();
+        CoachEye = Array.Empty<CoachEyeItem>();
         SelectedFixtureId = null;
         SelectedGroup = GameReviewMatrix.ParseGroup(tab);
         GroupFields = GameReviewMatrix.FieldsFor(SelectedGroup);
         SortKey = sort;
         SortDescending = string.Equals(dir, "desc", StringComparison.OrdinalIgnoreCase);
+        Mode = GameReviewMatrix.ParseMode(mode);
         GameContext = null;
+        PreviousFixtureId = null;
+        PreviousGameContext = null;
 
         var teamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
 
@@ -401,46 +425,53 @@ public class SquadModel : ClubLinkedPageModel
     }
 
     /// <summary>
-    /// The Game review card's data (C3, #35): the cached Fixtures as choices
-    /// (newest first, as the window arrives), the chosen Fixture's matrix rows for
-    /// the chosen Stat Group, sorted by the chosen column. Cache-only — it reads
-    /// the page's cached window, rows and capture and nothing else.
+    /// The Game review card's data (C3, #35 + #36): the cached Fixtures as choices
+    /// (newest first), the chosen Fixture's matrix rows for the chosen Stat Group,
+    /// each value carrying its delta against the previous cached game and the tab's
+    /// Coach's eye, sorted by the chosen column. Cache-only — it reads the page's
+    /// cached window, rows and capture and nothing else.
     /// </summary>
     private void BuildGameReview(SquadPageData page, int? requestedFixtureId)
     {
-        var choices = new List<GameChoice>();
-        var rowsById = new Dictionary<int, SquadFixtureRows>();
-        foreach (var entry in page.Window)
-        {
-            rowsById[entry.Fixture.FixtureId] = entry;
-            choices.Add(new GameChoice
+        // Newest first, the order the selector reads in: the previous cached game is
+        // the next one along, whatever competition it belonged to.
+        var window = page.Window.OrderByDescending(entry => entry.Fixture.MatchStartUnix).ToList();
+
+        GameChoices = window
+            .Select(entry => new GameChoice
             {
                 FixtureId = entry.Fixture.FixtureId,
                 Label = BuildGameChoiceLabel(page, entry)
-            });
-        }
-
-        GameChoices = choices;
+            })
+            .ToList();
 
         // The requested Fixture may be gone from the cached window (or the request
         // may name none): the newest cached game answers instead of an empty card.
-        var selected = requestedFixtureId is { } requested && rowsById.TryGetValue(requested, out var match)
-            ? match
-            : rowsById.Values.OrderByDescending(entry => entry.Fixture.MatchStartUnix).FirstOrDefault();
+        var requestedIndex = requestedFixtureId is { } requested
+            ? window.FindIndex(entry => entry.Fixture.FixtureId == requested)
+            : -1;
+        var selectedIndex = requestedIndex >= 0 ? requestedIndex : 0;
 
-        if (selected is null)
+        if (window.Count == 0)
         {
             GameRows = Array.Empty<GameReviewRow>();
             return;
         }
 
+        var selected = window[selectedIndex];
+        var previous = selectedIndex + 1 < window.Count ? window[selectedIndex + 1] : null;
+
         SelectedFixtureId = selected.Fixture.FixtureId;
         GameContext = BuildGameContext(page, selected);
+        PreviousFixtureId = previous?.Fixture.FixtureId;
+        PreviousGameContext = previous is null ? null : BuildGameContext(page, previous);
+
         GameRows = GameReviewMatrix.Sort(
-            GameReviewMatrix.BuildRows(selected, page.Capture, SelectedGroup),
+            GameReviewMatrix.BuildRows(selected, page.Capture, SelectedGroup, previous),
             SelectedGroup,
             SortKey,
             SortDescending);
+        CoachEye = GameReviewMatrix.BuildCoachEye(GameRows, SelectedGroup);
     }
 
     /// <summary>The fixture selector's option: when, what competition and round, and against whom.</summary>
@@ -511,9 +542,6 @@ public class SquadModel : ClubLinkedPageModel
         var kept = parts.Where(part => !string.IsNullOrWhiteSpace(part)).ToList();
         return kept.Count == 0 ? null : string.Join(" ", kept);
     }
-
-    public static string FormatDelta(int value) =>
-        value > 0 ? $"+{value}" : value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     private static decimal RoundAverage(IEnumerable<int> values)
     {

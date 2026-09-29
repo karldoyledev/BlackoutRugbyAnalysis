@@ -9,6 +9,7 @@
   --accent-deep: #9e3d18;
   --highlight: #f4b942;
   --success: #2d8a58;
+  --loss: #b23b2e;
   --warning: #8c5b16;
 }
 
@@ -175,6 +176,98 @@ body {
 .game-review-table .sort-link:hover,
 .game-review-table .sort-link:focus {
   text-decoration: underline;
+}
+
+/* C3 Game review, delta modes and movement (#36): the value, the value with its
+   movement against the previous cached game, or the movement alone — plus the
+   Coach's eye line that opens each Stat-Group tab. Layout only; the theme sweep
+   is its own effort. */
+.delta-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.delta-mode-label {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.delta-mode {
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(17, 33, 43, 0.06);
+  color: var(--ink-soft);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.delta-mode:hover,
+.delta-mode:focus {
+  text-decoration: none;
+  background: rgba(17, 33, 43, 0.12);
+}
+
+.delta-mode.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.coach-eye {
+  margin: 0 0 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.coach-eye strong {
+  color: var(--ink);
+}
+
+.coach-eye-item {
+  display: inline-block;
+  margin-right: 0.75rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(17, 33, 43, 0.06);
+}
+
+.coach-eye-item.is-standout {
+  background: rgba(45, 138, 88, 0.14);
+}
+
+.coach-eye-item.is-adverse {
+  background: rgba(178, 59, 46, 0.14);
+}
+
+.coach-eye-item a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.game-review-table .cell-delta {
+  display: block;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.game-review-table .cell-delta.delta-up {
+  color: var(--success);
+}
+
+.game-review-table .cell-delta.delta-down {
+  color: var(--loss);
+}
+
+.game-review-table .cell-delta.delta-flat {
+  color: var(--ink-soft);
+}
+
+.game-review-table .cell-delta.delta-blank {
+  color: rgba(65, 81, 89, 0.6);
 }
 
 .dashboard-form {
