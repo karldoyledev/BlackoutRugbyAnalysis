@@ -1,3 +1,4 @@
+using System.Globalization;
 using BlackoutRugbyDashboard.Data;
 using BlackoutRugbyDashboard.Models;
 using BlackoutRugbyDashboard.Services;
@@ -106,12 +107,32 @@ public class SquadModel : ClubLinkedPageModel
     public string ApiLogsJson { get; private set; } = "[]";
 
     /// <summary>
-    /// The cache-first render — what a plain GET does (no capture), and what every
-    /// Capture press re-runs (with that capture's outcome). The Game review
-    /// selection arrives as query-string state on both.
+    /// The Team review card (C6, #38): which of its tabs is open, and that tab's
+    /// eight small-multiple charts over the cached window. Query-string state, like
+    /// the Game review card, so the tab is a plain link.
     /// </summary>
-    public Task OnGetAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null) =>
-        RenderAsync(capture: null, game, tab, sort, dir, mode);
+    public TeamReviewTab ReviewTab { get; private set; } = TeamReviewBuilder.DefaultTab;
+    public IReadOnlyList<TeamReviewTab> ReviewTabs => TeamReviewBuilder.Tabs;
+    public IReadOnlyList<SvgChart> TeamReviewCharts { get; private set; } = Array.Empty<SvgChart>();
+
+    /// <summary>
+    /// The comparison card (C4, unchanged in shape): the chosen stat, the squad
+    /// ranked by it (present-state values from the latest capture), and where the
+    /// squad median falls. Query-string state — the selector is a form, not script.
+    /// </summary>
+    public string ComparisonStatKey { get; private set; } = ComparisonStats[0].Key;
+    public string ComparisonStatLabel { get; private set; } = ComparisonStats[0].Label;
+    public IReadOnlyList<ComparisonStat> ComparisonStatOptions => ComparisonStats;
+    public IReadOnlyList<ComparisonBar> ComparisonBars { get; private set; } = Array.Empty<ComparisonBar>();
+    public string ComparisonMedianPercent { get; private set; } = "0";
+
+    /// <summary>
+    /// The cache-first render — what a plain GET does (no capture), and what every
+    /// Capture press re-runs (with that capture's outcome). The Game review and
+    /// Team review selections arrive as query-string state on both.
+    /// </summary>
+    public Task OnGetAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? teamtab = null, string? c4stat = null) =>
+        RenderAsync(capture: null, game, tab, sort, dir, mode, teamtab, c4stat);
 
     /// <summary>
     /// Capture squad (S2, #34): the page's one live action — the roster read
@@ -121,12 +142,12 @@ public class SquadModel : ClubLinkedPageModel
     /// rejection panels and deep-links to Settings, a transport failure replays
     /// the last capture as a warning, and in both cases the cached cards stand.
     /// </summary>
-    public async Task<IActionResult> OnPostCaptureAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null)
+    public async Task<IActionResult> OnPostCaptureAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? teamtab = null, string? c4stat = null)
     {
         var teamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
         var capture = await _captures.CaptureAsync(teamId);
 
-        await RenderAsync(capture, game, tab, sort, dir, mode);
+        await RenderAsync(capture, game, tab, sort, dir, mode, teamtab, c4stat);
 
         if (capture.SavedSnapshot)
         {
@@ -147,7 +168,7 @@ public class SquadModel : ClubLinkedPageModel
     }
 
     private async Task RenderAsync(
-        SquadCaptureResult? capture, int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null)
+        SquadCaptureResult? capture, int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? teamtab = null, string? c4stat = null)
     {
         _apiLogger.Clear();
         StatusMessage = null;
@@ -170,6 +191,10 @@ public class SquadModel : ClubLinkedPageModel
         GameContext = null;
         PreviousFixtureId = null;
         PreviousGameContext = null;
+        ReviewTab = TeamReviewBuilder.Parse(teamtab);
+        TeamReviewCharts = Array.Empty<SvgChart>();
+        ComparisonBars = Array.Empty<ComparisonBar>();
+        ComparisonMedianPercent = "0";
 
         var teamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
 
@@ -204,6 +229,8 @@ public class SquadModel : ClubLinkedPageModel
                 .OrderByDescending(item => item.Date)
                 .ToList();
             BuildGameReview(page, game);
+            TeamReviewCharts = TeamReviewBuilder.Build(page, ReviewTab);
+            BuildComparison(c4stat);
 
             // The cold start speaks for itself in the bootstrap panel — the banner
             // is for the warm page, where "what came from where" needs saying.
@@ -225,6 +252,124 @@ public class SquadModel : ClubLinkedPageModel
         }
 
         ApiLogsJson = _apiLogger.GetLogsJson();
+    }
+
+    /// <summary>
+    /// The comparison card's stat list (C4, unchanged): the same options the legacy
+    /// dropdown offered, in the same groups and order, now the single source for
+    /// both the rendered selector and the ranked bars. Explicit rather than a
+    /// reflection sweep, so the list is greppable and testable.
+    /// </summary>
+    private static readonly IReadOnlyList<ComparisonStat> ComparisonStats = new ComparisonStat[]
+    {
+        new("totalPoints", "Total Points", "General", player => player.TotalPoints),
+        new("csr", "CSR Rating", "General", player => player.Csr),
+        new("energy", "Energy", "General", player => player.Energy),
+        new("form", "Form", "General", player => player.Form),
+        new("salary", "Salary", "General", player => player.Salary),
+        new("age", "Age", "General", player => player.Age),
+        new("tackles", "Tackles", "Match Performance", player => player.Tackles),
+        new("metresGained", "Metres Gained", "Match Performance", player => player.MetresGained),
+        new("tries", "Tries", "Match Performance", player => player.Tries),
+        new("conversions", "Conversions", "Match Performance", player => player.Conversions),
+        new("dropGoals", "Drop Goals", "Match Performance", player => player.DropGoals),
+        new("penalties", "Penalties", "Match Performance", player => player.Penalties),
+        new("kickingMetres", "Kicking Metres", "Match Performance", player => player.KickingMetres),
+        new("linebreaks", "Linebreaks", "Offensive", player => player.Linebreaks),
+        new("beatenDefenders", "Beaten Defenders", "Offensive", player => player.BeatenDefenders),
+        new("tryAssists", "Try Assists", "Offensive", player => player.TryAssists),
+        new("forwardPasses", "Forward Passes", "Offensive", player => player.ForwardPasses),
+        new("kicksOutOnTheFull", "Kicks Out On Full", "Offensive", player => player.KicksOutOnTheFull),
+        new("kicks", "Kicks", "Offensive", player => player.Kicks),
+        new("missedTackles", "Missed Tackles", "Defensive", player => player.MissedTackles),
+        new("intercepts", "Intercepts", "Defensive", player => player.Intercepts),
+        new("turnoversWon", "Turnovers Won", "Defensive", player => player.TurnoversWon),
+        new("penaltiesConceded", "Penalties Conceded", "Defensive", player => player.PenaltiesConceded),
+        new("successfulLineoutThrows", "Successful Lineout Throws", "Set Pieces", player => player.SuccessfulLineoutThrows),
+        new("unsuccessfulLineoutThrows", "Unsuccessful Lineout Throws", "Set Pieces", player => player.UnsuccessfulLineoutThrows),
+        new("lineoutsSecured", "Lineouts Secured", "Set Pieces", player => player.LineoutsSecured),
+        new("lineoutsConceded", "Lineouts Conceded", "Set Pieces", player => player.LineoutsConceded),
+        new("lineoutsStolen", "Lineouts Stolen", "Set Pieces", player => player.LineoutsStolen),
+        new("yellowCards", "Yellow Cards", "Disciplinary", player => player.YellowCards),
+        new("redCards", "Red Cards", "Disciplinary", player => player.RedCards),
+        new("fights", "Fights", "Disciplinary", player => player.Fights),
+        new("injuries", "Injuries", "Disciplinary", player => player.Injuries),
+        new("knockOns", "Knock Ons", "Other Stats", player => player.KnockOns),
+        new("handlingErrors", "Handling Errors", "Other Stats", player => player.HandlingErrors),
+        new("missedConversions", "Missed Conversions", "Other Stats", player => player.MissedConversions),
+        new("missedDropGoals", "Missed Drop Goals", "Other Stats", player => player.MissedDropGoals),
+        new("missedPenalties", "Missed Penalties", "Other Stats", player => player.MissedPenalties),
+        new("goodUpAndUnders", "Good Up And Unders", "Other Stats", player => player.GoodUpAndUnders),
+        new("badUpAndUnders", "Bad Up And Unders", "Other Stats", player => player.BadUpAndUnders),
+        new("upAndUnders", "Up And Unders", "Other Stats", player => player.UpAndUnders),
+        new("goodKicks", "Good Kicks", "Other Stats", player => player.GoodKicks),
+        new("badKicks", "Bad Kicks", "Other Stats", player => player.BadKicks),
+        new("ballTime", "Ball Time", "Other Stats", player => player.BallTime),
+        new("penaltyTime", "Penalty Time", "Other Stats", player => player.PenaltyTime),
+        new("totalCaps", "Total Caps", "Caps", player => player.TotalCaps),
+        new("leagueCaps", "League Caps", "Caps", player => player.LeagueCaps),
+        new("friendlyCaps", "Friendly Caps", "Caps", player => player.FriendlyCaps),
+        new("cupCaps", "Cup Caps", "Caps", player => player.CupCaps),
+        new("nationalCaps", "National Caps", "Caps", player => player.NationalCaps),
+        new("underTwentyCaps", "Under-20 Caps", "Caps", player => player.UnderTwentyCaps),
+        new("worldCupCaps", "World Cup Caps", "Caps", player => player.WorldCupCaps),
+        new("underTwentyWorldCupCaps", "U20 World Cup Caps", "Caps", player => player.UnderTwentyWorldCupCaps),
+        new("otherCaps", "Other Caps", "Caps", player => player.OtherCaps)
+    };
+
+    /// <summary>How many rows the comparison card emphasises as the squad's
+    /// strongest; the rest render de-emphasised (the card's long-standing rule).</summary>
+    private const int ComparisonTop = 5;
+
+    /// <summary>
+    /// The comparison card's bars (C4, unchanged in shape): the captured squad
+    /// ranked by the chosen stat, from the latest Squad Snapshot. A stat key the
+    /// card does not know falls back to the first option rather than rendering
+    /// nothing, so a hand-edited query string can never blank the card.
+    /// </summary>
+    private void BuildComparison(string? statKey)
+    {
+        var stat = ComparisonStats.FirstOrDefault(option => option.Key == statKey) ?? ComparisonStats[0];
+        ComparisonStatKey = stat.Key;
+        ComparisonStatLabel = stat.Label;
+
+        var players = Dashboard?.Players ?? Array.Empty<PlayerDashboardItem>();
+        if (players.Count == 0)
+        {
+            return;
+        }
+
+        var ranked = players
+            .Select(player => (player.Name, Value: stat.Value(player)))
+            .OrderByDescending(entry => entry.Value)
+            .ThenBy(entry => entry.Name, StringComparer.Ordinal)
+            .ToList();
+
+        var max = ranked.Max(entry => entry.Value);
+        var scale = max > 0 ? max * 1.06 : 1;
+        var median = Median(ranked.Select(entry => entry.Value).ToList());
+
+        ComparisonMedianPercent = Percent(median, scale);
+        ComparisonBars = ranked
+            .Select((entry, index) => new ComparisonBar(entry.Name, entry.Value, Percent(entry.Value, scale), index >= ComparisonTop))
+            .ToList();
+    }
+
+    private static string Percent(int value, double scale) =>
+        Math.Round(value / scale * 100, 1, MidpointRounding.AwayFromZero).ToString("0.#", CultureInfo.InvariantCulture);
+
+    private static int Median(IReadOnlyList<int> values)
+    {
+        var ordered = values.OrderBy(value => value).ToList();
+        if (ordered.Count == 0)
+        {
+            return 0;
+        }
+
+        var middle = ordered.Count / 2;
+        return ordered.Count % 2 == 1
+            ? ordered[middle]
+            : (int)Math.Round((ordered[middle - 1] + ordered[middle]) / 2.0, MidpointRounding.AwayFromZero);
     }
 
     /// <summary>
@@ -551,6 +696,16 @@ public class SquadModel : ClubLinkedPageModel
             : Math.Round((decimal)list.Average(), 1, MidpointRounding.AwayFromZero);
     }
 }
+
+/// <summary>One option of the comparison card's stat selector: its query-string
+/// key, its label, the group it sits under, and the present-state value it ranks
+/// the squad by.</summary>
+public sealed record ComparisonStat(string Key, string Label, string Group, Func<PlayerDashboardItem, int> Value);
+
+/// <summary>One ranked bar of the comparison card: the Player, the captured value,
+/// the bar's width as a percentage, and whether the row sits outside the
+/// emphasised top five.</summary>
+public sealed record ComparisonBar(string Name, int Value, string Percent, bool BelowTop);
 
 /// <summary>
 /// C1 as the club strip: whose page this is (club name, Team CSR, bot flag) and

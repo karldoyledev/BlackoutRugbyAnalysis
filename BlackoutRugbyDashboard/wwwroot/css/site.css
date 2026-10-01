@@ -486,3 +486,167 @@ body {
     align-items: end;
   }
 }
+
+/* C6 Team review + the inline-SVG charts (#38): the small-multiple grid, the
+   sparkline, the shared theme-token colours and the legend. No chart library -
+   every series is an SVG polyline styled from these classes. */
+.chart-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.chart-mini {
+  margin: 0;
+}
+
+.chart-mini figcaption {
+  margin-bottom: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.svg-line {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.svg-grid {
+  stroke: rgba(17, 33, 43, 0.12);
+}
+
+.svg-tick {
+  fill: var(--ink-soft);
+  font-size: 10px;
+}
+
+.svg-series {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.svg-point {
+  stroke: none;
+}
+
+.svg-us {
+  stroke: var(--accent);
+}
+
+.svg-adverse {
+  stroke: var(--loss);
+}
+
+.svg-point.svg-us {
+  fill: var(--accent);
+}
+
+.svg-point.svg-adverse {
+  fill: var(--loss);
+}
+
+.svg-spark {
+  width: 76px;
+  height: 20px;
+}
+
+.svg-spark-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.svg-spark-point {
+  fill: var(--accent);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0.25rem 0 0.85rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.chart-legend i {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  margin-right: 5px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.legend-us {
+  background: var(--accent);
+}
+
+.legend-adverse {
+  background: var(--loss);
+}
+
+/* C4 Member stats comparison (#38): the ranked bars, server-rendered HTML. Bar
+   width and the median tick are inline percentages; the top rows keep the accent
+   and the rest fade back. */
+.comparison-controls {
+  margin-bottom: 0.85rem;
+}
+
+.hbar-list {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.hbar-row {
+  display: grid;
+  grid-template-columns: 12rem 1fr 3.5rem;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.hbar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.hbar-track {
+  position: relative;
+  height: 16px;
+  border-radius: 3px;
+  background: rgba(17, 33, 43, 0.06);
+}
+
+.hbar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.hbar-fill-soft {
+  background: rgba(216, 111, 45, 0.4);
+}
+
+.hbar-median {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--ink);
+  border-radius: 1px;
+}
+
+.hbar-value {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}

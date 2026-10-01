@@ -44,7 +44,8 @@ public sealed record SquadFixtureRows(
     FixtureRow Fixture,
     MatchSummaryRow? Summary,
     IReadOnlyList<PlayerFixtureRow> Players,
-    TeamFixtureStatRow? TeamStats);
+    TeamFixtureStatRow? TeamStats,
+    TeamFixtureStatRow? OpponentStats = null);
 
 /// <summary>The Match Cache's parsed-row tables; the manual per-table reset targets (D1 §5).</summary>
 public enum CacheTable
@@ -467,10 +468,10 @@ public class MatchCacheService(
             .GroupBy(row => row.FixtureId)
             .ToDictionary(group => group.Key, group => (IReadOnlyList<PlayerFixtureRow>)group.ToList());
         var teamStatsByFixture = (await db.TeamFixtureStats
-                .Where(row => ids.Contains(row.FixtureId) && row.TeamId == teamId && row.Half == "full")
+                .Where(row => ids.Contains(row.FixtureId) && row.Half == "full")
                 .ToListAsync(cancellationToken))
             .GroupBy(row => row.FixtureId)
-            .ToDictionary(group => group.Key, group => group.First());
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<TeamFixtureStatRow>)group.ToList());
         var summariesByFixture = await db.MatchSummaries
             .Where(row => ids.Contains(row.FixtureId))
             .ToDictionaryAsync(row => row.FixtureId, cancellationToken);
@@ -482,11 +483,16 @@ public class MatchCacheService(
                 continue;
             }
 
+            var teamStats = teamStatsByFixture.TryGetValue(fixtureId, out var stats)
+                ? stats
+                : Array.Empty<TeamFixtureStatRow>();
+
             result[fixtureId] = new SquadFixtureRows(
                 fixture,
                 summariesByFixture.TryGetValue(fixtureId, out var summary) ? summary : null,
                 playersByFixture.TryGetValue(fixtureId, out var players) ? players : Array.Empty<PlayerFixtureRow>(),
-                teamStatsByFixture.TryGetValue(fixtureId, out var teamStats) ? teamStats : null);
+                teamStats.FirstOrDefault(row => row.TeamId == teamId),
+                teamStats.FirstOrDefault(row => row.TeamId != teamId));
         }
 
         return result;
