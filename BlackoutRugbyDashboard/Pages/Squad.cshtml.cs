@@ -82,6 +82,23 @@ public class SquadModel : ClubLinkedPageModel
     /// <summary>How the matrix's cells read (S3, #36).</summary>
     public DeltaMode Mode { get; private set; } = GameReviewMatrix.DefaultMode;
 
+    /// <summary>
+    /// The Game review card's view (S3, #37): the per-game matrix or the trend
+    /// across the cached window. Query-string state, like the tab and the sort.
+    /// </summary>
+    public GameReviewView View { get; private set; } = GameReviewMatrix.DefaultView;
+
+    /// <summary>
+    /// The Trend view's chosen stat and its rows (S3, #37): the picker's field key
+    /// and label, the full option list (every charted field plus the three output
+    /// columns) and one row per squad member carrying their window series, latest
+    /// reading, movement and total.
+    /// </summary>
+    public string TrendStatKey { get; private set; } = GameTrend.DefaultStat.Key;
+    public string TrendStatLabel { get; private set; } = GameTrend.DefaultStat.Label;
+    public IReadOnlyList<GameTrendStat> TrendStatOptions => GameTrend.Stats;
+    public IReadOnlyList<GameTrendRow> TrendRows { get; private set; } = Array.Empty<GameTrendRow>();
+
     /// <summary>The chosen Fixture in words: when, what competition, against whom, and how it went.</summary>
     public string? GameContext { get; private set; }
 
@@ -131,8 +148,8 @@ public class SquadModel : ClubLinkedPageModel
     /// Capture press re-runs (with that capture's outcome). The Game review and
     /// Team review selections arrive as query-string state on both.
     /// </summary>
-    public Task OnGetAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? teamtab = null, string? c4stat = null) =>
-        RenderAsync(capture: null, game, tab, sort, dir, mode, teamtab, c4stat);
+    public Task OnGetAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? view = null, string? stat = null, string? teamtab = null, string? c4stat = null) =>
+        RenderAsync(capture: null, game, tab, sort, dir, mode, view, stat, teamtab, c4stat);
 
     /// <summary>
     /// Capture squad (S2, #34): the page's one live action — the roster read
@@ -142,12 +159,12 @@ public class SquadModel : ClubLinkedPageModel
     /// rejection panels and deep-links to Settings, a transport failure replays
     /// the last capture as a warning, and in both cases the cached cards stand.
     /// </summary>
-    public async Task<IActionResult> OnPostCaptureAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? teamtab = null, string? c4stat = null)
+    public async Task<IActionResult> OnPostCaptureAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? view = null, string? stat = null, string? teamtab = null, string? c4stat = null)
     {
         var teamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
         var capture = await _captures.CaptureAsync(teamId);
 
-        await RenderAsync(capture, game, tab, sort, dir, mode, teamtab, c4stat);
+        await RenderAsync(capture, game, tab, sort, dir, mode, view, stat, teamtab, c4stat);
 
         if (capture.SavedSnapshot)
         {
@@ -168,7 +185,7 @@ public class SquadModel : ClubLinkedPageModel
     }
 
     private async Task RenderAsync(
-        SquadCaptureResult? capture, int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? teamtab = null, string? c4stat = null)
+        SquadCaptureResult? capture, int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? view = null, string? stat = null, string? teamtab = null, string? c4stat = null)
     {
         _apiLogger.Clear();
         StatusMessage = null;
@@ -188,6 +205,11 @@ public class SquadModel : ClubLinkedPageModel
         SortKey = sort;
         SortDescending = string.Equals(dir, "desc", StringComparison.OrdinalIgnoreCase);
         Mode = GameReviewMatrix.ParseMode(mode);
+        View = GameReviewMatrix.ParseView(view);
+        var trendStat = GameTrend.Resolve(stat);
+        TrendStatKey = trendStat.Key;
+        TrendStatLabel = trendStat.Label;
+        TrendRows = Array.Empty<GameTrendRow>();
         GameContext = null;
         PreviousFixtureId = null;
         PreviousGameContext = null;
@@ -229,6 +251,7 @@ public class SquadModel : ClubLinkedPageModel
                 .OrderByDescending(item => item.Date)
                 .ToList();
             BuildGameReview(page, game);
+            TrendRows = GameTrend.Build(page, TrendStatKey);
             TeamReviewCharts = TeamReviewBuilder.Build(page, ReviewTab);
             BuildComparison(c4stat);
 

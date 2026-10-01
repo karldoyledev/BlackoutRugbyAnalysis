@@ -11,21 +11,28 @@
     var reviewGame = Model.SelectedFixtureId;
     var reviewDir = Model.SortDescending ? "desc" : "asc";
     var reviewMode = GameReviewMatrix.KeyFor(Model.Mode);
-    // The other cards' chosen state rides every link, so moving between cards never
-    // resets what you were reading (C4's stat and C6's tab).
+    var reviewView = GameReviewMatrix.KeyFor(Model.View);
+    var trendStat = Model.TrendStatKey;
+    // The other cards' and the other view's chosen state rides every link, so moving
+    // between cards, views and games never resets what you were reading.
     var sortPart = string.IsNullOrEmpty(Model.SortKey) ? string.Empty : $"&sort={Model.SortKey}&dir={reviewDir}";
-    var carry = $"teamtab={TeamReviewBuilder.KeyFor(Model.ReviewTab)}&c4stat={Model.ComparisonStatKey}";
+    var viewPart = $"view={reviewView}&stat={trendStat}";
+    var c4Part = $"c4stat={Model.ComparisonStatKey}";
+    var carry = $"{viewPart}&teamtab={TeamReviewBuilder.KeyFor(Model.ReviewTab)}&{c4Part}";
     string SortUrl(string key) =>
         $"?game={reviewGame}&tab={reviewTab}&mode={reviewMode}&{carry}&sort={key}&dir={(Model.SortKey == key && !Model.SortDescending ? "desc" : "asc")}";
     string SortMarker(string key) =>
         Model.SortKey == key ? (Model.SortDescending ? " ▼" : " ▲") : string.Empty;
     string TabUrl(string key) => $"?game={reviewGame}&tab={key}&mode={reviewMode}&{carry}";
-    // Switching the mode keeps the game, the tab and the column sort you were reading.
+    // Switching the display mode keeps the game, the tab and the column sort you were reading.
     string ModeUrl(DeltaMode mode) =>
         $"?game={reviewGame}&tab={reviewTab}&mode={GameReviewMatrix.KeyFor(mode)}&{carry}"
         + (Model.SortKey is null ? string.Empty : $"&sort={Model.SortKey}&dir={reviewDir}");
+    // Switching between the matrix and the trend keeps every other selection too.
+    string ViewUrl(GameReviewView view) =>
+        $"?game={reviewGame}&tab={reviewTab}&mode={reviewMode}&view={GameReviewMatrix.KeyFor(view)}&stat={trendStat}&teamtab={TeamReviewBuilder.KeyFor(Model.ReviewTab)}&{c4Part}{sortPart}";
     string TeamTabUrl(TeamReviewTab tab) =>
-        $"?game={reviewGame}&tab={reviewTab}&mode={reviewMode}&teamtab={TeamReviewBuilder.KeyFor(tab)}&c4stat={Model.ComparisonStatKey}{sortPart}";
+        $"?game={reviewGame}&tab={reviewTab}&mode={reviewMode}&{viewPart}&teamtab={TeamReviewBuilder.KeyFor(tab)}&{c4Part}{sortPart}";
     // Why a cell reads as a dash: no previous game at all, or this Player is not in it.
     string DeltaTitle(int? delta) => delta is null
         ? Model.PreviousFixtureId is null
@@ -139,7 +146,20 @@
     <section class="table-panel">
         <div class="section-heading">
             <h2>Game review</h2>
-            @if (Model.GameRows.Any())
+            @if (!Model.GameRows.Any())
+            {
+                <p>No cached games yet — open a Fixture and it lands here.</p>
+            }
+            else if (Model.View == GameReviewView.Trend)
+            {
+                <p>
+                    One stat for the whole squad across the cached window, oldest to newest —
+                    each member's series as a sparkline beside their latest reading, the
+                    movement against their previous reading and the window total. Everything
+                    reads from the Match Cache.
+                </p>
+            }
+            else
             {
                 <p>
                     Every cached stat for one game, by Stat Group —
@@ -156,13 +176,96 @@
                     stay visible on every tab.
                 </p>
             }
-            else
-            {
-                <p>No cached games yet — open a Fixture and it lands here.</p>
-            }
         </div>
 
         @if (Model.GameRows.Any())
+        {
+            @* The two views of the same card (S3, #37): the per-game matrix or the
+               per-player trend across the window. A plain link, like every other
+               control, so the card needs no script. *@
+            <div class="delta-mode-tabs view-mode-tabs" role="group" aria-label="Game review view">
+                <span class="delta-mode-label">View</span>
+                @foreach (var view in new[] { GameReviewView.Matrix, GameReviewView.Trend })
+                {
+                    <a class="delta-mode @(Model.View == view ? "active" : string.Empty)"
+                       href="@ViewUrl(view)"
+                       title="@(view == GameReviewView.Matrix
+                                ? "One game, every squad slot, by Stat Group"
+                                : "One stat, every squad member, across the cached window")">@(view == GameReviewView.Matrix ? "Matrix" : "Trend")</a>
+                }
+            </div>
+        }
+
+        @* The Trend view (S3, #37): one stat for the whole squad across the cached
+           window, each member a sparkline beside their latest reading, the movement
+           against their previous reading and the window total. The picker is a form
+           and the query-string state rides every link, so it needs no script. *@
+        @if (Model.GameRows.Any() && Model.View == GameReviewView.Trend)
+        {
+            <form method="get" class="game-review-controls">
+                <label>
+                    <span>Stat</span>
+                    <select name="stat" class="form-control" onchange="this.form.submit()">
+                        @foreach (var optionGroup in Model.TrendStatOptions.GroupBy(option => option.Group))
+                        {
+                            <optgroup label="@optionGroup.Key">
+                                @foreach (var option in optionGroup)
+                                {
+                                    <option value="@option.Key" selected="@(option.Key == Model.TrendStatKey)">@option.Label</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                </label>
+                <input type="hidden" name="view" value="@reviewView" />
+                <input type="hidden" name="game" value="@reviewGame" />
+                <input type="hidden" name="tab" value="@reviewTab" />
+                <input type="hidden" name="mode" value="@reviewMode" />
+                <input type="hidden" name="teamtab" value="@TeamReviewBuilder.KeyFor(Model.ReviewTab)" />
+                <input type="hidden" name="c4stat" value="@Model.ComparisonStatKey" />
+                <noscript>
+                    <button type="submit" class="btn btn-outline-secondary action-button">Show</button>
+                </noscript>
+            </form>
+
+            @if (Model.TrendRows.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table dashboard-table compact-table game-review-table game-trend-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>@Model.TrendStatLabel — cached window</th>
+                                <th class="num">Latest</th>
+                                <th class="num" title="Movement against this Player's previous reading">Δ prev</th>
+                                <th class="num" title="Sum across the cached window">Season</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var row in Model.TrendRows)
+                        {
+                            <tr>
+                                <td><a class="trend-player" href="/Players/@row.PlayerId" title="Open this Player's history">@row.Name</a></td>
+                                <td>@Html.Raw(SvgCharts.Sparkline(row.Series))</td>
+                                <td class="num">@(row.Latest is { } latest ? latest : "—")</td>
+                                <td class="num">
+                                    <span class="cell-delta @GameReviewMatrix.DeltaClass(row.Delta)"
+                                          title="Movement against this Player's previous reading">@GameReviewMatrix.DeltaText(row.Delta)</span>
+                                </td>
+                                <td class="num">@(row.Season is { } season ? season : "—")</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p>No cached output for this stat yet — open a Fixture and it lands here.</p>
+            }
+        }
+
+        @if (Model.GameRows.Any() && Model.View == GameReviewView.Matrix)
         {
             <form method="get" class="game-review-controls">
                 <label>

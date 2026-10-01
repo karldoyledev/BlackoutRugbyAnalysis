@@ -30,6 +30,18 @@ public enum DeltaMode
     Delta
 }
 
+/// <summary>
+/// The two views of the Game review card (S3, build slice #37): the per-game
+/// matrix (one Fixture, every squad slot, by Stat Group) or the trend (one stat,
+/// every squad member, across the whole cached window). The second mode lives on
+/// the same card, chosen by a query-string link.
+/// </summary>
+public enum GameReviewView
+{
+    Matrix,
+    Trend
+}
+
 /// <summary>One column of a Stat Group's tab: the `fs` field it reads verbatim
 /// (D4's locked field map). <paramref name="Title"/> is the full name for the
 /// header's tooltip; <paramref name="Label"/> is the compact header.</summary>
@@ -247,6 +259,30 @@ public static class GameReviewMatrix
         }
 
         return DefaultMode;
+    }
+
+    private static readonly IReadOnlyDictionary<GameReviewView, string> ViewKeys = new Dictionary<GameReviewView, string>
+    {
+        [GameReviewView.Matrix] = "matrix",
+        [GameReviewView.Trend] = "trend"
+    };
+
+    /// <summary>The view the card opens in — the per-game matrix, the prototype's default.</summary>
+    public const GameReviewView DefaultView = GameReviewView.Matrix;
+
+    public static string KeyFor(GameReviewView view) => ViewKeys[view];
+
+    public static GameReviewView ParseView(string? key)
+    {
+        foreach (var entry in ViewKeys)
+        {
+            if (string.Equals(entry.Value, key?.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                return entry.Key;
+            }
+        }
+
+        return DefaultView;
     }
 
     /// <summary>The movement as it reads: a signed integer, or an em dash when there

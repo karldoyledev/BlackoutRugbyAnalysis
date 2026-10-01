@@ -566,6 +566,23 @@ body {
   fill: var(--accent);
 }
 
+/* C3 Game review, the Trend view (#37): a wider sparkline in the table and the
+   Player link. Layout only; the theme sweep is its own effort. */
+.game-trend-table .svg-spark {
+  width: 180px;
+  height: 24px;
+}
+
+.game-trend-table .trend-player {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.game-trend-table .trend-player:hover,
+.game-trend-table .trend-player:focus {
+  text-decoration: underline;
+}
+
 .chart-legend {
   display: flex;
   flex-wrap: wrap;
