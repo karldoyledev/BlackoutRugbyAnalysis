@@ -5,13 +5,14 @@ namespace BlackoutRugbyDashboard.Services;
 
 /// <summary>
 /// One tab of the Team review card (S6): a set of eight small-multiple charts over
-/// the cached window. #38 built Match control, #39 the Attack tab; the
-/// Defence/discipline/kicking tab arrives in its own slice.
+/// the cached window. #38 built Match control, #39 the Attack tab, #40 the
+/// Defence/discipline/kicking tab.
 /// </summary>
 public enum TeamReviewTab
 {
     MatchControl,
-    Attack
+    Attack,
+    Defence
 }
 
 /// <summary>
@@ -26,28 +27,35 @@ public static class TeamReviewBuilder
 {
     public const string MatchControlKey = "control";
     public const string AttackKey = "attack";
+    public const string DefenceKey = "defence";
 
     public static TeamReviewTab DefaultTab => TeamReviewTab.MatchControl;
 
     /// <summary>The tabs this slice can render, in the card's order. Only the
     /// implemented ones are listed, so the tab bar never offers an empty chart.</summary>
-    public static IReadOnlyList<TeamReviewTab> Tabs { get; } = new[] { TeamReviewTab.MatchControl, TeamReviewTab.Attack };
+    public static IReadOnlyList<TeamReviewTab> Tabs { get; } = new[]
+    {
+        TeamReviewTab.MatchControl, TeamReviewTab.Attack, TeamReviewTab.Defence
+    };
 
     public static string KeyFor(TeamReviewTab tab) => tab switch
     {
         TeamReviewTab.Attack => AttackKey,
+        TeamReviewTab.Defence => DefenceKey,
         _ => MatchControlKey
     };
 
     public static string LabelFor(TeamReviewTab tab) => tab switch
     {
         TeamReviewTab.Attack => "Attack",
+        TeamReviewTab.Defence => "Defence, discipline & kicking",
         _ => "Match control"
     };
 
     public static TeamReviewTab Parse(string? key) => key?.Trim().ToLowerInvariant() switch
     {
         AttackKey => TeamReviewTab.Attack,
+        DefenceKey => TeamReviewTab.Defence,
         _ => DefaultTab
     };
 
@@ -56,6 +64,7 @@ public static class TeamReviewBuilder
     public static IReadOnlyList<SvgChart> Build(SquadPageData page, TeamReviewTab tab) => tab switch
     {
         TeamReviewTab.Attack => BuildAttack(page),
+        TeamReviewTab.Defence => BuildDefence(page),
         _ => BuildMatchControl(page)
     };
 
@@ -182,6 +191,84 @@ public static class TeamReviewBuilder
         Chart(title, labels,
             Series("For", ChartTone.Us, fixtures.Select(entry => (double?)value(entry.TeamStats)).ToList()),
             Series("Against", ChartTone.Opponent, fixtures.Select(entry => (double?)value(entry.OpponentStats)).ToList()));
+
+    /// <summary>
+    /// The Defence, discipline and kicking tab (S6 / #40): eight charts over the
+    /// cached window — tackle completion and kick accuracy as shares of the locked
+    /// fields, sloppiness and needless kicks as sums of the locked fields, and the
+    /// half split read from the cached first-half team row (the second half is the
+    /// full row minus it). Every value is a read or a sum of cached fields; nothing
+    /// is invented, and a missing row is a gap.
+    /// </summary>
+    private static IReadOnlyList<SvgChart> BuildDefence(SquadPageData page)
+    {
+        var fixtures = page.Window.Reverse().ToList();
+        if (fixtures.Count == 0)
+        {
+            return Array.Empty<SvgChart>();
+        }
+
+        var labels = LabelsFor(fixtures);
+
+        return new[]
+        {
+            // Completion is a quality both sides hold, so each rides its own tone.
+            Chart("Tackle completion %", labels,
+                Series("Us", ChartTone.Us, fixtures.Select(entry => Completion(entry.TeamStats)).ToList()),
+                Series("Opponent", ChartTone.Opponent, fixtures.Select(entry => Completion(entry.OpponentStats)).ToList())),
+            // Adverse counts: the opponent's line leads, as the prototype draws them.
+            Chart("Missed tackles for / against", labels,
+                Series("Against", ChartTone.Opponent, fixtures.Select(entry => (double?)entry.OpponentStats?.MissedTackles).ToList()),
+                Series("For", ChartTone.Us, fixtures.Select(entry => (double?)entry.TeamStats?.MissedTackles).ToList())),
+            Chart("Sloppiness (knock-ons + forward passes + handling errors)", labels,
+                Series("Opponent", ChartTone.Opponent, fixtures.Select(entry => Sloppiness(entry.OpponentStats)).ToList()),
+                Series("Us", ChartTone.Us, fixtures.Select(entry => Sloppiness(entry.TeamStats)).ToList())),
+            Chart("Kick accuracy %", labels,
+                Series("Us", ChartTone.Us, fixtures.Select(entry => KickAccuracy(entry.TeamStats)).ToList())),
+            Chart("Needless kicks (bad up-and-unders + kicks out on the full)", labels,
+                Series("Opponent", ChartTone.Opponent, fixtures.Select(entry => NeedlessKicks(entry.OpponentStats)).ToList()),
+                Series("Us", ChartTone.Us, fixtures.Select(entry => NeedlessKicks(entry.TeamStats)).ToList())),
+            Chart("Shots at goal: conversions vs missed", labels,
+                Series("Made", ChartTone.Us, fixtures.Select(entry => (double?)entry.TeamStats?.Conversions).ToList()),
+                Series("Missed", ChartTone.Opponent, fixtures.Select(entry => (double?)entry.TeamStats?.MissedConversions).ToList())),
+            Chart("Injuries / injury breaks", labels,
+                Series("Injuries", ChartTone.Opponent, fixtures.Select(entry => (double?)entry.TeamStats?.Injuries).ToList()),
+                Series("Breaks", ChartTone.Us, fixtures.Select(entry => (double?)entry.TeamStats?.InjuryBreaks).ToList())),
+            Chart("1st half vs 2nd half points", labels,
+                Series("2nd half", ChartTone.Us, fixtures.Select(SecondHalfPoints).ToList()),
+                Series("1st half", ChartTone.Opponent, fixtures.Select(FirstHalfPoints).ToList()))
+        };
+    }
+
+    /// <summary>Tackle completion: made tackles as a share of all attempts, or a gap
+    /// when the Fixture holds no row for that side (or no attempts were made).</summary>
+    private static double? Completion(TeamFixtureStatRow? row) => Share(row?.Tackles, row?.MissedTackles);
+
+    /// <summary>Kick accuracy: the kicks neither bad nor out on the full as a share
+    /// of all kicks — the prototype's `(kicks - bad - out) / kicks`, expressed as a
+    /// share so the existing arithmetic guards a zero total.</summary>
+    private static double? KickAccuracy(TeamFixtureStatRow? row) =>
+        row is null
+            ? null
+            : Share(row.Kicks - row.BadKicks - row.KicksOutOnTheFull, row.BadKicks + row.KicksOutOnTheFull);
+
+    /// <summary>Sloppiness: knock-ons plus forward passes plus handling errors.</summary>
+    private static double? Sloppiness(TeamFixtureStatRow? row) =>
+        row is null ? null : row.Knockons + row.ForwardPasses + row.HandlingErrors;
+
+    /// <summary>Needless kicks: bad up-and-unders plus kicks out on the full.</summary>
+    private static double? NeedlessKicks(TeamFixtureStatRow? row) =>
+        row is null ? null : row.BadUpAndUnders + row.KicksOutOnTheFull;
+
+    /// <summary>The first half's points, from our cached first-half team row.</summary>
+    private static double? FirstHalfPoints(SquadFixtureRows entry) => entry.TeamFirstHalfStats?.TotalPoints;
+
+    /// <summary>The second half's points: the full-time total minus the first half
+    /// (the API serves no second-half block), or a gap when either is uncached.</summary>
+    private static double? SecondHalfPoints(SquadFixtureRows entry) =>
+        entry.TeamStats is { } full && entry.TeamFirstHalfStats is { } first
+            ? full.TotalPoints - first.TotalPoints
+            : null;
 
     private static SvgChart Chart(string title, IReadOnlyList<string> labels, params SvgSeries[] series) =>
         new(title, labels, series);

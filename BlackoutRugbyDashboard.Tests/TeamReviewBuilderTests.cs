@@ -28,7 +28,8 @@ public class TeamReviewBuilderTests
         int homePoints,
         int guestPoints,
         TeamFixtureStatRow? ours,
-        TeamFixtureStatRow? theirs) =>
+        TeamFixtureStatRow? theirs,
+        TeamFixtureStatRow? firstHalf = null) =>
         new(
             new FixtureRow
             {
@@ -44,7 +45,8 @@ public class TeamReviewBuilderTests
             new MatchSummaryRow { FixtureId = fixtureId, HomePoints = homePoints, GuestPoints = guestPoints },
             Array.Empty<PlayerFixtureRow>(),
             ours,
-            theirs);
+            theirs,
+            firstHalf);
 
     private static TeamFixtureStatRow Stats(
         int teamId,
@@ -59,6 +61,7 @@ public class TeamReviewBuilderTests
         int penaltiesWon = 0,
         int turnovers = 0,
         int turnoversConceded = 0,
+        int tackles = 0,
         int tries = 0,
         int metresGained = 0,
         int linebreaks = 0,
@@ -66,7 +69,20 @@ public class TeamReviewBuilderTests
         int sevenplusPhases = 0,
         int rucksWon = 0,
         int maulsWon = 0,
-        int kickingMetres = 0) =>
+        int kickingMetres = 0,
+        int missedTackles = 0,
+        int knockons = 0,
+        int forwardPasses = 0,
+        int handlingErrors = 0,
+        int kicks = 0,
+        int badKicks = 0,
+        int kicksOutOnTheFull = 0,
+        int badUpAndUnders = 0,
+        int conversions = 0,
+        int missedConversions = 0,
+        int injuries = 0,
+        int injuryBreaks = 0,
+        int totalPoints = 0) =>
         new()
         {
             TeamId = teamId,
@@ -83,6 +99,7 @@ public class TeamReviewBuilderTests
             PenaltiesWon = penaltiesWon,
             Turnovers = turnovers,
             TurnoversConceded = turnoversConceded,
+            Tackles = tackles,
             Tries = tries,
             MetresGained = metresGained,
             Linebreaks = linebreaks,
@@ -90,7 +107,20 @@ public class TeamReviewBuilderTests
             SevenplusPhases = sevenplusPhases,
             RucksWon = rucksWon,
             MaulsWon = maulsWon,
-            KickingMetres = kickingMetres
+            KickingMetres = kickingMetres,
+            MissedTackles = missedTackles,
+            Knockons = knockons,
+            ForwardPasses = forwardPasses,
+            HandlingErrors = handlingErrors,
+            Kicks = kicks,
+            BadKicks = badKicks,
+            KicksOutOnTheFull = kicksOutOnTheFull,
+            BadUpAndUnders = badUpAndUnders,
+            Conversions = conversions,
+            MissedConversions = missedConversions,
+            Injuries = injuries,
+            InjuryBreaks = injuryBreaks,
+            TotalPoints = totalPoints
         };
 
     private static SquadPageData Page(params SquadFixtureRows[] window) => new(
@@ -116,10 +146,11 @@ public class TeamReviewBuilderTests
     [Fact]
     public void Tabs_LeadWithMatchControlAndParseRoundTrips()
     {
-        Assert.Equal(new[] { TeamReviewTab.MatchControl, TeamReviewTab.Attack }, TeamReviewBuilder.Tabs);
+        Assert.Equal(new[] { TeamReviewTab.MatchControl, TeamReviewTab.Attack, TeamReviewTab.Defence }, TeamReviewBuilder.Tabs);
         Assert.Equal(TeamReviewTab.MatchControl, TeamReviewBuilder.Parse(null));
         Assert.Equal(TeamReviewTab.MatchControl, TeamReviewBuilder.Parse("control"));
         Assert.Equal(TeamReviewTab.Attack, TeamReviewBuilder.Parse("attack"));
+        Assert.Equal(TeamReviewTab.Defence, TeamReviewBuilder.Parse("defence"));
         Assert.Equal(TeamReviewTab.MatchControl, TeamReviewBuilder.Parse("nonsense"));
 
         foreach (var tab in TeamReviewBuilder.Tabs)
@@ -315,5 +346,106 @@ public class TeamReviewBuilderTests
     public void Attack_EmptyWindow_IsNoCharts()
     {
         Assert.Empty(TeamReviewBuilder.Build(Page(), TeamReviewTab.Attack));
+    }
+
+    // ---------------------------------------------------------------------
+    // The Defence, discipline & kicking tab (S6 / #40)
+    // ---------------------------------------------------------------------
+
+    [Fact]
+    public void Build_ReturnsTheEightDefenceChartsInTheLockedOrder()
+    {
+        var charts = TeamReviewBuilder.Build(
+            Page(Fixture(1001, 0, home: true, homePoints: 20, guestPoints: 10,
+                ours: Stats(TeamId), theirs: Stats(OpponentId))),
+            TeamReviewTab.Defence);
+
+        Assert.Equal(
+            new[]
+            {
+                "Tackle completion %",
+                "Missed tackles for / against",
+                "Sloppiness (knock-ons + forward passes + handling errors)",
+                "Kick accuracy %",
+                "Needless kicks (bad up-and-unders + kicks out on the full)",
+                "Shots at goal: conversions vs missed",
+                "Injuries / injury breaks",
+                "1st half vs 2nd half points"
+            },
+            charts.Select(chart => chart.Title));
+    }
+
+    /// <summary>Every composite is a share or a sum of the locked cached fields:
+    /// completion and kick accuracy as shares, sloppiness and needless kicks as
+    /// sums — never an invented field.</summary>
+    [Fact]
+    public void Defence_ComputesCompositesFromTheLockedFields()
+    {
+        var page = Page(Fixture(1001, 0, home: true, homePoints: 20, guestPoints: 10,
+            ours: Stats(TeamId, tackles: 90, missedTackles: 10,
+                kicks: 20, badKicks: 3, kicksOutOnTheFull: 2, badUpAndUnders: 5,
+                knockons: 4, forwardPasses: 3, handlingErrors: 2),
+            theirs: Stats(OpponentId, tackles: 80, missedTackles: 20,
+                kicksOutOnTheFull: 1, badUpAndUnders: 2,
+                knockons: 1, forwardPasses: 1, handlingErrors: 1)));
+
+        var charts = TeamReviewBuilder.Build(page, TeamReviewTab.Defence);
+
+        var completion = charts[0];
+        Assert.Equal(ChartTone.Us, completion.Series[0].Tone);
+        Assert.Equal(90.0, completion.Series[0].Values[0]); // 90 / (90 + 10)
+        Assert.Equal(ChartTone.Opponent, completion.Series[1].Tone);
+        Assert.Equal(80.0, completion.Series[1].Values[0]); // 80 / (80 + 20)
+
+        var sloppiness = charts[2];
+        Assert.Equal(3.0, sloppiness.Series[0].Values[0]); // opponent: 1 + 1 + 1
+        Assert.Equal(9.0, sloppiness.Series[1].Values[0]); // ours: 4 + 3 + 2
+
+        var accuracy = Assert.Single(charts[3].Series);
+        Assert.Equal(75.0, accuracy.Values[0]); // (20 - 3 - 2) / 20
+
+        var needless = charts[4];
+        Assert.Equal(3.0, needless.Series[0].Values[0]); // opponent: 2 + 1
+        Assert.Equal(7.0, needless.Series[1].Values[0]); // ours: 5 + 2
+    }
+
+    /// <summary>The half split reads the cached first-half row; the second half is
+    /// the full-time total minus it.</summary>
+    [Fact]
+    public void Defence_HalfSplitReadsTheCachedFirstHalfRow()
+    {
+        var page = Page(Fixture(1001, 0, home: true, homePoints: 31, guestPoints: 17,
+            ours: Stats(TeamId, totalPoints: 31),
+            theirs: Stats(OpponentId),
+            firstHalf: Stats(TeamId, totalPoints: 13)));
+
+        var halves = TeamReviewBuilder.Build(page, TeamReviewTab.Defence)[7];
+
+        Assert.Equal("2nd half", halves.Series[0].Label);
+        Assert.Equal(18.0, halves.Series[0].Values[0]); // 31 - 13
+        Assert.Equal("1st half", halves.Series[1].Label);
+        Assert.Equal(13.0, halves.Series[1].Values[0]);
+    }
+
+    [Fact]
+    public void Defence_MissingRows_AreGapsNotZeros()
+    {
+        var page = Page(Fixture(1001, 0, home: true, homePoints: 20, guestPoints: 10,
+            ours: Stats(TeamId, tackles: 10),
+            theirs: null));
+
+        var charts = TeamReviewBuilder.Build(page, TeamReviewTab.Defence);
+
+        Assert.Equal(100.0, charts[0].Series[0].Values[0]); // ours
+        Assert.Null(charts[0].Series[1].Values[0]);         // no opponent row
+        Assert.Null(charts[2].Series[0].Values[0]);         // opponent sloppiness
+        Assert.Null(charts[7].Series[0].Values[0]);         // no first-half row => 2nd half gap
+        Assert.Null(charts[7].Series[1].Values[0]);         // 1st half gap
+    }
+
+    [Fact]
+    public void Defence_EmptyWindow_IsNoCharts()
+    {
+        Assert.Empty(TeamReviewBuilder.Build(Page(), TeamReviewTab.Defence));
     }
 }

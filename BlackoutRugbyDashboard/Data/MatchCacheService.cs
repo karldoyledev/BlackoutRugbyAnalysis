@@ -39,13 +39,19 @@ public sealed record PlayerSeasonRefreshResult(
     string? FirstError,
     IReadOnlyDictionary<int, PlayerStatistics> Stats);
 
-/// <summary>The cached rows one completed Fixture contributes to the Squad page.</summary>
+/// <summary>
+/// The cached rows one completed Fixture contributes to the Squad page: the
+/// full-time team-stat rows for both sides, our side's first-half row (the API
+/// serves no second-half block, so the second half is the full row minus this
+/// one), the score-bearing summary and the per-player rows.
+/// </summary>
 public sealed record SquadFixtureRows(
     FixtureRow Fixture,
     MatchSummaryRow? Summary,
     IReadOnlyList<PlayerFixtureRow> Players,
     TeamFixtureStatRow? TeamStats,
-    TeamFixtureStatRow? OpponentStats = null);
+    TeamFixtureStatRow? OpponentStats = null,
+    TeamFixtureStatRow? TeamFirstHalfStats = null);
 
 /// <summary>The Match Cache's parsed-row tables; the manual per-table reset targets (D1 §5).</summary>
 public enum CacheTable
@@ -445,7 +451,8 @@ public class MatchCacheService(
 
     /// <summary>
     /// The cached rows for a window of completed fixtures, keyed by fixture id:
-    /// per-player fs rows (our side), our bare-fs team row, the score-bearing
+    /// per-player fs rows (our side), our and the opponent's full-time bare-fs team
+    /// rows, our side's first-half row (for the half splits), the score-bearing
     /// summary, and the fixture metadata row. The Squad page renders from this —
     /// zero API calls on a warm cache.
     /// </summary>
@@ -468,7 +475,7 @@ public class MatchCacheService(
             .GroupBy(row => row.FixtureId)
             .ToDictionary(group => group.Key, group => (IReadOnlyList<PlayerFixtureRow>)group.ToList());
         var teamStatsByFixture = (await db.TeamFixtureStats
-                .Where(row => ids.Contains(row.FixtureId) && row.Half == "full")
+                .Where(row => ids.Contains(row.FixtureId))
                 .ToListAsync(cancellationToken))
             .GroupBy(row => row.FixtureId)
             .ToDictionary(group => group.Key, group => (IReadOnlyList<TeamFixtureStatRow>)group.ToList());
@@ -486,13 +493,15 @@ public class MatchCacheService(
             var teamStats = teamStatsByFixture.TryGetValue(fixtureId, out var stats)
                 ? stats
                 : Array.Empty<TeamFixtureStatRow>();
+            var fullStats = teamStats.Where(row => row.Half == "full").ToList();
 
             result[fixtureId] = new SquadFixtureRows(
                 fixture,
                 summariesByFixture.TryGetValue(fixtureId, out var summary) ? summary : null,
                 playersByFixture.TryGetValue(fixtureId, out var players) ? players : Array.Empty<PlayerFixtureRow>(),
-                teamStats.FirstOrDefault(row => row.TeamId == teamId),
-                teamStats.FirstOrDefault(row => row.TeamId != teamId));
+                fullStats.FirstOrDefault(row => row.TeamId == teamId),
+                fullStats.FirstOrDefault(row => row.TeamId != teamId),
+                teamStats.FirstOrDefault(row => row.TeamId == teamId && row.Half == "half1"));
         }
 
         return result;

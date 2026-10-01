@@ -138,6 +138,8 @@ public class SquadCacheTests
         Assert.Equal(23, entry.Players.Count);
         Assert.NotNull(entry.TeamStats);
         Assert.NotNull(entry.Summary);
+        Assert.NotNull(entry.TeamFirstHalfStats); // the half split's source (S6 / #40)
+        Assert.Equal("half1", entry.TeamFirstHalfStats!.Half);
         Assert.Equal(31, entry.Summary!.HomePoints);
         Assert.Equal(17, entry.Summary.GuestPoints);
     }
