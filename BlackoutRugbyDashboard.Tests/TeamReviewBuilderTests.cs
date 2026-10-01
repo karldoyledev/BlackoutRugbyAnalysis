@@ -58,7 +58,15 @@ public class TeamReviewBuilderTests
         int penaltiesConceded = 0,
         int penaltiesWon = 0,
         int turnovers = 0,
-        int turnoversConceded = 0) =>
+        int turnoversConceded = 0,
+        int tries = 0,
+        int metresGained = 0,
+        int linebreaks = 0,
+        int phases = 0,
+        int sevenplusPhases = 0,
+        int rucksWon = 0,
+        int maulsWon = 0,
+        int kickingMetres = 0) =>
         new()
         {
             TeamId = teamId,
@@ -74,7 +82,15 @@ public class TeamReviewBuilderTests
             PenaltiesConceded = penaltiesConceded,
             PenaltiesWon = penaltiesWon,
             Turnovers = turnovers,
-            TurnoversConceded = turnoversConceded
+            TurnoversConceded = turnoversConceded,
+            Tries = tries,
+            MetresGained = metresGained,
+            Linebreaks = linebreaks,
+            Phases = phases,
+            SevenplusPhases = sevenplusPhases,
+            RucksWon = rucksWon,
+            MaulsWon = maulsWon,
+            KickingMetres = kickingMetres
         };
 
     private static SquadPageData Page(params SquadFixtureRows[] window) => new(
@@ -98,15 +114,19 @@ public class TeamReviewBuilderTests
             scrumsWon: 3, scrumsLost: 4, penaltiesConceded: 6, penaltiesWon: 4, turnovers: 3, turnoversConceded: 5)));
 
     [Fact]
-    public void Tabs_StartWithMatchControlAndParseRoundTrips()
+    public void Tabs_LeadWithMatchControlAndParseRoundTrips()
     {
-        Assert.Equal(new[] { TeamReviewTab.MatchControl }, TeamReviewBuilder.Tabs);
+        Assert.Equal(new[] { TeamReviewTab.MatchControl, TeamReviewTab.Attack }, TeamReviewBuilder.Tabs);
         Assert.Equal(TeamReviewTab.MatchControl, TeamReviewBuilder.Parse(null));
         Assert.Equal(TeamReviewTab.MatchControl, TeamReviewBuilder.Parse("control"));
+        Assert.Equal(TeamReviewTab.Attack, TeamReviewBuilder.Parse("attack"));
         Assert.Equal(TeamReviewTab.MatchControl, TeamReviewBuilder.Parse("nonsense"));
 
-        var key = TeamReviewBuilder.KeyFor(TeamReviewBuilder.DefaultTab);
-        Assert.Equal(key, TeamReviewBuilder.KeyFor(TeamReviewBuilder.Parse(key)));
+        foreach (var tab in TeamReviewBuilder.Tabs)
+        {
+            var key = TeamReviewBuilder.KeyFor(tab);
+            Assert.Equal(key, TeamReviewBuilder.KeyFor(TeamReviewBuilder.Parse(key)));
+        }
     }
 
     [Fact]
@@ -225,5 +245,75 @@ public class TeamReviewBuilderTests
     public void EmptyWindow_IsNoCharts()
     {
         Assert.Empty(TeamReviewBuilder.Build(Page(), TeamReviewTab.MatchControl));
+    }
+
+    // ---------------------------------------------------------------------
+    // The Attack tab (S6 / #39): eight attacking outputs, ours vs theirs
+    // ---------------------------------------------------------------------
+
+    [Fact]
+    public void Build_ReturnsTheEightAttackChartsInTheLockedOrder()
+    {
+        var charts = TeamReviewBuilder.Build(
+            Page(Fixture(1001, 0, home: true, homePoints: 20, guestPoints: 10,
+                ours: Stats(TeamId), theirs: Stats(OpponentId))),
+            TeamReviewTab.Attack);
+
+        Assert.Equal(
+            new[]
+            {
+                "Tries for / against",
+                "Metres gained for / against",
+                "Linebreaks for / against",
+                "Phases for / against",
+                "7+ phases for / against",
+                "Rucks won for / against",
+                "Mauls won for / against",
+                "Kicking metres for / against"
+            },
+            charts.Select(chart => chart.Title));
+        Assert.All(charts, chart => Assert.Equal(2, chart.Series.Count));
+    }
+
+    [Fact]
+    public void Attack_ReadsOurSideAndTheirsOldestToNewest()
+    {
+        var page = Page(
+            Fixture(1002, dayOffset: 7, home: true, homePoints: 30, guestPoints: 10,
+                ours: Stats(TeamId, tries: 4, metresGained: 500, kickingMetres: 300),
+                theirs: Stats(OpponentId, tries: 1, metresGained: 250, kickingMetres: 210)),
+            Fixture(1001, dayOffset: 0, home: false, homePoints: 12, guestPoints: 22,
+                ours: Stats(TeamId, tries: 2, metresGained: 300, kickingMetres: 150),
+                theirs: Stats(OpponentId, tries: 3, metresGained: 410, kickingMetres: 260)));
+
+        var charts = TeamReviewBuilder.Build(page, TeamReviewTab.Attack);
+
+        var tries = charts[0];
+        Assert.Equal(ChartTone.Us, tries.Series[0].Tone);
+        Assert.Equal(new double?[] { 2, 4 }, tries.Series[0].Values); // ours, oldest first
+        Assert.Equal(ChartTone.Opponent, tries.Series[1].Tone);
+        Assert.Equal(new double?[] { 3, 1 }, tries.Series[1].Values); // theirs
+
+        Assert.Equal(new double?[] { 300, 500 }, charts[1].Series[0].Values); // metres gained
+        Assert.Equal(new double?[] { 150, 300 }, charts[7].Series[0].Values); // kicking metres
+    }
+
+    /// <summary>A Fixture with no cached row for the opponent is a gap, never a zero.</summary>
+    [Fact]
+    public void Attack_MissingOpponentRow_IsAGapNotAZero()
+    {
+        var page = Page(Fixture(1001, 0, home: true, homePoints: 20, guestPoints: 10,
+            ours: Stats(TeamId, tries: 3), theirs: null));
+
+        var tries = TeamReviewBuilder.Build(page, TeamReviewTab.Attack)[0];
+
+        Assert.Equal(new double?[] { 3 }, tries.Series[0].Values);
+        Assert.Equal(new double?[] { null }, tries.Series[1].Values);
+    }
+
+    [Fact]
+    public void Attack_EmptyWindow_IsNoCharts()
+    {
+        Assert.Empty(TeamReviewBuilder.Build(Page(), TeamReviewTab.Attack));
     }
 }
