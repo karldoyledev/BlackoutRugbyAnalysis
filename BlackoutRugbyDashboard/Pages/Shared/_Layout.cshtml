@@ -21,35 +21,15 @@
     <link rel="stylesheet" href="~/BlackoutRugbyDashboard.styles.css" asp-append-version="true" />
 </head>
 <body>
-    @* D10 "Command centre": a fixed left sidebar carries the brand, the club's
-       identity (name + Team CSR) and D2's gate-driven nav; the page renders into
-       the offset main. Sign-out stays a POST handler on Settings (no route). *@
-    <aside class="app-side">
+    @* D10 "Command centre" palette with a minimal top bar (the user's call over
+       the prototype's fixed sidebar): brand, D2's gate-driven nav as slim pills,
+       and the club-link state. Sign-out stays a POST handler on Settings (no route). *@
+    <header class="app-top">
         <a class="app-logo" asp-page="/Index">Blackout<span>Analysis</span></a>
 
         @if (authenticated)
         {
-            <div class="app-club">
-                @if (link is null)
-                {
-                    <b>No club linked</b>
-                    <span>Link from Settings</span>
-                }
-                else
-                {
-                    <b>@clubName</b>
-                    @if (link.TeamCsr is int csr)
-                    {
-                        <span>Team CSR @csr</span>
-                    }
-                    else
-                    {
-                        <span>Team @link.TeamId</span>
-                    }
-                }
-            </div>
-
-            <nav class="app-side-nav">
+            <nav class="app-top-nav">
                 <a class="@NavClass("/Index")" asp-page="/Index">Home</a>
                 @if (link is not null)
                 {
@@ -59,10 +39,10 @@
                 <a class="@NavClass("/Account/Settings")" asp-page="/Account/Settings">Settings</a>
             </nav>
 
-            <div class="app-state">
-                <span class="app-state-label">Linked account</span>
+            <div class="app-top-state">
                 @if (link is not null)
                 {
+                    <span class="app-club-name">@clubName@(link.TeamCsr is int csr ? $" · CSR {csr}" : string.Empty)</span>
                     <span class="app-chip">Club link active</span>
                 }
                 else
@@ -73,12 +53,12 @@
         }
         else
         {
-            <nav class="app-side-nav">
+            <nav class="app-top-nav">
                 <a class="@NavClass("/Account/Login")" asp-page="/Account/Login">Log in</a>
                 <a class="@NavClass("/Account/SignUp")" asp-page="/Account/SignUp">Sign up</a>
             </nav>
         }
-    </aside>
+    </header>
 
     @* The page body — the swap target for the in-page navigation enhancement
        (site.js), so card/tab switches never reload or jump to the top. *@
