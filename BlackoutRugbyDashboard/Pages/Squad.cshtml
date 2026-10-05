@@ -190,7 +190,7 @@
             <form method="get" class="game-review-controls">
                 <label>
                     <span>Stat</span>
-                    <select name="stat" class="form-control" onchange="this.form.submit()">
+                    <select name="stat" class="form-control" data-autosubmit>
                         @foreach (var optionGroup in Model.TrendStatOptions.GroupBy(option => option.Group))
                         {
                             <optgroup label="@optionGroup.Key">
@@ -255,7 +255,7 @@
             <form method="get" class="game-review-controls">
                 <label>
                     <span>Game</span>
-                    <select name="game" class="form-control" onchange="this.form.submit()">
+                    <select name="game" class="form-control" data-autosubmit>
                         @foreach (var choice in Model.GameChoices)
                         {
                             <option value="@choice.FixtureId" selected="@(choice.FixtureId == Model.SelectedFixtureId)">@choice.Label</option>
@@ -404,7 +404,7 @@
             <form method="get" class="game-review-controls comparison-controls">
                 <label>
                     <span>Select stat</span>
-                    <select name="c4stat" class="form-control" onchange="this.form.submit()">
+                    <select name="c4stat" class="form-control" data-autosubmit>
                         @foreach (var statGroup in Model.ComparisonStatOptions.GroupBy(option => option.Group))
                         {
                             <optgroup label="@statGroup.Key">

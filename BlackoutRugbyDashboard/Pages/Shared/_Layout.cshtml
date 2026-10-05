@@ -1,5 +1,15 @@
 ﻿@using BlackoutRugbyDashboard.Services
 @inject ClubLinkService ClubLink
+@{
+    var currentPage = ViewContext.RouteData.Values["page"] as string ?? string.Empty;
+    string NavClass(string page) =>
+        string.Equals(currentPage, page, StringComparison.OrdinalIgnoreCase) ? "on" : string.Empty;
+    var authenticated = User.Identity?.IsAuthenticated == true;
+    var link = authenticated ? ClubLink.GetLinkState() : null;
+    var clubName = link is null
+        ? null
+        : string.IsNullOrWhiteSpace(link.TeamName) ? $"Team {link.TeamId}" : link.TeamName;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,56 +21,70 @@
     <link rel="stylesheet" href="~/BlackoutRugbyDashboard.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark app-nav mb-4">
-            <div class="container">
-                <a class="navbar-brand" asp-page="/Index">Blackout Rugby Team Hub</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    @if (User.Identity?.IsAuthenticated == true)
+    @* D10 "Command centre": a fixed left sidebar carries the brand, the club's
+       identity (name + Team CSR) and D2's gate-driven nav; the page renders into
+       the offset main. Sign-out stays a POST handler on Settings (no route). *@
+    <aside class="app-side">
+        <a class="app-logo" asp-page="/Index">Blackout<span>Analysis</span></a>
+
+        @if (authenticated)
+        {
+            <div class="app-club">
+                @if (link is null)
+                {
+                    <b>No club linked</b>
+                    <span>Link from Settings</span>
+                }
+                else
+                {
+                    <b>@clubName</b>
+                    @if (link.TeamCsr is int csr)
                     {
-                        var linked = ClubLink.GetLinkState() is not null;
-                        <ul class="navbar-nav flex-grow-1">
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-page="/Index">Home</a>
-                            </li>
-                            @if (linked)
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-light" asp-page="/Squad">Squad</a>
-                                </li>
-                            }
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-page="/Playground">API Playground</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-page="/Account/Settings">Settings</a>
-                            </li>
-                        </ul>
+                        <span>Team CSR @csr</span>
                     }
                     else
                     {
-                        <ul class="navbar-nav flex-grow-1 justify-content-end">
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-page="/Account/Login">Log in</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-page="/Account/SignUp">Sign up</a>
-                            </li>
-                        </ul>
+                        <span>Team @link.TeamId</span>
                     }
-                </div>
+                }
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+
+            <nav class="app-side-nav">
+                <a class="@NavClass("/Index")" asp-page="/Index">Home</a>
+                @if (link is not null)
+                {
+                    <a class="@NavClass("/Squad")" asp-page="/Squad">Squad</a>
+                }
+                <a class="@NavClass("/Playground")" asp-page="/Playground">API Playground</a>
+                <a class="@NavClass("/Account/Settings")" asp-page="/Account/Settings">Settings</a>
+            </nav>
+
+            <div class="app-state">
+                <span class="app-state-label">Linked account</span>
+                @if (link is not null)
+                {
+                    <span class="app-chip">Club link active</span>
+                }
+                else
+                {
+                    <span class="app-chip app-chip-muted">Not linked</span>
+                }
+            </div>
+        }
+        else
+        {
+            <nav class="app-side-nav">
+                <a class="@NavClass("/Account/Login")" asp-page="/Account/Login">Log in</a>
+                <a class="@NavClass("/Account/SignUp")" asp-page="/Account/SignUp">Sign up</a>
+            </nav>
+        }
+    </aside>
+
+    @* The page body — the swap target for the in-page navigation enhancement
+       (site.js), so card/tab switches never reload or jump to the top. *@
+    <main id="page-content" class="app-main" role="main">
+        @RenderBody()
+    </main>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

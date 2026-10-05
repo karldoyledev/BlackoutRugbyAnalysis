@@ -30,8 +30,8 @@ public sealed record ClubLinkResult(ClubLinkStatus Status, string Message, int? 
 /// <summary>The signed-in User's decrypted member credentials for API reads, when linked.</summary>
 public sealed record MemberCredentials(int MemberId, string MemberKey, int TeamId);
 
-/// <summary>The link status shown on Settings: Member, Team, linked-at, and the Team's cached name.</summary>
-public sealed record ClubLinkState(int MemberId, int TeamId, DateTime LinkedAt, string? TeamName);
+/// <summary>The link status shown on Settings: Member, Team, linked-at, and the Team's cached name + CSR.</summary>
+public sealed record ClubLinkState(int MemberId, int TeamId, DateTime LinkedAt, string? TeamName, int? TeamCsr = null);
 
 /// <summary>
 /// The Club Link state machine (D3): two states only, Unlinked → Linked. Linking
@@ -67,13 +67,18 @@ public class ClubLinkService(
         }
 
         var teamId = user.TeamId ?? 0;
-        var teamName = db.TeamFacts
-            .Where(fact => fact.TeamId == teamId)
-            .OrderByDescending(fact => fact.CapturedAt)
-            .Select(fact => (string?)fact.Name)
+        var fact = db.TeamFacts
+            .Where(row => row.TeamId == teamId)
+            .OrderByDescending(row => row.CapturedAt)
+            .Select(row => new { row.Name, row.AverageTop15Csr })
             .FirstOrDefault();
 
-        return new ClubLinkState(memberId, teamId, user.LinkedAt ?? DateTime.UtcNow, teamName);
+        return new ClubLinkState(
+            memberId,
+            teamId,
+            user.LinkedAt ?? DateTime.UtcNow,
+            fact?.Name,
+            fact is { AverageTop15Csr: > 0 } ? fact.AverageTop15Csr : null);
     }
 
     /// <summary>

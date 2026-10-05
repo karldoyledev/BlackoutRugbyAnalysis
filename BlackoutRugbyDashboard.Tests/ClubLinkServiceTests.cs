@@ -332,12 +332,13 @@ public class ClubLinkServiceTests
     }
 
     [Fact]
-    public async Task GetLinkState_ForLinkedUser_CarriesTheCachedTeamName()
+    public async Task GetLinkState_ForLinkedUser_CarriesTheCachedTeamNameAndCsr()
     {
         var harness = new Harness();
         await harness.Service.LinkAsync(202665, MemberKey);
 
         Assert.Null(harness.Service.GetLinkState()?.TeamName);
+        Assert.Null(harness.Service.GetLinkState()?.TeamCsr);
 
         harness.Db.TeamFacts.Add(new TeamFactRow { TeamId = 45047, CapturedAt = DateTime.UtcNow, Name = "Doylester", Bot = false, AverageTop15Csr = 210000, LeagueId = 349097 });
         await harness.Db.SaveChangesAsync();
@@ -347,6 +348,7 @@ public class ClubLinkServiceTests
         Assert.Equal(202665, named!.MemberId);
         Assert.Equal(45047, named.TeamId);
         Assert.Equal("Doylester", named.TeamName);
+        Assert.Equal(210000, named.TeamCsr);
     }
 
     [Fact]
