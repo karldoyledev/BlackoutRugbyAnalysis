@@ -66,10 +66,6 @@ public class SquadModel : ClubLinkedPageModel
 
     public TeamDashboardViewModel? Dashboard { get; private set; }
 
-    /// <summary>The C7 results strip (S7, #41): the cached window as a slim,
-    /// newest-first navigation strip. Cache-only — built by <see cref="SquadResults"/>.</summary>
-    public IReadOnlyList<ResultRow> Results { get; private set; } = Array.Empty<ResultRow>();
-
     /// <summary>
     /// The Game review card (C3, #35 + #36): the cached Fixtures as choices (newest
     /// first), the chosen Fixture, its Stat-Group tab, the column sort and how every
@@ -232,7 +228,6 @@ public class SquadModel : ClubLinkedPageModel
         Dashboard = null;
         HasCapture = false;
         IsColdStart = false;
-        Results = Array.Empty<ResultRow>();
         GameChoices = Array.Empty<GameChoice>();
         GameRows = Array.Empty<GameReviewRow>();
         CoachEye = Array.Empty<CoachEyeItem>();
@@ -282,7 +277,6 @@ public class SquadModel : ClubLinkedPageModel
                 $"{page.SeasonStats.Count}/{page.Capture?.Players.Count ?? 0} season read(s) served from cache");
 
             Dashboard = BuildDashboardViewModel(page);
-            Results = SquadResults.Build(page);
             BuildGameReview(page, game);
             TrendRows = GameTrend.Build(page, TrendStatKey);
             TeamReviewCharts = TeamReviewBuilder.Build(page, ReviewTab);

@@ -2,6 +2,7 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Home";
+    var results = Model.Results;
 }
 
 <div class="container">
@@ -31,17 +32,88 @@
             · Member @Model.Link.MemberId · club link active
         </p>
 
-        <div class="card mb-4">
-            <div class="card-body">
-                <h2 class="card-title h4">Recent form</h2>
-                <p class="card-text">
-                    The last-8 fixture window — W/L badges, opponent CSR, attendance and links into
-                    Match Analysis — arrives with the Home build slice. Your Match Cache already fills
-                    itself as Fixtures are viewed.
-                </p>
-                <a asp-page="/Squad" class="btn btn-outline-primary me-2">Squad</a>
-                <a asp-page="/Playground" class="btn btn-outline-secondary">API Playground</a>
+        @* C7 results strip (S7), moved here from the Squad page: the cached last-8
+           window as navigation, not analysis — newest first, every row opening that
+           Fixture's Match Analysis. The bare visit fills the window, then this reads
+           the cache. *@
+        <section class="table-panel">
+            <div class="section-heading">
+                <h2>Recent results</h2>
+                @if (results.Any())
+                {
+                    <p>Newest first — every row opens that Fixture's Match Analysis.</p>
+                }
+                else
+                {
+                    <p>No cached games yet — open a Fixture and it lands here.</p>
+                }
             </div>
-        </div>
+            @if (results.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table dashboard-table compact-table results-strip">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Competition</th>
+                                <th>Opponent</th>
+                                <th>Result</th>
+                                <th class="num">Margin</th>
+                                <th><span class="visually-hidden">Match Analysis</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var game in results)
+                        {
+                            <tr>
+                                <td>@game.Date.ToString("MMM d, yyyy")</td>
+                                <td>@game.CompetitionLabel</td>
+                                <td>
+                                    @game.Opponent
+                                    @if (game.OpponentIsBot)
+                                    {
+                                        <span class="pill warning-pill">BOT</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!game.HasResult)
+                                    {
+                                        @* No cached Match Summary: no result to report — never a 0-0 draw. *@
+                                        <span class="pill neutral-pill" title="This Fixture's Match Summary is not cached">—</span>
+                                    }
+                                    else if (game.Result == "W")
+                                    {
+                                        <span class="pill success-pill">@game.Score - @game.OppositionScore (W)</span>
+                                    }
+                                    else if (game.Result == "L")
+                                    {
+                                        <span class="pill warning-pill">@game.Score - @game.OppositionScore (L)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="pill neutral-pill">@game.Score - @game.OppositionScore (D)</span>
+                                    }
+                                </td>
+                                <td class="num">
+                                    @if (game.HasResult)
+                                    {
+                                        <span class="@game.MarginClass">@game.MarginText</span>
+                                    }
+                                    else
+                                    {
+                                        <text>—</text>
+                                    }
+                                </td>
+                                <td>
+                                    <a class="results-link" href="/Fixtures/@game.FixtureId"
+                                       title="Open this Fixture's Match Analysis">Match Analysis →</a>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
     }
 </div>
