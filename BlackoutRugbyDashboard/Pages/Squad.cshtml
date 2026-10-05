@@ -2,7 +2,7 @@
 @model BlackoutRugbyDashboard.Pages.SquadModel
 @{
     ViewData["Title"] = "Squad";
-    var gameStats = Model.GameStatsList;
+    var results = Model.Results;
 
     // C3 Game review (S3, #35 + #36): the whole selection — the game, the tab, the
     // mode and the column sort — is query-string state, so every control is a plain
@@ -488,77 +488,89 @@
     </article>
 </section>
 
+    @* C7 results strip (S7, #41): the cached window as navigation, not analysis —
+       date · competition+round · opponent (BOT marked) · result · margin, newest
+       first, every row pointing at that Fixture's Match Analysis page. The 12-column
+       stat table is retired: its columns were C6's charts re-plotted as text, and
+       Match Analysis owns per-fixture detail. Cache-only. *@
     <section class="table-panel">
         <div class="section-heading">
-            <h2>Recent match details</h2>
-            @if (gameStats.Any())
+            <h2>Recent results</h2>
+            @if (results.Any())
             {
-                <p>Sorted by most recent game first.</p>
+                <p>Newest first — every row opens that Fixture's Match Analysis.</p>
             }
             else
             {
                 <p>No cached games yet — open a Fixture and it lands here.</p>
             }
         </div>
-        <div class="table-responsive">
-            <table class="table dashboard-table compact-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Opponent</th>
-                        <th>Result</th>
-                        <th>Tackles</th>
-                        <th>Metres</th>
-                        <th>Tries</th>
-                        <th>Conversions</th>
-                        <th>Drop Goals</th>
-                        <th>Penalties</th>
-                        <th>Yellow Cards</th>
-                        <th>Red Cards</th>
-                        <th>Linebreaks</th>
-                        <th>Intercepts</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach (var game in gameStats)
-                {
-                    <tr>
-                        <td>@game.Date.ToString("MMM d, yyyy")</td>
-                        <td>@game.Opponent</td>
-                        <td>
-                            @if (game.Result == "W")
-                            {
-                                <span class="pill success-pill">@game.Score - @game.OppositionScore (W)</span>
-                            }
-                            else if (game.Result == "L")
-                            {
-                                <span class="pill warning-pill">@game.Score - @game.OppositionScore (L)</span>
-                            }
-                            else if (game.Result == "D")
-                            {
-                                <span class="pill neutral-pill">@game.Score - @game.OppositionScore (D)</span>
-                            }
-                            else
-                            {
-                                @* No cached Match Summary: no result to report — never a 0-0 draw. *@
-                                <span class="pill neutral-pill" title="This Fixture's Match Summary is not cached">—</span>
-                            }
-                        </td>
-                        <td>@game.Tackles</td>
-                        <td>@game.MetresGained</td>
-                        <td>@game.Tries</td>
-                        <td>@game.Conversions</td>
-                        <td>@game.DropGoals</td>
-                        <td>@game.Penalties</td>
-                        <td>@game.YellowCards</td>
-                        <td>@game.RedCards</td>
-                        <td>@game.Linebreaks</td>
-                        <td>@game.Intercepts</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
+        @if (results.Any())
+        {
+            <div class="table-responsive">
+                <table class="table dashboard-table compact-table results-strip">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Competition</th>
+                            <th>Opponent</th>
+                            <th>Result</th>
+                            <th class="num">Margin</th>
+                            <th><span class="visually-hidden">Match Analysis</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var game in results)
+                    {
+                        <tr>
+                            <td>@game.Date.ToString("MMM d, yyyy")</td>
+                            <td>@game.CompetitionLabel</td>
+                            <td>
+                                @game.Opponent
+                                @if (game.OpponentIsBot)
+                                {
+                                    <span class="pill warning-pill">BOT</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!game.HasResult)
+                                {
+                                    @* No cached Match Summary: no result to report — never a 0-0 draw. *@
+                                    <span class="pill neutral-pill" title="This Fixture's Match Summary is not cached">—</span>
+                                }
+                                else if (game.Result == "W")
+                                {
+                                    <span class="pill success-pill">@game.Score - @game.OppositionScore (W)</span>
+                                }
+                                else if (game.Result == "L")
+                                {
+                                    <span class="pill warning-pill">@game.Score - @game.OppositionScore (L)</span>
+                                }
+                                else
+                                {
+                                    <span class="pill neutral-pill">@game.Score - @game.OppositionScore (D)</span>
+                                }
+                            </td>
+                            <td class="num">
+                                @if (game.HasResult)
+                                {
+                                    <span class="@game.MarginClass">@game.MarginText</span>
+                                }
+                                else
+                                {
+                                    <text>—</text>
+                                }
+                            </td>
+                            <td>
+                                <a class="results-link" href="/Fixtures/@game.FixtureId"
+                                   title="Open this Fixture's Match Analysis">Match Analysis →</a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
     </section>
 }
 

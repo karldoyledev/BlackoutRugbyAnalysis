@@ -21,9 +21,27 @@ public sealed record SquadPageData(
     TeamSnapshot? Capture,
     IReadOnlyDictionary<int, PlayerStatistics> SeasonStats)
 {
+    /// <summary>Opponent bot flags from the captured TeamFacts (S7): the C7 results
+    /// strip marks a BOT opponent; a team we have never read carries no flag and so
+    /// no tag. Empty by default so a page built without a window still reads.</summary>
+    public IReadOnlyDictionary<int, bool> TeamBots { get; init; } = new Dictionary<int, bool>();
+
     /// <summary>Nothing cached at all — no completed Fixture and no Squad
     /// Snapshot: the page's bootstrap empty state, never a silent live read.</summary>
     public bool IsColdStart => Window.Count == 0 && Capture is null;
+
+    /// <summary>The opponent's team id for one cached Fixture: whichever end is not us.</summary>
+    public int OpponentIdFor(FixtureRow row) => row.HomeTeamId == TeamId ? row.GuestTeamId : row.HomeTeamId;
+
+    /// <summary>The opponent's name: the cached TeamFact's name when we hold one,
+    /// else the linked Team id — the rule every card that names an opponent shares.</summary>
+    public string OpponentNameFor(FixtureRow row)
+    {
+        var opponentId = OpponentIdFor(row);
+        return TeamNames.TryGetValue(opponentId, out var cachedName) && !string.IsNullOrWhiteSpace(cachedName)
+            ? cachedName
+            : $"Team {opponentId}";
+    }
 }
 
 /// <summary>
@@ -49,8 +67,10 @@ public class SquadPageReader(MatchCacheService cache, SnapshotStore snapshots)
             .OrderByDescending(entry => entry.Fixture.MatchStartUnix)
             .ToList();
 
-        var teamNames = await cache.GetTeamNamesAsync(
+        var teamFacts = await cache.GetTeamFactsAsync(
             window.SelectMany(row => new[] { row.HomeTeamId, row.GuestTeamId }), cancellationToken);
+        var teamNames = teamFacts.ToDictionary(pair => pair.Key, pair => pair.Value.Name);
+        var teamBots = teamFacts.ToDictionary(pair => pair.Key, pair => pair.Value.Bot);
         var teamFact = await cache.GetLatestTeamFactAsync(teamId, cancellationToken);
         var capture = await snapshots.GetLatestAsync(teamId);
 
@@ -69,7 +89,10 @@ public class SquadPageReader(MatchCacheService cache, SnapshotStore snapshots)
             orderedRows,
             teamNames,
             capture,
-            seasonStats);
+            seasonStats)
+        {
+            TeamBots = teamBots
+        };
     }
 
     /// <summary>The clue we hold about whose page this is: a captured team read,

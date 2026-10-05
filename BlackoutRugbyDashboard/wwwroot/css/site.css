@@ -475,6 +475,37 @@ body {
   color: var(--ink-soft);
 }
 
+/* C7 results strip (S7, #41): the cached window as navigation. The only thing
+   clickable in a row is its Match Analysis link; the margin carries the win/loss
+   tone. */
+.results-strip .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.results-strip .results-link {
+  white-space: nowrap;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.results-strip .margin-win {
+  color: var(--success);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.results-strip .margin-loss {
+  color: var(--loss);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.results-strip .margin-flat {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
 .footer {
   margin-top: 2rem;
   padding: 1rem 0 1.5rem;

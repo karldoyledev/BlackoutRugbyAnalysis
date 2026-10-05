@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using BlackoutRugbyDashboard.Data;
 using BlackoutRugbyDashboard.Models;
 using BlackoutRugbyDashboard.Services;
@@ -29,7 +29,6 @@ public class SquadModel : ClubLinkedPageModel
     private readonly SquadPageReader _reader;
     private readonly SquadCaptureService _captures;
     private readonly MatchCacheService _cache;
-    private readonly BlackoutRugbyResponseAdapter _adapter;
     private readonly ApiLogger _apiLogger;
     private readonly IOptions<DashboardDefaultsOptions> _defaults;
     private readonly ILogger<SquadModel> _logger;
@@ -38,7 +37,6 @@ public class SquadModel : ClubLinkedPageModel
         SquadPageReader reader,
         SquadCaptureService captures,
         MatchCacheService cache,
-        BlackoutRugbyResponseAdapter adapter,
         ApiLogger apiLogger,
         IOptions<DashboardDefaultsOptions> defaults,
         ClubLinkService clubLinks,
@@ -47,7 +45,6 @@ public class SquadModel : ClubLinkedPageModel
         _reader = reader;
         _captures = captures;
         _cache = cache;
-        _adapter = adapter;
         _apiLogger = apiLogger;
         _defaults = defaults;
         _logger = logger;
@@ -68,8 +65,10 @@ public class SquadModel : ClubLinkedPageModel
     public bool HasCapture { get; private set; }
 
     public TeamDashboardViewModel? Dashboard { get; private set; }
-    public List<GameStats> GameStatsList { get; private set; } = new();
-    public List<FixtureBreakdown> FixtureBreakdowns { get; private set; } = new();
+
+    /// <summary>The C7 results strip (S7, #41): the cached window as a slim,
+    /// newest-first navigation strip. Cache-only — built by <see cref="SquadResults"/>.</summary>
+    public IReadOnlyList<ResultRow> Results { get; private set; } = Array.Empty<ResultRow>();
 
     /// <summary>
     /// The Game review card (C3, #35 + #36): the cached Fixtures as choices (newest
@@ -233,8 +232,7 @@ public class SquadModel : ClubLinkedPageModel
         Dashboard = null;
         HasCapture = false;
         IsColdStart = false;
-        GameStatsList = new List<GameStats>();
-        FixtureBreakdowns = new List<FixtureBreakdown>();
+        Results = Array.Empty<ResultRow>();
         GameChoices = Array.Empty<GameChoice>();
         GameRows = Array.Empty<GameReviewRow>();
         CoachEye = Array.Empty<CoachEyeItem>();
@@ -284,11 +282,7 @@ public class SquadModel : ClubLinkedPageModel
                 $"{page.SeasonStats.Count}/{page.Capture?.Players.Count ?? 0} season read(s) served from cache");
 
             Dashboard = BuildDashboardViewModel(page);
-            FixtureBreakdowns = BuildFixtureBreakdowns(page);
-            GameStatsList = FixtureBreakdowns
-                .Select(item => item.TeamStats)
-                .OrderByDescending(item => item.Date)
-                .ToList();
+            Results = SquadResults.Build(page);
             BuildGameReview(page, game);
             TrendRows = GameTrend.Build(page, TrendStatKey);
             TeamReviewCharts = TeamReviewBuilder.Build(page, ReviewTab);
@@ -542,95 +536,6 @@ public class SquadModel : ClubLinkedPageModel
         };
     }
 
-    private List<FixtureBreakdown> BuildFixtureBreakdowns(SquadPageData page)
-    {
-        var breakdowns = new List<FixtureBreakdown>();
-        var playerNames = (Dashboard?.Players ?? Array.Empty<PlayerDashboardItem>())
-            .GroupBy(player => player.Id)
-            .ToDictionary(group => group.Key, group => group.First().Name);
-
-        foreach (var entry in page.Window)
-        {
-            if (entry.Players.Count == 0)
-            {
-                continue; // unplayed or not-yet-filled — the same skip rule the live parse had
-            }
-
-            var playerStats = _adapter.ToFixturePlayerStatistics(entry.Players, entry.TeamStats, playerNames);
-            breakdowns.Add(new FixtureBreakdown
-            {
-                FixtureId = entry.Fixture.FixtureId,
-                Label = BuildFixtureLabel(entry.Fixture.Season, entry.Fixture.Round, entry.Fixture.Competition, GameDate(entry.Fixture)),
-                TeamStats = BuildGameStats(page, entry, playerStats),
-                PlayerStats = playerStats
-            });
-        }
-
-        return breakdowns;
-    }
-
-    /// <summary>
-    /// Builds one fixture's GameStats from the cached rows: the opponent's name
-    /// from the captured TeamFacts, the score from the cached Match Summary. A
-    /// Fixture whose summary was never cached is left without a result rather
-    /// than being reported as a 0–0 draw.
-    /// </summary>
-    private GameStats BuildGameStats(SquadPageData page, SquadFixtureRows entry, IReadOnlyList<FixturePlayerStatistics> playerStats)
-    {
-        var row = entry.Fixture;
-        var isHome = row.HomeTeamId == page.TeamId;
-        var opponentId = isHome ? row.GuestTeamId : row.HomeTeamId;
-
-        var opponent = page.TeamNames.TryGetValue(opponentId, out var cachedName) && !string.IsNullOrWhiteSpace(cachedName)
-            ? cachedName
-            : $"Team {opponentId}";
-
-        var score = entry.Summary is null ? 0 : isHome ? entry.Summary.HomePoints : entry.Summary.GuestPoints;
-        var oppositionScore = entry.Summary is null ? 0 : isHome ? entry.Summary.GuestPoints : entry.Summary.HomePoints;
-
-        return new GameStats
-        {
-            FixtureId = row.FixtureId,
-            Season = row.Season,
-            Round = row.Round,
-            Competition = row.Competition,
-            Date = GameDate(row),
-            Opponent = opponent,
-            Score = score,
-            OppositionScore = oppositionScore,
-            Result = entry.Summary is null
-                ? string.Empty
-                : score > oppositionScore ? "W" : score < oppositionScore ? "L" : "D",
-            Tackles = playerStats.Sum(item => item.Tackles),
-            MetresGained = playerStats.Sum(item => item.MetresGained),
-            Tries = playerStats.Sum(item => item.Tries),
-            Conversions = playerStats.Sum(item => item.Conversions),
-            DropGoals = playerStats.Sum(item => item.DropGoals),
-            Penalties = playerStats.Sum(item => item.Penalties),
-            TotalPoints = playerStats.Sum(item => item.TotalPoints),
-            YellowCards = playerStats.Sum(item => item.YellowCards),
-            RedCards = playerStats.Sum(item => item.RedCards),
-            Linebreaks = playerStats.Sum(item => item.Linebreaks),
-            Intercepts = playerStats.Sum(item => item.Intercepts),
-            Kicks = playerStats.Sum(item => item.Kicks),
-            KnockOns = playerStats.Sum(item => item.KnockOns),
-            ForwardPasses = playerStats.Sum(item => item.ForwardPasses),
-            TryAssists = playerStats.Sum(item => item.TryAssists),
-            BeatenDefenders = playerStats.Sum(item => item.BeatenDefenders),
-            Injuries = playerStats.Sum(item => item.Injuries),
-            HandlingErrors = playerStats.Sum(item => item.HandlingErrors),
-            MissedTackles = playerStats.Sum(item => item.MissedTackles),
-            Fights = playerStats.Sum(item => item.Fights),
-            KickingMetres = playerStats.Sum(item => item.KickingMetres),
-            PenaltiesConceded = playerStats.Sum(item => item.PenaltiesConceded),
-            KicksOutOnTheFull = playerStats.Sum(item => item.KicksOutOnTheFull),
-            LineoutsWon = playerStats.Sum(item => item.LineoutsWon),
-            LineoutsLost = playerStats.Sum(item => item.LineoutsLost),
-            ScrumWins = playerStats.Sum(item => item.ScrumWins),
-            ScrumLosses = playerStats.Sum(item => item.ScrumLosses)
-        };
-    }
-
     /// <summary>
     /// The Game review card's data (C3, #35 + #36): the cached Fixtures as choices
     /// (newest first), the chosen Fixture's matrix rows for the chosen Stat Group,
@@ -685,7 +590,7 @@ public class SquadModel : ClubLinkedPageModel
     private static string BuildGameChoiceLabel(SquadPageData page, SquadFixtureRows entry)
     {
         var row = entry.Fixture;
-        return $"{GameDate(row):MMM d, yyyy} · {row.Competition} R{row.Round} · vs {OpponentName(page, row)}";
+        return $"{GameDate(row):MMM d, yyyy} · {row.Competition} R{row.Round} · vs {page.OpponentNameFor(row)}";
     }
 
     /// <summary>The card's subtitle: the same context, plus how the game went when the summary is cached.</summary>
@@ -698,27 +603,12 @@ public class SquadModel : ClubLinkedPageModel
             : isHome
                 ? $"{entry.Summary.HomePoints}-{entry.Summary.GuestPoints}"
                 : $"{entry.Summary.GuestPoints}-{entry.Summary.HomePoints}";
-        return $"{GameDate(row):MMM d, yyyy} · {row.Competition} R{row.Round} · vs {OpponentName(page, row)} · {outcome}";
-    }
-
-    private static string OpponentName(SquadPageData page, FixtureRow row)
-    {
-        var opponentId = row.HomeTeamId == page.TeamId ? row.GuestTeamId : row.HomeTeamId;
-        return page.TeamNames.TryGetValue(opponentId, out var cachedName) && !string.IsNullOrWhiteSpace(cachedName)
-            ? cachedName
-            : $"Team {opponentId}";
+        return $"{GameDate(row):MMM d, yyyy} · {row.Competition} R{row.Round} · vs {page.OpponentNameFor(row)} · {outcome}";
     }
 
     private static DateTime GameDate(FixtureRow row) =>
         DateTimeOffset.FromUnixTimeSeconds(row.MatchStartUnix).LocalDateTime;
 
-    private static string BuildFixtureLabel(int season, int round, string competition, DateTime date)
-    {
-        var seasonLabel = season > 0 ? $"Season {season}" : "Season";
-        var roundLabel = round > 0 ? $"Week {round}" : "Fixture";
-        var competitionLabel = string.IsNullOrWhiteSpace(competition) ? string.Empty : $" {competition}";
-        return $"{seasonLabel}, {roundLabel}{competitionLabel} - {date:MMM d}";
-    }
     /// <summary>
     /// The page's honesty line (D3's partial-load pattern, cache-first): what came
     /// from where. A plain GET (no capture outcome) also says that arriving made no
@@ -804,54 +694,4 @@ public class GameChoice
     public int FixtureId { get; init; }
 
     public string Label { get; init; } = string.Empty;
-}
-
-public class FixtureBreakdown
-{
-    public int FixtureId { get; set; }
-    public string Label { get; set; } = string.Empty;
-    public GameStats TeamStats { get; set; } = new();
-    public IReadOnlyList<FixturePlayerStatistics> PlayerStats { get; set; } = Array.Empty<FixturePlayerStatistics>();
-}
-
-public class GameStats
-{
-    public int FixtureId { get; set; }
-    public int Season { get; set; }
-    public int Round { get; set; }
-    public string Competition { get; set; } = string.Empty;
-    public DateTime Date { get; set; }
-    public string Opponent { get; set; } = string.Empty;
-    public int Score { get; set; }
-    public int OppositionScore { get; set; }
-    public string Result { get; set; } = string.Empty;
-
-    // Team stats
-    public int Tackles { get; set; }
-    public int MetresGained { get; set; }
-    public int Tries { get; set; }
-    public int Conversions { get; set; }
-    public int DropGoals { get; set; }
-    public int Penalties { get; set; }
-    public int TotalPoints { get; set; }
-    public int YellowCards { get; set; }
-    public int RedCards { get; set; }
-    public int Linebreaks { get; set; }
-    public int Intercepts { get; set; }
-    public int Kicks { get; set; }
-    public int KnockOns { get; set; }
-    public int ForwardPasses { get; set; }
-    public int TryAssists { get; set; }
-    public int BeatenDefenders { get; set; }
-    public int Injuries { get; set; }
-    public int HandlingErrors { get; set; }
-    public int MissedTackles { get; set; }
-    public int Fights { get; set; }
-    public int KickingMetres { get; set; }
-    public int PenaltiesConceded { get; set; }
-    public int KicksOutOnTheFull { get; set; }
-    public int LineoutsWon { get; set; }
-    public int LineoutsLost { get; set; }
-    public int ScrumWins { get; set; }
-    public int ScrumLosses { get; set; }
 }

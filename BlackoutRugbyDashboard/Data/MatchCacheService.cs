@@ -527,8 +527,13 @@ public class MatchCacheService(
             .ToListAsync(cancellationToken);
     }
 
-    /// <summary>Latest captured name per team id from TeamFacts (degraded-mode labels).</summary>
-    public async Task<IReadOnlyDictionary<int, string>> GetTeamNamesAsync(
+    /// <summary>
+    /// Latest captured TeamFact per team id — the cached labels and bot flags the
+    /// Squad page reads (the results strip's BOT tag, the opponent names the Game
+    /// review card and results strip share). Teams with no captured read are simply
+    /// absent; zero API calls.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<int, TeamFactRow>> GetTeamFactsAsync(
         IEnumerable<int> teamIds, CancellationToken cancellationToken = default)
     {
         var ids = teamIds.Distinct().ToList();
@@ -537,7 +542,7 @@ public class MatchCacheService(
             .ToListAsync(cancellationToken);
         return facts
             .GroupBy(fact => fact.TeamId)
-            .ToDictionary(group => group.Key, group => group.OrderByDescending(fact => fact.CapturedAt).First().Name);
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(fact => fact.CapturedAt).First());
     }
 
     /// <summary>
