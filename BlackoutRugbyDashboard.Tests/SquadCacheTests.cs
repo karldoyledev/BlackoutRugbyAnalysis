@@ -39,12 +39,21 @@ public class SquadCacheTests
     private sealed class FakeApi : IBlackoutRugbyApiClient
     {
         public int FixtureCalls, SummaryCalls, TeamCalls, FsCalls, LuCalls, PsCalls;
+        public int? LastFixturesSeason;
+        public int? LastFixturesLast;
         public string PlayerStatsXml { get; set; } = string.Empty;
         public bool ThrowOnPlayerStats;
 
         public Task<string> GetFixturesAsync(int? fixtureId = null, string? fixtureIds = null, int? teamId = null, int? last = null, int? future = null, int? past = null, int? latest = null, int? leagueId = null, int? season = null, int? round = null, bool roundRobin = false, int? friendlyCompId = null, bool youth = false, bool nat = false, bool u20 = false)
         {
             FixtureCalls++;
+            if (fixtureId is null)
+            {
+                // The window discovery read (the per-fixture f reads leave last/season null).
+                LastFixturesSeason = season;
+                LastFixturesLast = last;
+            }
+
             return Task.FromResult(fixtureId.HasValue ? SingleFixtureXml : WindowXml);
         }
 
@@ -123,6 +132,35 @@ public class SquadCacheTests
         Assert.Equal(1, warm.AlreadyCached);
         Assert.Equal(1, warm.ApiCalls); // the warm budget: discovery only — zero fs/ms/lu
         Assert.Equal(7, api.FixtureCalls + api.SummaryCalls + api.FsCalls + api.LuCalls);
+    }
+
+    /// <summary>The automatic Squad load passes the season it derived; a real season
+    /// goes through to the API unchanged.</summary>
+    [Fact]
+    public async Task SquadWindow_ARealSeasonIsPassedToTheDiscoveryRead()
+    {
+        var (service, api, _, _) = BuildService();
+
+        await service.FillSquadWindowAsync(45047, 62, 20, "http://x");
+
+        Assert.Equal(62, api.LastFixturesSeason);
+        Assert.Equal(20, api.LastFixturesLast);
+    }
+
+    /// <summary>Season 0 means "whatever is current" — the automatic load's cold-start
+    /// case, with no season to derive. The discovery read omits the parameter rather
+    /// than asking the API for season 0, and the fill still completes.</summary>
+    [Fact]
+    public async Task SquadWindow_SeasonZeroAsksForTheCurrentWindowWithoutASeason()
+    {
+        var (service, api, _, _) = BuildService();
+
+        var result = await service.FillSquadWindowAsync(45047, 0, 20, "http://x");
+
+        Assert.Null(api.LastFixturesSeason); // omitted: "current", not season 0
+        Assert.Equal(20, api.LastFixturesLast);
+        Assert.Equal(1, result.Completed);
+        Assert.Equal(1, result.NewlyCached);
     }
 
     [Fact]
