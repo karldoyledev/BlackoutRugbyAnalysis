@@ -390,12 +390,11 @@ public static class GameReviewMatrix
     }
 
     /// <summary>
-    /// The locked per-tab metric pair (standout, adverse). The prototype's choices
-    /// where it made them (docs/prototypes/squad-card-prototype.html, renderC3CMatrix),
-    /// extended to the one tab it left out (Other: time on the ball, injuries). Null
-    /// is honest rather than invented: D4's field map holds no adverse metric in
-    /// Attack and no headline metric in Handling or Discipline, so those tabs open
-    /// with the half they have.
+    /// The locked per-tab metric pair (standout, adverse). The Squad page design
+    /// map's choices (the S3 decision, #22), extended to the one tab the prototype
+    /// left out (Other: time on the ball, injuries). Null is honest rather than
+    /// invented: D4's field map holds no adverse metric in Attack and no headline
+    /// metric in Handling or Discipline, so those tabs open with the half they have.
     /// </summary>
     private static readonly IReadOnlyDictionary<StatGroup, (string? Standout, string? Adverse)> CoachEyeMetrics =
         new Dictionary<StatGroup, (string?, string?)>

@@ -425,11 +425,11 @@ public class GameReviewMatrixTests
         Assert.Equal(8, standout.Value);
     }
 
-    /// <summary>The locked per-tab metric map: the prototype's choices where it made
-    /// them (docs/prototypes/squad-card-prototype.html, renderC3CMatrix), extended
-    /// to the tab it left out (Other). Null is honest — D4's field map holds no
-    /// adverse metric in Attack and no headline metric in Handling or Discipline, so
-    /// those tabs open with the half they have.</summary>
+    /// <summary>The locked per-tab metric map: the Squad page design map's choices
+    /// (the S3 decision, #22), extended to the tab the prototype left out (Other).
+    /// Null is honest — D4's field map holds no adverse metric in Attack and no
+    /// headline metric in Handling or Discipline, so those tabs open with the half
+    /// they have.</summary>
     [Theory]
     [InlineData(StatGroup.Attack, "tries", null)]
     [InlineData(StatGroup.Defence, "tackles", "missed_tackles")]
