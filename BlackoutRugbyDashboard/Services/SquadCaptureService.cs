@@ -45,16 +45,17 @@ public sealed record SquadCaptureResult(
 }
 
 /// <summary>
-/// The Capture squad action (S2 load model, build slice #34): the page's only live
-/// read. One explicit press performs the roster read (2 calls — the club's `t`
-/// record and its `p` roster; CSR, form, energy, salary and age are the volatile
-/// present), saves a Squad Snapshot from it, and persists the club's own TeamFact
-/// — which no window fill captures, so it is the writer that keeps the club
-/// strip's Team CSR alive. It is also the cold-start bootstrap. Failures follow
-/// D3: a rejection is the hard error the page panels; a transport failure replays
-/// the last capture with a loud warning rather than losing the page. The write
-/// seam mirrors <see cref="SquadPageReader"/> on the read side: the reader holds
-/// no API client, and this class is the only live read the page can reach.
+/// The roster capture (S2 load model, build slice #34): the Squad page's automatic
+/// load runs it on every visit — there is no Capture button. It performs the
+/// roster read (2 calls — the club's `t` record and its `p` roster; CSR, form,
+/// energy, salary and age are the volatile present), saves a Squad Snapshot from
+/// it, and persists the club's own TeamFact — which no window fill captures, so it
+/// is the writer that keeps the club strip's Team CSR alive. It is also the
+/// cold-start bootstrap. Failures follow D3: a rejection is the hard error the page
+/// panels; a transport failure replays the last capture with a loud warning rather
+/// than losing the page. The write seam mirrors <see cref="SquadPageReader"/> on
+/// the read side: the reader holds no API client, and this class is the only live
+/// roster read the page makes.
 /// </summary>
 public class SquadCaptureService(
     IBlackoutRugbyApiClient api,

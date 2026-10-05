@@ -76,18 +76,6 @@
             }
         </div>
     </div>
-    @* The page's only live read (S2): an explicit press performs the roster read,
-       saves a Squad Snapshot and re-renders. Arriving here fetches nothing. *@
-    <form method="post" asp-page-handler="Capture" class="button-row">
-        @* The Game review selection survives the capture, so the page comes back
-           to the game, tab and mode you were reading. *@
-        <input type="hidden" name="game" value="@reviewGame" />
-        <input type="hidden" name="tab" value="@reviewTab" />
-        <input type="hidden" name="sort" value="@Model.SortKey" />
-        <input type="hidden" name="dir" value="@reviewDir" />
-        <input type="hidden" name="mode" value="@reviewMode" />
-        <button type="submit" class="btn btn-primary action-button">Capture squad</button>
-    </form>
 
     @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
     {
@@ -117,22 +105,19 @@
 
 @if (Model.IsColdStart)
 {
-    @* Cold start (S2 decision 4): a Linked user with an empty Match Cache and no
-       Squad Snapshot gets one explicit bootstrap action — never a silent fetch. *@
+    @* Cold start, now only reachable when the automatic load could not get data
+       (no linked club, or the API read failed): say so, with no button — the load
+       runs on every visit. *@
     <section class="control-panel bootstrap-panel">
         <h2 class="h4">Nothing cached for your club yet</h2>
         <p class="mb-2">
-            This page renders from the Match Cache and your latest Squad Snapshot, and it never
-            fetches on load — so with two empty stores there is nothing to show yet.
+            This page loads your club's fixtures and roster automatically on every visit, then
+            renders from the Match Cache and your latest Squad Snapshot.
         </p>
-        <p class="mb-3">
-            <strong>Capture squad</strong> performs the one live read this page needs: your club's
-            roster (CSR, form, energy, salary, age). From then on every visit costs nothing, and
-            games land in the cache as you open Fixtures.
+        <p class="mb-0">
+            Nothing has landed yet — that usually means no club is linked, or the API read did
+            not answer. Check the banner above, or re-link from Settings.
         </p>
-        <form method="post" asp-page-handler="Capture">
-            <button type="submit" class="btn btn-primary action-button">Capture squad</button>
-        </form>
     </section>
 }
 

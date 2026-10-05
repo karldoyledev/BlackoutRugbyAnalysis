@@ -262,10 +262,13 @@ public class MatchCacheService(
     {
         var calls = 0;
 
-        var url = $"{baseEndpoint}/fixtures?teamId={teamId}&last={last}&season={season}";
+        // Season 0 means "whatever is current": omit the parameter rather than
+        // asking the API for season 0.
+        var seasonQuery = season > 0 ? $"&season={season}" : string.Empty;
+        var url = $"{baseEndpoint}/fixtures?teamId={teamId}&last={last}{seasonQuery}";
         apiLogger?.LogRequest("GET", url);
         var sw = Stopwatch.StartNew();
-        var fixturesXml = await api.GetFixturesAsync(teamId: teamId, last: last, season: season);
+        var fixturesXml = await api.GetFixturesAsync(teamId: teamId, last: last, season: season > 0 ? season : null);
         calls++;
         rawStore.Save("f", $"team{teamId}-s{season}-last{last}", fixturesXml);
         apiLogger?.LogResponse(url, 200, Truncate(fixturesXml), sw.ElapsedMilliseconds);

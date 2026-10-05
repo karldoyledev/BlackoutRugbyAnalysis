@@ -4,19 +4,20 @@ using BlackoutRugbyDashboard.Models;
 using BlackoutRugbyDashboard.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
 
 namespace BlackoutRugbyDashboard.Pages;
 
 /// <summary>
-/// The Squad page (D-Squad, S2 load model): a plain GET renders the club strip
-/// (club name, Team CSR, derived season, when the last capture happened) and every
-/// card from the Match Cache and the latest Squad Snapshot — zero API calls, because
-/// the render path (<see cref="SquadPageReader"/>) holds no API client at all. The
-/// legacy control panel (API endpoint field, Team ID field, the hardcoded Season
-/// 50–80 list and the Load POST) is deleted; the page's only live read is the
-/// explicit Capture squad action (<see cref="SquadCaptureService"/>, reached from
-/// the Capture POST handler alone). With nothing cached the page shows the bootstrap
-/// empty state instead of fetching anything on load. D3's failure patterns still own
+/// The Squad page (D-Squad): a plain visit auto-loads — it brings the cached
+/// fixture window current from the API and refreshes the roster snapshot (the
+/// <see cref="SquadCaptureService"/> read), then renders the club strip (club name,
+/// Team CSR, derived season, when the last capture happened) and every card from
+/// the Match Cache and the latest Squad Snapshot. There is no load button: the
+/// load is automatic on the bare visit, and card-selection links (tab / sort /
+/// stat / game) re-render from cache so moving around a card never re-hits the
+/// API. The legacy control panel (API endpoint field, Team ID field, the hardcoded
+/// Season 50–80 list and the Load POST) is deleted. D3's failure patterns still own
 /// the banner and the hard-error panel with one button to Settings.
 /// </summary>
 public class SquadModel : ClubLinkedPageModel
@@ -27,22 +28,28 @@ public class SquadModel : ClubLinkedPageModel
 
     private readonly SquadPageReader _reader;
     private readonly SquadCaptureService _captures;
+    private readonly MatchCacheService _cache;
     private readonly BlackoutRugbyResponseAdapter _adapter;
     private readonly ApiLogger _apiLogger;
+    private readonly IOptions<DashboardDefaultsOptions> _defaults;
     private readonly ILogger<SquadModel> _logger;
 
     public SquadModel(
         SquadPageReader reader,
         SquadCaptureService captures,
+        MatchCacheService cache,
         BlackoutRugbyResponseAdapter adapter,
         ApiLogger apiLogger,
+        IOptions<DashboardDefaultsOptions> defaults,
         ClubLinkService clubLinks,
         ILogger<SquadModel> logger) : base(clubLinks)
     {
         _reader = reader;
         _captures = captures;
+        _cache = cache;
         _adapter = adapter;
         _apiLogger = apiLogger;
+        _defaults = defaults;
         _logger = logger;
     }
 
@@ -144,27 +151,57 @@ public class SquadModel : ClubLinkedPageModel
     public string ComparisonMedianPercent { get; private set; } = "0";
 
     /// <summary>
-    /// The cache-first render — what a plain GET does (no capture), and what every
-    /// Capture press re-runs (with that capture's outcome). The Game review and
-    /// Team review selections arrive as query-string state on both.
+    /// A plain visit: auto-load (bring the fixture window current, refresh the
+    /// roster snapshot), then the cache-first render. Card-selection links carry
+    /// query-string state and re-render from cache alone, so moving between games,
+    /// tabs, stats and sorts never re-hits the API.
     /// </summary>
-    public Task OnGetAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? view = null, string? stat = null, string? teamtab = null, string? c4stat = null) =>
-        RenderAsync(capture: null, game, tab, sort, dir, mode, view, stat, teamtab, c4stat);
-
-    /// <summary>
-    /// Capture squad (S2, #34): the page's one live action — the roster read
-    /// (2 calls), the Squad Snapshot it saves, and the club's own TeamFact — and
-    /// then the same cache-first render, so the page shows the values just read.
-    /// It bootstraps the cold start with no other step. D3 owns the failures: a
-    /// rejection panels and deep-links to Settings, a transport failure replays
-    /// the last capture as a warning, and in both cases the cached cards stand.
-    /// </summary>
-    public async Task<IActionResult> OnPostCaptureAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? view = null, string? stat = null, string? teamtab = null, string? c4stat = null)
+    public async Task OnGetAsync(int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? view = null, string? stat = null, string? teamtab = null, string? c4stat = null)
     {
         var teamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
-        var capture = await _captures.CaptureAsync(teamId);
+
+        // A bare visit auto-loads; a card-selection link (game / tab / sort / stat)
+        // is a re-render of what is already cached.
+        var isBareVisit = game is null && tab is null && sort is null && dir is null
+            && mode is null && view is null && stat is null && teamtab is null && c4stat is null;
+
+        var capture = teamId > 0 && isBareVisit ? await AutoLoadAsync(teamId) : null;
 
         await RenderAsync(capture, game, tab, sort, dir, mode, view, stat, teamtab, c4stat);
+        ApplyLoadOutcome(capture);
+        ApiLogsJson = _apiLogger.GetLogsJson();
+    }
+
+    /// <summary>
+    /// The page's automatic load (there is no Capture button): bring the cached
+    /// fixture window current from the API (append-only — a warm visit costs one
+    /// discovery call), then refresh the roster snapshot through
+    /// <see cref="SquadCaptureService"/> (2 calls). It is also the cold-start
+    /// bootstrap. A failed window refresh is logged and the roster read still runs,
+    /// so the page degrades to the cache rather than failing.
+    /// </summary>
+    private async Task<SquadCaptureResult> AutoLoadAsync(int teamId)
+    {
+        try
+        {
+            var season = (await _cache.GetCachedWindowAsync(teamId, season: 0, last: 1)).FirstOrDefault()?.Season ?? 0;
+            await _cache.FillSquadWindowAsync(teamId, season, SquadPageReader.SquadWindowLast, Endpoint(), _apiLogger);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "The Squad window refresh failed for team {TeamId}", teamId);
+        }
+
+        return await _captures.CaptureAsync(teamId);
+    }
+
+    /// <summary>D3 banners for the automatic load's outcome, applied after the render.</summary>
+    private void ApplyLoadOutcome(SquadCaptureResult? capture)
+    {
+        if (capture is null)
+        {
+            return;
+        }
 
         if (capture.SavedSnapshot)
         {
@@ -179,10 +216,12 @@ public class SquadModel : ClubLinkedPageModel
         {
             WarningMessage = Join(capture.Message, WarningMessage);
         }
-
-        ApiLogsJson = _apiLogger.GetLogsJson();
-        return Page();
     }
+
+    private string Endpoint() =>
+        string.IsNullOrWhiteSpace(_defaults.Value.BaseEndpoint)
+            ? "http://classic-api.blackoutrugby.com"
+            : _defaults.Value.BaseEndpoint;
 
     private async Task RenderAsync(
         SquadCaptureResult? capture, int? game = null, string? tab = null, string? sort = null, string? dir = null, string? mode = null, string? view = null, string? stat = null, string? teamtab = null, string? c4stat = null)
@@ -239,7 +278,7 @@ public class SquadModel : ClubLinkedPageModel
 
             _apiLogger.LogCache(
                 "match-cache/fixtures",
-                $"{page.Window.Count} completed cached Fixture(s) rendered from the Match Cache — no API call");
+                $"{page.Window.Count} completed cached Fixture(s) rendered from the Match Cache");
             _apiLogger.LogCache(
                 "match-cache/playerstatistics",
                 $"{page.SeasonStats.Count}/{page.Capture?.Players.Count ?? 0} season read(s) served from cache");
