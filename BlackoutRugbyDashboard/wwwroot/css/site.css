@@ -865,6 +865,16 @@ input::placeholder {
   color: var(--ink-soft);
 }
 
+/* ---- Home league table (r=s) ---- */
+.league-table .own-team {
+  background: rgba(76, 194, 255, .08);
+}
+
+.league-table .own-team td {
+  color: var(--head);
+  font-weight: 600;
+}
+
 /* ---- C7 results strip ---- */
 .results-strip .results-link {
   color: var(--accent);

@@ -106,6 +106,10 @@ builder.Services.AddScoped<IBlackoutRugbyApiClient>(sp =>
         : factory.CreateForMember(credentials.MemberId, credentials.MemberKey);
 });
 
+// The Home page's league table (r=s + r=t&leagueid): a point-in-time read of the
+// club's league, not cached. Depends on the per-request default client above.
+builder.Services.AddScoped<LeagueTableService>();
+
 var app = builder.Build();
 
 // Migrations live in the web project (D3); a local tool (dotnet-ef in the

@@ -57,6 +57,8 @@ public class SquadCaptureTests
         public Task<string> GetMemberAsync(int memberId) => throw new NotSupportedException();
 
         public Task<string> GetLineupsAsync(int teamId, int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false) => throw new NotSupportedException();
+
+        public Task<string> GetStandingsAsync(int? leagueId = null, bool youth = false, bool nat = false, bool u20 = false, int? season = null) => throw new NotSupportedException();
     }
 
     private sealed record CaptureHost(

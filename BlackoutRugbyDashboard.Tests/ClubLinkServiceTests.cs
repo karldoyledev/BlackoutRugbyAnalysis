@@ -52,6 +52,8 @@ public class ClubLinkServiceTests
         public Task<string> GetPlayersAsync(int? playerId = null, string? playerIds = null, int? teamId = null, string? teamIds = null, bool youth = false, bool nat = false, bool u20 = false) => throw new NotSupportedException();
 
         public Task<string> GetLineupsAsync(int teamId, int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false) => throw new NotSupportedException();
+
+        public Task<string> GetStandingsAsync(int? leagueId = null, bool youth = false, bool nat = false, bool u20 = false, int? season = null) => throw new NotSupportedException();
     }
 
     private sealed class FakeFactory : IBlackoutRugbyApiClientFactory

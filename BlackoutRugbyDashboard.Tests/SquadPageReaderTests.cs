@@ -43,6 +43,8 @@ public class SquadPageReaderTests
 
         public Task<string> GetLineupsAsync(int teamId, int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false) => throw Offender();
 
+        public Task<string> GetStandingsAsync(int? leagueId = null, bool youth = false, bool nat = false, bool u20 = false, int? season = null) => throw Offender();
+
         private static InvalidOperationException Offender(
             [System.Runtime.CompilerServices.CallerMemberName] string read = "") =>
             new($"the Squad page's cache read called {read} — a plain GET must not read the API");

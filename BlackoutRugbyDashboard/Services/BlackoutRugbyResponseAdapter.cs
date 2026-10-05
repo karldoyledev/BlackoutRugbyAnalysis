@@ -303,6 +303,41 @@ public class BlackoutRugbyResponseAdapter
     }
 
     /// <summary>
+    /// Parses a Standings response (r=s) into league-table rows (probed live
+    /// 2026-10-06): position, team id, and the played / won / drawn / lost / for /
+    /// against / bonus / points record. The API nests the position as a
+    /// &lt;standing&gt; child of the &lt;standing&gt; container, and ReadInt reads
+    /// child elements, so the position is read off the container. The response
+    /// carries no team name — the league's team read supplies it. The position
+    /// child matches Descendants("standing") too, but has no teamid and is dropped.
+    /// </summary>
+    public IReadOnlyList<StandingRecord> ParseStandings(string? xml)
+    {
+        var document = TryParse(xml);
+        if (document is null)
+        {
+            return [];
+        }
+
+        return document
+            .Descendants("standing")
+            .Select(element => new StandingRecord(
+                ReadInt(element, "teamid"),
+                ReadInt(element, "standing"),
+                ReadInt(element, "season"),
+                ReadInt(element, "played"),
+                ReadInt(element, "w"),
+                ReadInt(element, "d"),
+                ReadInt(element, "l"),
+                ReadInt(element, "for"),
+                ReadInt(element, "against"),
+                ReadInt(element, "b1") + ReadInt(element, "b2"),
+                ReadInt(element, "points")))
+            .Where(row => row.TeamId > 0)
+            .ToList();
+    }
+
+    /// <summary>
     /// Parses a Lineups response into per-Fixture team sheets: XV slots 1–15 and
     /// bench slots 1–8 plus captain and kicker. The live API duplicates the
     /// <c>&lt;lineup&gt;</c> element (R1 F4); duplicates collapse on
@@ -884,6 +919,24 @@ public sealed record TeamFact(
     int RegionalRank,
     int NationalRank,
     int WorldRank);
+
+/// <summary>
+/// One league-table row from a Standings response (r=s, probed 2026-10-06): the
+/// team's position and its played / won / drawn / lost / for / against / bonus /
+/// points record for one season. No name — the league's team read supplies it.
+/// </summary>
+public sealed record StandingRecord(
+    int TeamId,
+    int Position,
+    int Season,
+    int Played,
+    int Won,
+    int Drawn,
+    int Lost,
+    int PointsFor,
+    int PointsAgainst,
+    int BonusPoints,
+    int Points);
 
 /// <summary>
 /// One Team's team sheet for a Fixture: the XV (slots 1–15), the Bench (slots

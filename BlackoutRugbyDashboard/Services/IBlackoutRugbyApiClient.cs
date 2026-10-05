@@ -35,4 +35,11 @@ public interface IBlackoutRugbyApiClient
     Task<string> GetMemberAsync(int memberId);
 
     Task<string> GetLineupsAsync(int teamId, int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false);
+
+    /// <summary>
+    /// The league-standings read (r=s + leagueid, probed live 2026-10-06): the
+    /// league table the Home page renders. The same client's GetTeamsAsync with the
+    /// same leagueid names its rows.
+    /// </summary>
+    Task<string> GetStandingsAsync(int? leagueId = null, bool youth = false, bool nat = false, bool u20 = false, int? season = null);
 }

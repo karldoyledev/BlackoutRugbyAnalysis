@@ -177,6 +177,13 @@ public class ApiTestController : ControllerBase
                 u20: query.GetValueOrDefault("u20") == "1",
                 country: query.GetValueOrDefault("country")),
             
+            "standings" => await client.GetStandingsAsync(
+                leagueId: ParseInt(query.GetValueOrDefault("leagueid")),
+                youth: query.GetValueOrDefault("youth") == "1",
+                nat: query.GetValueOrDefault("nat") == "1",
+                u20: query.GetValueOrDefault("u20") == "1",
+                season: ParseInt(query.GetValueOrDefault("season"))),
+
             _ => throw new ArgumentException($"Unknown endpoint: {endpoint}")
         };
     }

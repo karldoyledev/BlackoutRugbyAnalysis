@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Home";
     var results = Model.Results;
+    var league = Model.League;
 }
 
 <div class="container">
@@ -26,11 +27,65 @@
     }
     else
     {
-        <h1 class="mb-1">Home</h1>
         <p class="text-muted">
             @(string.IsNullOrWhiteSpace(Model.Link.TeamName) ? $"Team {Model.Link.TeamId}" : Model.Link.TeamName)
             · Member @Model.Link.MemberId · club link active
         </p>
+
+        @* The club's league table (r=s), above the results: position, team, and the
+           played / W / D / L / for / against / bonus / points record. The club's own
+           row is marked. The bare visit reads it live; when the club's league is
+           unknown or the read answered nothing, the card is left off. *@
+        @if (league is { Rows.Count: > 0 })
+        {
+            <section class="table-panel league-table">
+                <div class="section-heading">
+                    <h2>League table</h2>
+                    <p>
+                        @if (league.Season > 0)
+                        {
+                            <text>Season @league.Season · </text>
+                        }
+                        your league, in standings order.
+                    </p>
+                </div>
+                <div class="table-responsive">
+                    <table class="table dashboard-table compact-table">
+                        <thead>
+                            <tr>
+                                <th class="num">#</th>
+                                <th>Team</th>
+                                <th class="num">P</th>
+                                <th class="num">W</th>
+                                <th class="num">D</th>
+                                <th class="num">L</th>
+                                <th class="num">For</th>
+                                <th class="num">Ag</th>
+                                <th class="num">BP</th>
+                                <th class="num">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var row in league.Rows)
+                        {
+                            <tr class="@(row.TeamId == league.OwnTeamId ? "own-team" : string.Empty)">
+                                <td class="num">@row.Position</td>
+                                <td>@row.TeamName</td>
+                                <td class="num">@row.Played</td>
+                                <td class="num">@row.Won</td>
+                                <td class="num">@row.Drawn</td>
+                                <td class="num">@row.Lost</td>
+                                <td class="num">@row.PointsFor</td>
+                                <td class="num">@row.PointsAgainst</td>
+                                <td class="num">@row.BonusPoints</td>
+                                <td class="num">@row.Points</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
 
         @* C7 results strip (S7), moved here from the Squad page: the cached last-8
            window as navigation, not analysis — newest first, every row opening that

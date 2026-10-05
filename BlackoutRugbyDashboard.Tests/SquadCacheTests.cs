@@ -99,6 +99,8 @@ public class SquadCacheTests
             LuCalls++;
             return Task.FromResult("<blackoutrugby_api_response />");
         }
+
+        public Task<string> GetStandingsAsync(int? leagueId = null, bool youth = false, bool nat = false, bool u20 = false, int? season = null) => throw new NotSupportedException();
     }
 
     private static (MatchCacheService Service, FakeApi Api, DashboardDbContext Db, string RawRoot) BuildService()
