@@ -294,7 +294,9 @@ public class SquadCacheTests
     }
 }
 
-/// <summary>The SnapshotStore's revived comparison (Q5/Q10): save → latest → delta.</summary>
+/// <summary>The SnapshotStore: Capture squad writes a point-in-time snapshot and the
+/// degraded-roster replay reads the newest one back. (The snapshot-delta comparison
+/// retired with the card it fed — C3's Game review matrix; cleanup #42.)</summary>
 public class SnapshotStoreTests
 {
     private static TeamDashboardViewModel BuildDashboard(int tackles) => new()
@@ -321,23 +323,23 @@ public class SnapshotStoreTests
     };
 
     [Fact]
-    public async Task Snapshots_SaveLatestAndCompare()
+    public async Task Snapshots_SaveAndReadBackTheNewest()
     {
         var root = Path.Combine(Path.GetTempPath(), "snaptest-" + Guid.NewGuid().ToString("N"));
         var store = new SnapshotStore(new TestEnvironment(root));
 
         await store.SaveSnapshotAsync(BuildDashboard(tackles: 10));
-        Assert.Null(await store.GetLatestComparisonAsync(7)); // one snapshot, nothing to compare
-        var latest = await store.GetLatestAsync(7);
-        Assert.NotNull(latest);
-        Assert.Equal(10, latest!.Players.Single().Tackles);
+        var first = await store.GetLatestAsync(7);
+        Assert.NotNull(first);
+        Assert.Equal(10, first!.Players.Single().Tackles);
 
         await Task.Delay(1100); // snapshot filenames carry one-second resolution
         await store.SaveSnapshotAsync(BuildDashboard(tackles: 14));
 
-        var comparison = await store.GetLatestComparisonAsync(7);
-        Assert.NotNull(comparison);
-        Assert.Equal(4, comparison!.PlayerChanges.Single().DeltaTackles);
+        // The degraded-roster replay reads the newest snapshot on disk.
+        var latest = await store.GetLatestAsync(7);
+        Assert.NotNull(latest);
+        Assert.Equal(14, latest!.Players.Single().Tackles);
     }
 }
 
