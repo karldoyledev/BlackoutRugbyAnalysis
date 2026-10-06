@@ -881,6 +881,15 @@ input::placeholder {
   white-space: nowrap;
 }
 
+/* A destination page that is not built yet (Match Analysis D6, Player History
+   D7) renders as plain, muted text rather than a link that 404s. */
+.results-link-pending,
+.trend-player-pending,
+.coach-eye-player {
+  color: var(--muted);
+  cursor: default;
+}
+
 /* ---- Playground / misc ---- */
 .endpoint-code {
   font-family: Consolas, monospace;

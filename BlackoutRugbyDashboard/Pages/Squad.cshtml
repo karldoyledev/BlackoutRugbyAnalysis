@@ -229,7 +229,7 @@
                         @foreach (var row in Model.TrendRows)
                         {
                             <tr>
-                                <td><a class="trend-player" href="/Players/@row.PlayerId" title="Open this Player's history">@row.Name</a></td>
+                                <td><span class="trend-player trend-player-pending" title="Player History arrives with the /Players pages (D7)">@row.Name</span></td>
                                 <td>@Html.Raw(SvgCharts.Sparkline(row.Series))</td>
                                 <td class="num">@(row.Latest is { } latest ? latest : "—")</td>
                                 <td class="num">
@@ -303,7 +303,7 @@
                         <span class="coach-eye-item @(item.IsAdverse ? "is-adverse" : "is-standout")"
                               title="@(item.IsAdverse ? $"Worst offender — {item.Label} ({item.Value})" : $"Standout — {item.Label} ({item.Value})")">
                             @(item.IsAdverse ? "worst" : "best"):
-                            <a href="/Players/@item.PlayerId">@item.PlayerName</a>
+                            <span class="coach-eye-player">@item.PlayerName</span>
                             (@item.Value @item.Label)
                         </span>
                     }
