@@ -881,13 +881,85 @@ input::placeholder {
   white-space: nowrap;
 }
 
-/* A destination page that is not built yet (Match Analysis D6, Player History
-   D7) renders as plain, muted text rather than a link that 404s. */
+/* A destination page that is not built yet (Player History D7) renders as plain,
+   muted text rather than a link that 404s. */
 .results-link-pending,
 .trend-player-pending,
 .coach-eye-player {
   color: var(--muted);
   cursor: default;
+}
+
+/* ---- Match Analysis (D6): masthead, compare grid, notes ---- */
+.match-masthead {
+  display: grid;
+  gap: 10px;
+}
+
+.masthead-score {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.masthead-team {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--head);
+}
+
+.masthead-result {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--head);
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 6px 22px;
+}
+
+.compare-pair {
+  padding: 3px 0;
+}
+
+.compare-values {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-values b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.compare-values i {
+  color: var(--loss);
+  font-style: normal;
+}
+
+.compare-label {
+  display: block;
+  margin-top: 1px;
+  font-size: 10.5px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.compare-pair .hbar-track {
+  margin-top: 3px;
+}
+
+.note-line {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--text);
 }
 
 /* ---- Playground / misc ---- */

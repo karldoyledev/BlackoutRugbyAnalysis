@@ -1,0 +1,161 @@
+@page "/Fixtures/{id:int}"
+@model BlackoutRugbyDashboard.Pages.FixtureModel
+@{
+    ViewData["Title"] = "Match Analysis";
+
+    // The tab and the column sort are query-string state, so every control is a
+    // plain link and the card works without script (D6).
+    var tabKey = GameReviewMatrix.KeyFor(Model.SelectedGroup);
+    var dir = Model.SortDescending ? "desc" : "asc";
+    string TabUrl(string key) => $"?tab={key}";
+    string SortUrl(string key) =>
+        $"?tab={tabKey}&sort={key}&dir={(Model.SortKey == key && !Model.SortDescending ? "desc" : "asc")}";
+    string SortMarker(string key) => Model.SortKey == key ? (Model.SortDescending ? " ▼" : " ▲") : string.Empty;
+    string Score(int? value) => value?.ToString() ?? "—";
+}
+
+@if (Model.NotFound)
+{
+    <section class="control-panel">
+        <h1 class="club-name">Fixture not found</h1>
+        <p class="mb-0 text-muted">
+            No completed Fixture with id @Model.FixtureId is cached — it may not have been played yet, or the id is wrong.
+        </p>
+    </section>
+}
+else
+{
+    @* Masthead (D6): the two sides and the score, then the competition · date ·
+       stadium · attendance pills. A foreign Fixture says so rather than faking a
+       team sheet. *@
+    <section class="control-panel match-masthead">
+        <div class="masthead-score">
+            <span class="masthead-team">@Model.HomeName</span>
+            <span class="masthead-result">@Score(Model.HomeScore) - @Score(Model.GuestScore)</span>
+            <span class="masthead-team">@Model.GuestName</span>
+        </div>
+        <div class="pill-row">
+            <span class="pill neutral-pill">@Model.Competition</span>
+            <span class="pill neutral-pill">@Model.Date.ToString("MMM d, yyyy")</span>
+            @if (!string.IsNullOrWhiteSpace(Model.Stadium))
+            {
+                <span class="pill neutral-pill">@Model.Stadium</span>
+            }
+            @if (Model.AttendanceTotal > 0)
+            {
+                <span class="pill neutral-pill" title="Attendance tiers: @Model.AttendanceBreakdown">Att. @Model.AttendanceTotal.ToString("N0")</span>
+            }
+        </div>
+        @if (!Model.IsOurFixture)
+        {
+            <p class="mb-0 mt-2 text-muted">A foreign Fixture — your team sheet and the player tabs are not shown.</p>
+        }
+    </section>
+
+    @* Team compare row (D4): twelve fixed pairs from the cached full-time team
+       stats of both sides; possession and territory split a share bar. *@
+    <section class="table-panel">
+        <div class="section-heading">
+            <h2>Team vs opponent</h2>
+            <p>Twelve fixed pairs from this Fixture's cached full-time team stats.</p>
+        </div>
+        <div class="compare-grid">
+            @foreach (var pair in Model.Compare)
+            {
+                <div class="compare-pair">
+                    <div class="compare-values"><b>@pair.Us</b><i>@pair.Them</i></div>
+                    @if (pair.UsShare is int share)
+                    {
+                        <div class="hbar-track"><div class="hbar-fill" style="width:@share%"></div></div>
+                    }
+                    <span class="compare-label">@pair.Label</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    @if (!Model.IsOurFixture)
+    {
+        <section class="table-panel">
+            <p class="mb-0 text-muted">Full player breakdown is only for your club's Fixtures.</p>
+        </section>
+    }
+    else
+    {
+        @if (Model.ScoringLines.Count > 0)
+        {
+            <section class="table-panel">
+                <div class="section-heading"><h2>Match notes</h2></div>
+                @foreach (var line in Model.ScoringLines)
+                {
+                    <p class="note-line">@line</p>
+                }
+            </section>
+        }
+
+        <section class="table-panel">
+            <div class="section-heading">
+                <h2>Squad</h2>
+                <p>Every cached stat for this game, by Stat Group — each cell carries its movement against the previous cached game.</p>
+            </div>
+            <ul class="nav nav-pills stat-group-tabs">
+                @foreach (var group in GameReviewMatrix.Groups)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(group == Model.SelectedGroup ? "active" : string.Empty)"
+                           href="@TabUrl(GameReviewMatrix.KeyFor(group))">@GameReviewMatrix.TitleFor(group)</a>
+                    </li>
+                }
+            </ul>
+            <div class="table-responsive">
+                <table class="table dashboard-table compact-table game-review-table">
+                    <thead>
+                        <tr>
+                            <th title="Squad slot: 1-15 the XV, 16-23 the bench">Slot</th>
+                            <th>Player</th>
+                            <th>XV</th>
+                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.MinutesKey)" title="Minutes played">Min@(SortMarker(GameReviewMatrix.MinutesKey))</a></th>
+                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.PointsKey)" title="Points">Pts@(SortMarker(GameReviewMatrix.PointsKey))</a></th>
+                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.EnergyAfterKey)" title="Energy after the game">E-after@(SortMarker(GameReviewMatrix.EnergyAfterKey))</a></th>
+                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.CsrKey)" title="CSR from the latest Squad Snapshot">CSR@(SortMarker(GameReviewMatrix.CsrKey))</a></th>
+                            @foreach (var field in Model.GroupFields)
+                            {
+                                <th title="@field.Title"><a class="sort-link" href="@SortUrl(field.Key)">@field.Label@(SortMarker(field.Key))</a></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        <tr>
+                            <td>@row.Slot</td>
+                            <td>@row.Name</td>
+                            <td>
+                                @if (row.IsBench)
+                                {
+                                    <span class="pill neutral-pill">Bench</span>
+                                }
+                                else
+                                {
+                                    <span class="pill success-pill">XV</span>
+                                }
+                            </td>
+                            @foreach (var cell in row.Cells)
+                            {
+                                <td class="num">
+                                    @cell.Text
+                                    @if (cell.Delta is not null)
+                                    {
+                                        <span class="cell-delta @GameReviewMatrix.DeltaClass(cell.Delta)"
+                                              title="Movement against the previous cached game">@GameReviewMatrix.DeltaText(cell.Delta)</span>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+}

@@ -510,6 +510,19 @@ public class MatchCacheService(
         return result;
     }
 
+    /// <summary>True when the cache already holds this Fixture — the Match Analysis
+    /// page's first-view gate, so a warm Fixture costs no API call.</summary>
+    public async Task<bool> IsFixtureCachedAsync(int fixtureId, CancellationToken cancellationToken = default) =>
+        await db.Fixtures.AnyAsync(row => row.FixtureId == fixtureId, cancellationToken);
+
+    /// <summary>The cached Match Summary's scorer rows for one Fixture — zero API
+    /// calls; empty when the summary is not cached.</summary>
+    public async Task<IReadOnlyList<MatchSummaryScorerRow>> GetSummaryScorersAsync(
+        int fixtureId, CancellationToken cancellationToken = default) =>
+        await db.MatchSummaryScorers
+            .Where(row => row.FixtureId == fixtureId)
+            .ToListAsync(cancellationToken);
+
     /// <summary>
     /// The degraded discovery read: the newest completed cached fixtures for a
     /// team (season filter optional — season 0 means any season). Used only when
