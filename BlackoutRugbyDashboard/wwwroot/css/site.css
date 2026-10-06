@@ -476,6 +476,20 @@ input::placeholder {
   gap: 1rem;
 }
 
+.club-strip .club-identity {
+  flex: 1 1 auto;
+}
+
+/* The status / warning / error banners own a full-width row inside the strip and
+   read flush left. They were sharing the identity's flex row (space-between),
+   which left them floating mid-card rather than under the club name. */
+.club-strip .status-banner,
+.club-strip .warning-banner,
+.club-strip .error-banner {
+  flex: 1 1 100%;
+  margin-top: 0;
+}
+
 .club-strip .club-name,
 .club-name {
   margin: 0;
