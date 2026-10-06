@@ -1,0 +1,63 @@
+@page "/Players"
+@model BlackoutRugbyDashboard.Pages.Players.PlayersIndexModel
+@{
+    ViewData["Title"] = "Players";
+}
+
+<section class="control-panel player-header">
+    <div>
+        <h1 class="club-name">Players</h1>
+        <p class="mb-0 text-muted">Your squad from the latest Squad Snapshot — open a Player for their history.</p>
+    </div>
+</section>
+
+@if (Model.StatusMessage is not null)
+{
+    <div class="status-banner">@Model.StatusMessage</div>
+}
+
+<section class="table-panel">
+    <div class="section-heading">
+        <h2>Squad</h2>
+        @if (Model.HasCapture)
+        {
+            <p>Every Player in your latest capture, ranked by CSR. This page makes no API call.</p>
+        }
+        else
+        {
+            <p>No Squad Snapshot yet — capture the squad to populate this list.</p>
+        }
+    </div>
+
+    @if (Model.HasCapture)
+    {
+        <div class="table-responsive">
+            <table class="table dashboard-table compact-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th class="num">CSR</th>
+                        <th><span class="visually-hidden">History</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var player in Model.Players)
+                    {
+                        <tr>
+                            <td>@player.Name</td>
+                            <td class="num">@player.Csr</td>
+                            <td><a class="results-link" href="/Players/@player.Id" title="Open this Player's history">Player History →</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <form method="post" asp-page-handler="Capture">
+            <p class="text-muted">Capture squad performs the same roster read the Squad page makes and saves a Squad Snapshot.</p>
+            <button type="submit" class="btn btn-primary action-button">Capture squad</button>
+        </form>
+    }
+</section>

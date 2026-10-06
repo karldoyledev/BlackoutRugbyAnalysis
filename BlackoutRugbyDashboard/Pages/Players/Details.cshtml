@@ -1,0 +1,149 @@
+@page "/Players/{id:int}"
+@model BlackoutRugbyDashboard.Pages.Players.PlayerDetailModel
+@{
+    ViewData["Title"] = Model.PlayerName;
+
+    // The tab and the column sort are query-string state, so every control is a plain
+    // link and the page works without script (D7).
+    var tabKey = GameReviewMatrix.KeyFor(Model.SelectedGroup);
+    var dir = Model.SortDescending ? "desc" : "asc";
+    string TabUrl(string key) => $"?tab={key}&sort={Model.SortKey}&dir={dir}";
+    string SortUrl(string key) =>
+        $"?tab={tabKey}&sort={key}&dir={(Model.SortKey == key && !Model.SortDescending ? "desc" : "asc")}";
+    string SortMarker(string key) => Model.SortKey == key ? (Model.SortDescending ? " ▼" : " ▲") : string.Empty;
+}
+
+@* Header (D7): the Player name and the CSR chip from the latest Squad Snapshot. The
+   chip blanks when the Player is absent from it (a transferred-out Player). *@
+<section class="control-panel player-header">
+    <div>
+        <h1 class="club-name">@Model.PlayerName</h1>
+        <div class="pill-row">
+            @if (Model.PlayerCsr is int csr)
+            {
+                <span class="pill neutral-pill" title="CSR from the latest Squad Snapshot">CSR @csr</span>
+            }
+            @if (Model.Season > 0)
+            {
+                <span class="pill neutral-pill">Season @Model.Season</span>
+            }
+            @if (!Model.IsKnown)
+            {
+                <span class="pill neutral-pill" title="Not in your latest Squad Snapshot">Not in your squad</span>
+            }
+        </div>
+    </div>
+    <a class="btn btn-outline-secondary action-button" asp-page="/Players/Index">All players</a>
+</section>
+
+@* Season block (D7): the cached PlayerSeason row's totals organised by the same seven
+   Stat Groups as the Match page, the reliable caps total, and the one `ps` average. *@
+@if (Model.SeasonStats is not null)
+{
+    <section class="table-panel season-block">
+        <div class="section-heading">
+            <h2>Season @Model.SeasonStats.Season totals</h2>
+            <p>Cached season statistics (r=ps), by Stat Group. Caps is the reliable season count.</p>
+        </div>
+        <div class="pill-row">
+            <span class="pill neutral-pill">Caps @Model.SeasonStats.TotalCaps</span>
+            @if (Model.SeasonStats.AverageKickingMetres is int avKicking)
+            {
+                <span class="pill neutral-pill" title="Average kicking metres from the season read">Av kicking m @avKicking</span>
+            }
+        </div>
+        <div class="season-groups">
+            @foreach (var group in Model.SeasonStats.Groups)
+            {
+                <div class="season-group">
+                    <h3 class="sheet-heading">@GameReviewMatrix.TitleFor(group.Group)</h3>
+                    <dl class="season-list">
+                        @foreach (var field in group.Fields)
+                        {
+                            <div class="season-item">
+                                <dt>@field.Label</dt>
+                                <dd>@field.Value</dd>
+                            </div>
+                        }
+                    </dl>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@* Trends (D7): the seven Stat-Group tabs over a per-fixture table, newest first by
+   default, each field's column header carrying its own chronological sparkline. *@
+<section class="table-panel">
+    <div class="section-heading">
+        <h2>Trends</h2>
+        <p>Every cached Fixture this Player appeared in, by Stat Group. Cache-only — the Match Cache's PlayerFixture rows.</p>
+    </div>
+    <ul class="nav nav-pills stat-group-tabs">
+        @foreach (var group in GameReviewMatrix.Groups)
+        {
+            <li class="nav-item">
+                <a class="nav-link @(group == Model.SelectedGroup ? "active" : string.Empty)"
+                   href="@TabUrl(GameReviewMatrix.KeyFor(group))">@GameReviewMatrix.TitleFor(group)</a>
+            </li>
+        }
+    </ul>
+
+    @if (Model.EmptyTrends)
+    {
+        <p class="mb-0 text-muted">
+            No cached Fixtures for this Player yet — trends appear as you open your club's Fixtures.
+        </p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table dashboard-table compact-table player-history-table">
+                <thead>
+                    <tr>
+                        <th><a class="sort-link" href="@SortUrl(PlayerHistory.DateKey)">Date@(SortMarker(PlayerHistory.DateKey))</a></th>
+                        <th>Comp</th>
+                        <th>Opponent</th>
+                        <th>Result</th>
+                        <th class="num"><a class="sort-link" href="@SortUrl(PlayerHistory.SlotKey)">Slot@(SortMarker(PlayerHistory.SlotKey))</a></th>
+                        <th class="num"><a class="sort-link" href="@SortUrl(PlayerHistory.MinutesKey)">Min@(SortMarker(PlayerHistory.MinutesKey))</a></th>
+                        @for (var index = 0; index < Model.GroupFields.Count; index++)
+                        {
+                            var field = Model.GroupFields[index];
+                            <th class="num" title="@field.Title">
+                                <a class="sort-link" href="@SortUrl(field.Key)">@field.Label@(SortMarker(field.Key))</a>
+                                @if (Model.Sparklines[index].Length > 0)
+                                {
+                                    <span class="trend-spark">@Html.Raw(Model.Sparklines[index])</span>
+                                }
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        <tr>
+                            <td>@row.Date.ToString("MMM d, yyyy")</td>
+                            <td>@row.CompetitionLabel</td>
+                            <td>
+                                @row.Opponent
+                                @if (row.OpponentIsBot)
+                                {
+                                    <span class="pill warning-pill">BOT</span>
+                                }
+                            </td>
+                            <td><span class="@row.ResultClass">@row.ResultText</span></td>
+                            <td class="num">@row.Slot</td>
+                            <td class="num">@row.Minutes</td>
+                            @foreach (var value in row.Values)
+                            {
+                                <td class="num">@value</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

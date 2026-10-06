@@ -312,4 +312,43 @@ public class MatchCacheServiceTests
 
         Assert.Null(service.GetCachedLineup(900001, 45047));
     }
+
+    [Fact]
+    public async Task GetPlayerFixtureHistory_JoinsFixturesAndSummaries_NewestFirst()
+    {
+        var (service, _, db, _) = BuildService();
+        db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 1, HomeTeamId = 45047, GuestTeamId = 45037, Competition = "League", Round = 1,
+            Season = 62, MatchStartUnix = 100, MatchFinishUnix = 200
+        });
+        db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 2, HomeTeamId = 45037, GuestTeamId = 45047, Competition = "League", Round = 2,
+            Season = 62, MatchStartUnix = 300, MatchFinishUnix = 400
+        });
+        db.PlayerFixtures.Add(new PlayerFixtureRow { FixtureId = 1, TeamId = 45047, PlayerId = 99, Slot = 1 });
+        db.PlayerFixtures.Add(new PlayerFixtureRow { FixtureId = 2, TeamId = 45047, PlayerId = 99, Slot = 1 });
+        db.MatchSummaries.Add(new MatchSummaryRow { FixtureId = 1, HomePoints = 20, GuestPoints = 10 });
+        db.MatchSummaries.Add(new MatchSummaryRow { FixtureId = 2, HomePoints = 5, GuestPoints = 15 });
+        await db.SaveChangesAsync();
+
+        var history = await service.GetPlayerFixtureHistoryAsync(99);
+
+        Assert.Equal(2, history.Count);
+        Assert.Equal(2, history[0].Fixture.FixtureId); // newest first
+        Assert.False(history[0].IsHome);
+        Assert.Equal(15, history[0].Score);
+        Assert.Equal(5, history[0].OppositionScore);
+        Assert.True(history[1].IsHome);
+        Assert.Equal(20, history[1].Score);
+    }
+
+    [Fact]
+    public async Task GetPlayerFixtureHistory_UnknownPlayer_IsEmpty()
+    {
+        var (service, _, _, _) = BuildService();
+
+        Assert.Empty(await service.GetPlayerFixtureHistoryAsync(123456));
+    }
 }

@@ -53,6 +53,20 @@ public sealed record SquadFixtureRows(
     TeamFixtureStatRow? OpponentStats = null,
     TeamFixtureStatRow? TeamFirstHalfStats = null);
 
+/// <summary>
+/// One cached appearance of a Player (D7): the Fixture it was, the PlayerFixture
+/// row itself, and the result context the Player History trends table's columns
+/// read. <see cref="IsHome"/> is whether the Player's Team was the Fixture's home
+/// side; the scores are read from our perspective.
+/// </summary>
+public sealed record PlayerFixtureHistoryRow(
+    FixtureRow Fixture,
+    PlayerFixtureRow Row,
+    bool IsHome,
+    int Score,
+    int OppositionScore,
+    bool HasResult);
+
 /// <summary>The Match Cache's parsed-row tables; the manual per-table reset targets (D1 §5).</summary>
 public enum CacheTable
 {
@@ -540,6 +554,77 @@ public class MatchCacheService(
 
         var lineups = adapter.ParseLineups(xml);
         return lineups.FirstOrDefault(lineup => lineup.TeamId == teamId) ?? lineups.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Every cached appearance of one Player, newest Fixture first (D7): their
+    /// PlayerFixture rows joined with the Fixture metadata and the Match Summary that
+    /// carries the result. Strictly cache-first — zero API calls; a Player the cache
+    /// has never seen yields an empty list.
+    /// </summary>
+    public async Task<IReadOnlyList<PlayerFixtureHistoryRow>> GetPlayerFixtureHistoryAsync(
+        int playerId, CancellationToken cancellationToken = default)
+    {
+        var rows = await db.PlayerFixtures
+            .Where(row => row.PlayerId == playerId)
+            .ToListAsync(cancellationToken);
+        if (rows.Count == 0)
+        {
+            return [];
+        }
+
+        var fixtureIds = rows.Select(row => row.FixtureId).Distinct().ToList();
+        var fixtures = await db.Fixtures
+            .Where(row => fixtureIds.Contains(row.FixtureId))
+            .ToDictionaryAsync(row => row.FixtureId, cancellationToken);
+        var summaries = await db.MatchSummaries
+            .Where(row => fixtureIds.Contains(row.FixtureId))
+            .ToDictionaryAsync(row => row.FixtureId, cancellationToken);
+
+        return rows
+            .Where(row => fixtures.ContainsKey(row.FixtureId))
+            .Select(row =>
+            {
+                var fixture = fixtures[row.FixtureId];
+                var isHome = fixture.HomeTeamId == row.TeamId;
+                var hasResult = summaries.TryGetValue(row.FixtureId, out var summary);
+                var score = !hasResult ? 0 : isHome ? summary!.HomePoints : summary!.GuestPoints;
+                var opposition = !hasResult ? 0 : isHome ? summary!.GuestPoints : summary!.HomePoints;
+                return new PlayerFixtureHistoryRow(fixture, row, isHome, score, opposition, hasResult);
+            })
+            .OrderByDescending(entry => entry.Fixture.MatchStartUnix)
+            .ToList();
+    }
+
+    /// <summary>The cached season statistics row for one Player+season (D7's season
+    /// block), or null when no `ps` read has been cached for that pair yet.</summary>
+    public async Task<PlayerSeasonRow?> GetPlayerSeasonAsync(
+        int playerId, int season, CancellationToken cancellationToken = default) =>
+        await db.PlayerSeasons
+            .FirstOrDefaultAsync(row => row.PlayerId == playerId && row.Season == season, cancellationToken);
+
+    /// <summary>The newest completed cached Fixture's season for a team (0 when the
+    /// cache holds none) — the season the Player History page scopes its `ps` read to.</summary>
+    public async Task<int> GetLatestCachedSeasonAsync(int teamId, CancellationToken cancellationToken = default)
+    {
+        var row = await db.Fixtures
+            .Where(fixture => (fixture.HomeTeamId == teamId || fixture.GuestTeamId == teamId)
+                              && fixture.MatchFinishUnix > 0)
+            .OrderByDescending(fixture => fixture.MatchFinishUnix)
+            .FirstOrDefaultAsync(cancellationToken);
+        return row?.Season ?? 0;
+    }
+
+    /// <summary>The newest completed cached Fixture's finish time for a team, or null —
+    /// the staleness bound D7's `ps` refresh compares a cached row's FetchedAt against.</summary>
+    public async Task<DateTime?> GetLatestCachedFinishUtcAsync(int teamId, CancellationToken cancellationToken = default)
+    {
+        var row = await db.Fixtures
+            .Where(fixture => (fixture.HomeTeamId == teamId || fixture.GuestTeamId == teamId)
+                              && fixture.MatchFinishUnix > 0)
+            .OrderByDescending(fixture => fixture.MatchFinishUnix)
+            .FirstOrDefaultAsync(cancellationToken);
+        return row is null ? null : DateTimeOffset.FromUnixTimeSeconds(row.MatchFinishUnix).UtcDateTime;
     }
 
     /// <summary>

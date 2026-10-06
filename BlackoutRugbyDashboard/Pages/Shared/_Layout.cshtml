@@ -3,7 +3,7 @@
 @{
     var currentPage = ViewContext.RouteData.Values["page"] as string ?? string.Empty;
     string NavClass(string page) =>
-        string.Equals(currentPage, page, StringComparison.OrdinalIgnoreCase) ? "on" : string.Empty;
+        currentPage.StartsWith(page, StringComparison.OrdinalIgnoreCase) ? "on" : string.Empty;
     var authenticated = User.Identity?.IsAuthenticated == true;
     var link = authenticated ? ClubLink.GetLinkState() : null;
     var clubName = link is null
@@ -34,6 +34,7 @@
                 @if (link is not null)
                 {
                     <a class="@NavClass("/Squad")" asp-page="/Squad">Squad</a>
+                    <a class="@NavClass("/Players")" asp-page="/Players/Index">Players</a>
                 }
                 <a class="@NavClass("/Playground")" asp-page="/Playground">API Playground</a>
                 <a class="@NavClass("/Account/Settings")" asp-page="/Account/Settings">Settings</a>

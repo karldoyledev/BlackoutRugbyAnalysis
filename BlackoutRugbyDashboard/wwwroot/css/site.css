@@ -1124,3 +1124,55 @@ input::placeholder {
   font-size: 12.5px;
   color: var(--accent);
 }
+
+/* Player History (D7): header, season block, trends */
+.player-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.season-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px 26px;
+  margin-top: 10px;
+}
+
+.season-list {
+  margin: 0;
+}
+
+.season-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 1px 0;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.season-item dt {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.season-item dd {
+  margin: 0;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.player-history-table .trend-spark,
+.game-trend-table .trend-spark {
+  display: block;
+  margin-top: 2px;
+}
+
+.player-history-table .sort-link,
+.game-trend-table .sort-link {
+  white-space: nowrap;
+}
+
