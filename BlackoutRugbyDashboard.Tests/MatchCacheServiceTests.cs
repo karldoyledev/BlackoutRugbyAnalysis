@@ -351,4 +351,30 @@ public class MatchCacheServiceTests
 
         Assert.Empty(await service.GetPlayerFixtureHistoryAsync(123456));
     }
+
+    [Fact]
+    public async Task GetLatestCachedFixture_ReturnsSeasonAndFinish_OrNullWhenEmpty()
+    {
+        var (service, _, db, _) = BuildService();
+
+        Assert.Null(await service.GetLatestCachedFixtureAsync(45047));
+
+        db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 1, HomeTeamId = 45047, GuestTeamId = 45037, Season = 61,
+            MatchStartUnix = 100, MatchFinishUnix = 200
+        });
+        db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 2, HomeTeamId = 45037, GuestTeamId = 45047, Season = 62,
+            MatchStartUnix = 300, MatchFinishUnix = 400
+        });
+        await db.SaveChangesAsync();
+
+        var latest = await service.GetLatestCachedFixtureAsync(45047);
+
+        Assert.NotNull(latest);
+        Assert.Equal(62, latest!.Value.Season);
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(400).UtcDateTime, latest.Value.FinishUtc);
+    }
 }

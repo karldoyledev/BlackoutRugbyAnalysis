@@ -166,20 +166,27 @@ public class RecommendationEngineTests
     }
 
     [Fact]
-    public void Items_OrderActBeforeWatch_ThenRuleOrderWithinALevel()
+    public void Items_OrderActBeforeWatch_ThenCompareRowOrderWithinALevel()
     {
         var items = Build(us =>
         {
-            us.Possession = 40;          // Watch (rule 1)
+            us.Possession = 40;          // Watch, compare pair 1
             us.LineoutsWon = 8;
-            us.LineoutsLost = 14;        // Act (rule 3)
-            us.PenaltiesConceded = 4;    // Watch (rule 7)
-        }, them => them.Possession = 60);
+            us.LineoutsLost = 14;        // Act,  compare pair 8 (rule 3)
+            us.PenaltiesConceded = 4;    // Watch, compare pair 11 (rule 7)
+        }, them =>
+        {
+            them.Possession = 60;
+            them.Tries = 3;              // Watch, compare pair 3 (rule 8)
+        });
 
+        // Within the Watch level the order follows the compare row (pair 1, pair 3,
+        // pair 11) — not the D8 rule-table order (rule 7 would precede rule 8).
         Assert.Collection(
             items,
             item => Assert.Equal(RecommendationSeverity.Act, item.Severity),
             item => Assert.Equal("Lost the possession battle", item.Diagnosis),
+            item => Assert.Equal("Defence broken repeatedly", item.Diagnosis),
             item => Assert.Equal("Discipline is costing points", item.Diagnosis));
     }
 }

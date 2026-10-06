@@ -76,13 +76,13 @@ public class PlayerDetailModel(
 
         // `ps` is ours-only and fetched once per Player+season (1 call) on first view;
         // a foreign or unknown id makes no read at all.
-        Season = await cache.GetLatestCachedSeasonAsync(teamId);
+        var latest = await cache.GetLatestCachedFixtureAsync(teamId);
+        Season = latest?.Season ?? 0;
         if (IsKnown && Season > 0)
         {
-            var newestFinish = await cache.GetLatestCachedFinishUtcAsync(teamId);
             try
             {
-                await cache.GetOrRefreshPlayerSeasonsAsync([id], Season, newestFinish);
+                await cache.GetOrRefreshPlayerSeasonsAsync([id], Season, latest!.Value.FinishUtc);
             }
             catch (Exception exception)
             {

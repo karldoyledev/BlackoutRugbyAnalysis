@@ -100,101 +100,105 @@ public static class RecommendationEngine
 
     /// <summary>
     /// The rules run against our side's and the opponent's full-time bare-`fs` rows.
-    /// Items come back Act first, then Watch; within a level the rules read in their
-    /// fixed v1 order (the D8 rule-table order). No item means every comparison sat
-    /// inside its Watch threshold.
+    /// Items come back Act first, then Watch; within a level they read in compare-row
+    /// order (the D8 §4 rule). No item means every comparison sat inside its Watch
+    /// threshold.
     /// </summary>
     public static IReadOnlyList<RecommendationItem> Build(TeamFixtureStatRow us, TeamFixtureStatRow them)
     {
-        var items = new List<RecommendationItem>();
+        // Each rule records the compare-row position of the pair it reads (the D4 order),
+        // so the output orders Act first, then by compare-row within a level (D8 §4).
+        var items = new List<(int Order, RecommendationItem Item)>();
 
-        // 1 - Possession share.
+        // Possession share (compare pair 1).
         if (Share(us.Possession, them.Possession) is int possession && possession < Thresholds.PossessionWatch)
         {
-            items.Add(Item(
+            items.Add((1, Item(
                 possession < Thresholds.PossessionAct,
                 "Lost the possession battle",
                 $"Possession {possession}% to {100 - possession}%",
-                Raise(Driving), Cut(Expansive)));
+                Raise(Driving), Cut(Expansive))));
         }
 
         // 2 - Territory share.
         if (Share(us.Territory, them.Territory) is int territory && territory < Thresholds.TerritoryWatch)
         {
-            items.Add(Item(
+            items.Add((2, Item(
                 territory < Thresholds.TerritoryAct,
                 "Starved of territory",
                 $"Territory {territory}% to {100 - territory}%",
-                Raise(KickForTouch), Raise(Kicking)));
+                Raise(KickForTouch), Raise(Kicking))));
         }
 
         // 3 - Lineouts: lost minus won.
         var lineoutLoss = us.LineoutsLost - us.LineoutsWon;
         if (lineoutLoss >= Thresholds.LineoutLostMinusWonWatch)
         {
-            items.Add(Item(
+            items.Add((8, Item(
                 lineoutLoss >= Thresholds.LineoutLostMinusWonAct,
                 "Lineout battle lost",
                 $"Lineouts: won {us.LineoutsWon}, lost {us.LineoutsLost}",
-                Raise(Driving), Cut(Expansive)));
+                Raise(Driving), Cut(Expansive))));
         }
 
         // 4 - Scrums lost on our own ball.
         if (us.ScrumsLost >= Thresholds.ScrumLostWatch)
         {
-            items.Add(Item(
+            items.Add((7, Item(
                 us.ScrumsLost >= Thresholds.ScrumLostAct,
                 "Scrum under pressure",
                 $"Scrums lost on our own ball: {us.ScrumsLost}",
-                Cut(Expansive)));
+                Cut(Expansive))));
         }
 
         // 5 - Rucks won: theirs minus yours.
         var ruckDeficit = them.RucksWon - us.RucksWon;
         if (ruckDeficit >= Thresholds.RuckWonTheirsMinusYoursWatch)
         {
-            items.Add(Item(
+            items.Add((5, Item(
                 ruckDeficit >= Thresholds.RuckWonTheirsMinusYoursAct,
                 "Ruck battle lost",
                 $"Rucks won: {us.RucksWon} to {them.RucksWon}",
-                Raise(PickAndGo), Raise(Driving), Cut(Expansive)));
+                Raise(PickAndGo), Raise(Driving), Cut(Expansive))));
         }
 
         // 6 - Turnovers: conceded minus won.
         var turnoverLoss = us.TurnoversConceded - us.Turnovers;
         if (turnoverLoss >= Thresholds.TurnoverConcededMinusWonWatch)
         {
-            items.Add(Item(
+            items.Add((12, Item(
                 turnoverLoss >= Thresholds.TurnoverConcededMinusWonAct,
                 "Throwing it away",
                 $"Turnovers: conceded {us.TurnoversConceded}, won {us.Turnovers}",
-                Cut(Creative), Cut(Expansive), Raise(Driving)));
+                Cut(Creative), Cut(Expansive), Raise(Driving))));
         }
 
         // 7 - Penalties: conceded minus won.
         var penaltyLoss = us.PenaltiesConceded - us.PenaltiesWon;
         if (penaltyLoss >= Thresholds.PenaltyConcededMinusWonWatch)
         {
-            items.Add(Item(
+            items.Add((11, Item(
                 penaltyLoss >= Thresholds.PenaltyConcededMinusWonAct,
                 "Discipline is costing points",
                 $"Penalties: conceded {us.PenaltiesConceded}, won {us.PenaltiesWon}",
-                EaseOff(Discipline)));
+                EaseOff(Discipline))));
         }
 
         // 8 - Tries conceded.
         if (them.Tries >= Thresholds.TriesConcededWatch)
         {
-            items.Add(Item(
+            items.Add((3, Item(
                 them.Tries >= Thresholds.TriesConcededAct,
                 "Defence broken repeatedly",
                 $"Tries conceded: {them.Tries}",
-                Raise(Defence)));
+                Raise(Defence))));
         }
 
-        // Act items first, then Watch; a stable sort keeps the v1 rule order within a level.
+        // Act items first, then Watch; within a level, compare-row order (D8 §4).
         return items
-            .OrderBy(item => item.Severity == RecommendationSeverity.Act ? 0 : 1)
+            .OrderBy(entry => entry.Item.Severity == RecommendationSeverity.Act ? 0 : 1)
+            .ThenBy(entry => entry.Order)
+            .Select(entry => entry.Item)
             .ToList();
     }
     /// <summary>Our percentage share of a two-sided count, or null when neither side

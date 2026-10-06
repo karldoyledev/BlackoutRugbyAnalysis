@@ -19,7 +19,7 @@ namespace BlackoutRugbyDashboard.Tests;
 /// raw folder, over a fake API client. They assert the rendered state (team sheet,
 /// recommendations, trends, season block) and the call budget — never Razor markup.
 /// </summary>
-public partial class PageModelTests
+public class PageModelTests
 {
     private const int TeamId = 45047;
     private const int OpponentId = 45037;

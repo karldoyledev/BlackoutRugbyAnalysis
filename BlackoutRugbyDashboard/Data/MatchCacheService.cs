@@ -603,28 +603,23 @@ public class MatchCacheService(
         await db.PlayerSeasons
             .FirstOrDefaultAsync(row => row.PlayerId == playerId && row.Season == season, cancellationToken);
 
-    /// <summary>The newest completed cached Fixture's season for a team (0 when the
-    /// cache holds none) — the season the Player History page scopes its `ps` read to.</summary>
-    public async Task<int> GetLatestCachedSeasonAsync(int teamId, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// The newest completed cached Fixture for a team — its season and its finish time
+    /// — or null when the cache holds none. One read serves both the `ps` scope's
+    /// season and its staleness bound (D7), so the Player History page never runs the
+    /// same query twice.
+    /// </summary>
+    public async Task<(int Season, DateTime FinishUtc)?> GetLatestCachedFixtureAsync(
+        int teamId, CancellationToken cancellationToken = default)
     {
         var row = await db.Fixtures
             .Where(fixture => (fixture.HomeTeamId == teamId || fixture.GuestTeamId == teamId)
                               && fixture.MatchFinishUnix > 0)
             .OrderByDescending(fixture => fixture.MatchFinishUnix)
             .FirstOrDefaultAsync(cancellationToken);
-        return row?.Season ?? 0;
-    }
-
-    /// <summary>The newest completed cached Fixture's finish time for a team, or null —
-    /// the staleness bound D7's `ps` refresh compares a cached row's FetchedAt against.</summary>
-    public async Task<DateTime?> GetLatestCachedFinishUtcAsync(int teamId, CancellationToken cancellationToken = default)
-    {
-        var row = await db.Fixtures
-            .Where(fixture => (fixture.HomeTeamId == teamId || fixture.GuestTeamId == teamId)
-                              && fixture.MatchFinishUnix > 0)
-            .OrderByDescending(fixture => fixture.MatchFinishUnix)
-            .FirstOrDefaultAsync(cancellationToken);
-        return row is null ? null : DateTimeOffset.FromUnixTimeSeconds(row.MatchFinishUnix).UtcDateTime;
+        return row is null
+            ? null
+            : (row.Season, DateTimeOffset.FromUnixTimeSeconds(row.MatchFinishUnix).UtcDateTime);
     }
 
     /// <summary>
