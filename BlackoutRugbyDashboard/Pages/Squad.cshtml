@@ -328,13 +328,13 @@
                             <th title="Squad slot: 1-15 the XV, 16-23 the bench">Slot</th>
                             <th>Player</th>
                             <th>XV</th>
-                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.MinutesKey)" title="Minutes played">Min@(SortMarker(GameReviewMatrix.MinutesKey))</a></th>
-                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.PointsKey)" title="Points">Pts@(SortMarker(GameReviewMatrix.PointsKey))</a></th>
-                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.EnergyAfterKey)" title="Energy after the game">E-after@(SortMarker(GameReviewMatrix.EnergyAfterKey))</a></th>
-                            <th><a class="sort-link" href="@SortUrl(GameReviewMatrix.CsrKey)" title="CSR from the latest Squad Snapshot — blank when the Player is not in it">CSR@(SortMarker(GameReviewMatrix.CsrKey))</a></th>
+                            <th class="num"><a class="sort-link" href="@SortUrl(GameReviewMatrix.MinutesKey)" title="Minutes played">Min@(SortMarker(GameReviewMatrix.MinutesKey))</a></th>
+                            <th class="num"><a class="sort-link" href="@SortUrl(GameReviewMatrix.PointsKey)" title="Points">Pts@(SortMarker(GameReviewMatrix.PointsKey))</a></th>
+                            <th class="num"><a class="sort-link" href="@SortUrl(GameReviewMatrix.EnergyAfterKey)" title="Energy after the game">E-after@(SortMarker(GameReviewMatrix.EnergyAfterKey))</a></th>
+                            <th class="num"><a class="sort-link" href="@SortUrl(GameReviewMatrix.CsrKey)" title="CSR from the latest Squad Snapshot — blank when the Player is not in it">CSR@(SortMarker(GameReviewMatrix.CsrKey))</a></th>
                             @foreach (var field in Model.GroupFields)
                             {
-                                <th title="@field.Title"><a class="sort-link" href="@SortUrl(field.Key)">@field.Label@(SortMarker(field.Key))</a></th>
+                                <th class="num" title="@field.Title"><a class="sort-link" href="@SortUrl(field.Key)">@field.Label@(SortMarker(field.Key))</a></th>
                             }
                         </tr>
                     </thead>
