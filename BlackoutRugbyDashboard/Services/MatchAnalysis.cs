@@ -82,6 +82,64 @@ public static class MatchAnalysis
             .ToList();
     }
 
+    /// <summary>
+    /// One slot of the tactics panel's team sheet (D6 §2): the slot number (1–15 the
+    /// XV, 16–23 the Bench), the Player id, the name resolved from the latest Squad
+    /// Snapshot, and the captain / kicker badges.
+    /// </summary>
+    public sealed record TeamSheetSlot(
+        int Slot, int PlayerId, string Name, bool IsBench, bool IsCaptain, bool IsKicker);
+
+    /// <summary>
+    /// The tactics panel's team sheet (D6 §2) from the cached `lu` lineup: the XV
+    /// (slots 1–15) then the Bench (slots 16–23), each with its Player name resolved
+    /// from the latest Squad Snapshot and the captain / kicker badges. A null lineup
+    /// (nothing archived) yields no rows; a slot with no Player id is skipped; a Player
+    /// absent from the capture reads as "Player {id}" rather than a made-up name.
+    /// Strategy sliders are deliberately absent — the API cannot verify them (R1).
+    /// </summary>
+    public static IReadOnlyList<TeamSheetSlot> BuildTeamSheet(
+        Lineup? lineup, IReadOnlyDictionary<int, string> names)
+    {
+        if (lineup is null)
+        {
+            return [];
+        }
+
+        var slots = new List<TeamSheetSlot>();
+        for (var index = 0; index < lineup.Xv.Count; index++)
+        {
+            AddSlot(slots, index + 1, lineup.Xv[index], isBench: false, lineup, names);
+        }
+
+        for (var index = 0; index < lineup.Bench.Count; index++)
+        {
+            AddSlot(slots, index + 16, lineup.Bench[index], isBench: true, lineup, names);
+        }
+
+        return slots;
+    }
+
+    /// <summary>The intensity chip's text from the cached Match Summary ("Intensity: 2"),
+    /// or null when our side's intensity is not cached (0 / missing) — never a made-up value.</summary>
+    public static string? IntensityText(int? intensity) =>
+        intensity is int value && value > 0 ? $"Intensity: {value}" : null;
+
+    private static void AddSlot(
+        List<TeamSheetSlot> slots, int slot, int playerId, bool isBench, Lineup lineup,
+        IReadOnlyDictionary<int, string> names)
+    {
+        if (playerId <= 0)
+        {
+            return;
+        }
+
+        var name = names.TryGetValue(playerId, out var resolved) && !string.IsNullOrWhiteSpace(resolved)
+            ? resolved
+            : $"Player {playerId}";
+        slots.Add(new TeamSheetSlot(slot, playerId, name, isBench, lineup.CaptainId == playerId, lineup.KickerId == playerId));
+    }
+
     private static CompareRow Share(string label, int? us, int? them)
     {
         if (us is not int ours || them is not int theirs || ours + theirs <= 0)

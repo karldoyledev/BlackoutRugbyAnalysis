@@ -86,7 +86,7 @@ public class MatchCacheServiceTests
         public Task<string> GetLineupsAsync(int teamId, int? fixtureId = null, string? fixtureIds = null, bool youth = false, bool nat = false, bool u20 = false)
         {
             LuCalls++;
-            return Task.FromResult("<blackoutrugby_api_response />");
+            return Task.FromResult(TestXml.Load("r1-lineups-lu-fixture-21416928.xml"));
         }
 
         public Task<string> GetStandingsAsync(int? leagueId = null, bool youth = false, bool nat = false, bool u20 = false, int? season = null) => throw new NotSupportedException();
@@ -252,5 +252,64 @@ public class MatchCacheServiceTests
 
         Assert.Equal(1, await db.TeamFacts.CountAsync());
         Assert.Equal(2, api.TeamCalls);
+    }
+
+    [Fact]
+    public async Task FillFixtureAnalysis_ColdFixture_FillsTheFullEntryScope()
+    {
+        var (service, api, _, _) = BuildService();
+
+        var calls = await service.FillFixtureAnalysisAsync(900001, 45047);
+
+        Assert.Equal(5, calls);
+        Assert.Equal(5, api.FixtureCalls + api.SummaryCalls + api.FsCalls + api.LuCalls);
+    }
+
+    [Fact]
+    public async Task FillFixtureAnalysis_WarmFixture_FillsOnlyTheMissingAnalysisScope()
+    {
+        var (service, api, _, _) = BuildService();
+        await service.FillHomeWindowAsync(45047); // f + ms + t — the Home window fill
+        var fsBefore = api.FsCalls;
+        var luBefore = api.LuCalls;
+
+        var calls = await service.FillFixtureAnalysisAsync(900001, 45047);
+
+        // The analysis adds the squad fs, the bare fs and the lu — nothing else.
+        Assert.Equal(3, calls);
+        Assert.Equal(2, api.FsCalls - fsBefore);
+        Assert.Equal(1, api.LuCalls - luBefore);
+
+        // The little the analysis never re-reads: the archived `lu` (and the fixture /
+        // summary Home already held) are untouched by a second fill. The `fs` rows the
+        // FakeApi returns carry the artifact's own fixture id, so the fs archive itself
+        // is out of scope here — its append-only rule is FillFixture_NeverReFetches'.
+        await service.FillFixtureAnalysisAsync(900001, 45047);
+        Assert.Equal(1, api.LuCalls - luBefore);
+        Assert.Equal(1, api.FixtureCalls);
+        Assert.Equal(1, api.SummaryCalls);
+    }
+
+    [Fact]
+    public async Task GetCachedLineup_ParsesTheArchivedLu_WithNoApiCall()
+    {
+        var (service, _, _, _) = BuildService();
+        await service.FillFixtureAnalysisAsync(900001, 45047);
+
+        var lineup = service.GetCachedLineup(900001, 45047);
+
+        Assert.NotNull(lineup);
+        Assert.Equal(45047, lineup!.TeamId);
+        Assert.Equal(15, lineup.Xv.Count);
+        Assert.Equal(8, lineup.Bench.Count);
+        Assert.Equal(16398979, lineup.CaptainId);
+    }
+
+    [Fact]
+    public void GetCachedLineup_WithNoArchive_ReturnsNull()
+    {
+        var (service, _, _, _) = BuildService();
+
+        Assert.Null(service.GetCachedLineup(900001, 45047));
     }
 }

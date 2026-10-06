@@ -524,6 +524,81 @@ public class MatchCacheService(
             .ToListAsync(cancellationToken);
 
     /// <summary>
+    /// Our cached team sheet for one Fixture (D6 §2): the `lu` response is archived raw
+    /// at fill time and parsed here on read, so the tactics panel costs no API call and
+    /// every Fixture that has had its entry-scope fill carries one — including Fixtures
+    /// cached by earlier slices, for which no parsed table exists. Null when nothing was
+    /// archived; the team's own lineup wins, else the first the archive holds.
+    /// </summary>
+    public Lineup? GetCachedLineup(int fixtureId, int teamId)
+    {
+        var xml = rawStore.TryLoadLatest("lu", fixtureId.ToString(CultureInfo.InvariantCulture));
+        if (xml is null)
+        {
+            return null;
+        }
+
+        var lineups = adapter.ParseLineups(xml);
+        return lineups.FirstOrDefault(lineup => lineup.TeamId == teamId) ?? lineups.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Brings one Fixture's Match Analysis scope into the cache (D6 §8): a cold deep
+    /// link fills the full D1 entry scope (5 calls), while a Fixture the Home window
+    /// already holds (`f` + `ms`) fills only what the analysis adds — the squad `fs`,
+    /// the bare-`fs` both sides and the `lu` archive — so arriving from Home costs 2–3
+    /// calls, inside R3's verified budget. Append-only: only missing pieces are
+    /// fetched, and the squad `fs` / `lu` reads are ours-only (a foreign Fixture still
+    /// reads its bare-`fs` for the compare row). Returns the calls made.
+    /// </summary>
+    public async Task<int> FillFixtureAnalysisAsync(
+        int fixtureId, int teamId, CancellationToken cancellationToken = default)
+    {
+        var fixture = await db.Fixtures
+            .FirstOrDefaultAsync(row => row.FixtureId == fixtureId, cancellationToken);
+        if (fixture is null)
+        {
+            return await FillFixtureAsync(fixtureId, teamId, cancellationToken) ? CallsPerFixtureFill : 0;
+        }
+
+        var key = fixtureId.ToString(CultureInfo.InvariantCulture);
+        var ours = fixture.HomeTeamId == teamId || fixture.GuestTeamId == teamId;
+        var calls = 0;
+
+        if (ours && !await db.PlayerFixtures.AnyAsync(
+                row => row.FixtureId == fixtureId && row.TeamId == teamId, cancellationToken))
+        {
+            var squadXml = await api.GetFixtureStatisticsAsync(fixtureId, teamPlayersStats: teamId);
+            rawStore.Save("fs-teamplayers", key, squadXml);
+            db.PlayerFixtures.AddRange(adapter.ParsePlayerFixtureStats(squadXml));
+            calls++;
+        }
+
+        if (!await db.TeamFixtureStats.AnyAsync(
+                row => row.FixtureId == fixtureId && row.Half == "full", cancellationToken))
+        {
+            var bareXml = await api.GetFixtureStatisticsAsync(fixtureId);
+            rawStore.Save("fs-bare", key, bareXml);
+            db.TeamFixtureStats.AddRange(adapter.ParseTeamFixtureStats(bareXml));
+            calls++;
+        }
+
+        if (ours && rawStore.TryLoadLatest("lu", key) is null)
+        {
+            var lineupXml = await api.GetLineupsAsync(teamId, fixtureId: fixtureId);
+            rawStore.Save("lu", key, lineupXml);
+            calls++;
+        }
+
+        if (calls > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        return calls;
+    }
+
+    /// <summary>
     /// The degraded discovery read: the newest completed cached fixtures for a
     /// team (season filter optional — season 0 means any season). Used only when
     /// the live fixtures read failed.

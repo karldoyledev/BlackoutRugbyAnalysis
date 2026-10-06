@@ -12,6 +12,12 @@
         $"?tab={tabKey}&sort={key}&dir={(Model.SortKey == key && !Model.SortDescending ? "desc" : "asc")}";
     string SortMarker(string key) => Model.SortKey == key ? (Model.SortDescending ? " ▼" : " ▲") : string.Empty;
     string Score(int? value) => value?.ToString() ?? "—";
+    // The Recommendations run (D8): a plain link carrying the current tab and sort, so
+    // the output card renders server-side with no script.
+    string RecsUrl() =>
+        $"?tab={tabKey}&recs=1"
+        + (Model.SortKey is null ? string.Empty : $"&sort={Model.SortKey}&dir={dir}");
+    int slotStart(IEnumerable<MatchAnalysis.TeamSheetSlot> slots) => slots.FirstOrDefault()?.Slot ?? 1;
 }
 
 @if (Model.NotFound)
@@ -52,12 +58,85 @@ else
         }
     </section>
 
+    @* Tactics panel (D6 §2): our team sheet from the cached `lu` archive — XV (slots
+       1–15) and Bench (16–23) as two compact columns, captain / kicker badges, and the
+       intensity chip from the Match Summary. Strictly read-only: strategy sliders are
+       unreadable through the API (R1), so none are shown. *@
+    @if (Model.IsOurFixture && Model.TeamSheet.Count > 0)
+    {
+        var xv = Model.TeamSheet.Where(slot => !slot.IsBench).ToList();
+        var bench = Model.TeamSheet.Where(slot => slot.IsBench).ToList();
+        <section class="table-panel tactics-panel">
+            <div class="section-heading">
+                <h2>Tactics</h2>
+                <p>Your team sheet for this Fixture — read-only. Strategy sliders are not available through the API.</p>
+            </div>
+            <div class="pill-row">
+                @if (Model.IntensityChip is not null)
+                {
+                    <span class="pill neutral-pill" title="Intensity recorded on the Match Summary">@Model.IntensityChip</span>
+                }
+                <span class="pill neutral-pill">@xv.Count XV · @bench.Count Bench</span>
+            </div>
+            <div class="sheet-columns">
+                <div>
+                    <h3 class="sheet-heading">XV</h3>
+                    <ol class="team-sheet" start="@slotStart(xv)">
+                        @foreach (var slot in xv)
+                        {
+                            <li>
+                                <span class="sheet-slot">@slot.Slot</span>
+                                <a class="sheet-player" href="/Players/@slot.PlayerId" title="Open this Player's history">@slot.Name</a>
+                                @if (slot.IsCaptain)
+                                {
+                                    <span class="pill neutral-pill" title="Captain">C</span>
+                                }
+                                @if (slot.IsKicker)
+                                {
+                                    <span class="pill neutral-pill" title="Kicker">K</span>
+                                }
+                            </li>
+                        }
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="sheet-heading">Bench</h3>
+                    <ol class="team-sheet" start="@slotStart(bench)">
+                        @foreach (var slot in bench)
+                        {
+                            <li>
+                                <span class="sheet-slot">@slot.Slot</span>
+                                <a class="sheet-player" href="/Players/@slot.PlayerId" title="Open this Player's history">@slot.Name</a>
+                                @if (slot.IsCaptain)
+                                {
+                                    <span class="pill neutral-pill" title="Captain">C</span>
+                                }
+                                @if (slot.IsKicker)
+                                {
+                                    <span class="pill neutral-pill" title="Kicker">K</span>
+                                }
+                            </li>
+                        }
+                    </ol>
+                </div>
+            </div>
+        </section>
+    }
+
     @* Team compare row (D4): twelve fixed pairs from the cached full-time team
-       stats of both sides; possession and territory split a share bar. *@
+       stats of both sides; possession and territory split a share bar. The
+       Recommendations button (D8) sits beside it and runs the rules over these rows. *@
     <section class="table-panel">
-        <div class="section-heading">
-            <h2>Team vs opponent</h2>
-            <p>Twelve fixed pairs from this Fixture's cached full-time team stats.</p>
+        <div class="section-heading compare-heading">
+            <div>
+                <h2>Team vs opponent</h2>
+                <p>Twelve fixed pairs from this Fixture's cached full-time team stats.</p>
+            </div>
+            @if (Model.CanRecommend)
+            {
+                <a class="btn btn-outline-secondary action-button" href="@RecsUrl()"
+                   title="Run the deterministic rules over the full-time compare row">Recommendations</a>
+            }
         </div>
         <div class="compare-grid">
             @foreach (var pair in Model.Compare)
@@ -73,6 +152,41 @@ else
             }
         </div>
     </section>
+
+    @* Recommendations output (D8 §5): the deterministic engine's card, directly below
+       the compare row. Computed on click, local-only, no regenerate control. *@
+    @if (Model.ShowRecommendations)
+    {
+        <section class="table-panel recommendations-panel">
+            <div class="section-heading">
+                <h2>Recommendations</h2>
+                <p>Deterministic rules v1, computed from the full-time compare row above — no API call.</p>
+            </div>
+            @if (Model.Recommendations.Count == 0)
+            {
+                <p class="mb-0 text-muted">No tactical flags — every comparison within thresholds.</p>
+            }
+            else
+            {
+                <ul class="recommendation-list">
+                    @foreach (var item in Model.Recommendations)
+                    {
+                        <li class="recommendation">
+                            <span class="pill @(item.Severity == RecommendationSeverity.Act ? "warning-pill" : "neutral-pill")">@item.SeverityText</span>
+                            <div class="recommendation-body">
+                                <div class="recommendation-headline">@item.Diagnosis</div>
+                                <div class="recommendation-evidence">@item.Evidence</div>
+                                @if (item.Advice.Count > 0)
+                                {
+                                    <div class="recommendation-advice">@item.AdviceText</div>
+                                }
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    }
 
     @if (!Model.IsOurFixture)
     {

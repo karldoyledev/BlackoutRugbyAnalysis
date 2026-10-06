@@ -25,6 +25,27 @@ public class MatchCacheRawStore
         return path;
     }
 
+    /// <summary>
+    /// The newest archived response for one API call, or null when none was archived.
+    /// This is the D1 hedge made usable at read time: a parser bug (or a row the parsed
+    /// tables never gained) re-parses from the immutable raw XML instead of forcing an
+    /// API re-fetch. The Match Analysis team sheet reads its `lu` archive this way.
+    /// </summary>
+    public string? TryLoadLatest(string endpoint, string key)
+    {
+        if (!Directory.Exists(_rawDirectory))
+        {
+            return null;
+        }
+
+        var prefix = $"{endpoint}-{SanitizeKey(key)}-";
+        var latest = Directory.EnumerateFiles(_rawDirectory, "*.xml")
+            .Where(path => Path.GetFileName(path).StartsWith(prefix, StringComparison.Ordinal))
+            .OrderByDescending(path => Path.GetFileName(path), StringComparer.Ordinal)
+            .FirstOrDefault();
+        return latest is null ? null : File.ReadAllText(latest);
+    }
+
     private static string SanitizeKey(string key) =>
         string.Join('_', key.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
 
