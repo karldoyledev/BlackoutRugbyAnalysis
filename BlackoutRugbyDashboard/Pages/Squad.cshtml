@@ -122,6 +122,47 @@
 
 @if (!Model.IsColdStart)
 {
+    @* C6 Team review (S6, #38): eight team trends across the cached window as
+       small-multiple line charts, each on its own scale, time running oldest to
+       newest. Inline SVG with no chart library; hover a point for its value. The tab
+       rides the query string, so switching is a plain link. It opens the page. *@
+    <section class="chart-grid">
+        <article class="chart-panel full-width-panel">
+            <div class="section-heading">
+                <h2>Team review</h2>
+                @if (Model.TeamReviewCharts.Count > 0)
+                {
+                    <p>
+                        Team trends across the cached window, oldest to newest — each chart on its own
+                        scale. Points show their value on hover; possession, territory and minutes in 22
+                        are shares of the Fixture total.
+                    </p>
+                }
+                else
+                {
+                    <p>No cached games yet — open a Fixture and it lands here.</p>
+                }
+            </div>
+            @if (Model.TeamReviewCharts.Count > 0)
+            {
+                <ul class="nav nav-pills stat-group-tabs">
+                    @foreach (var tab in Model.ReviewTabs)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(tab == Model.ReviewTab ? "active" : string.Empty)"
+                               href="@TeamTabUrl(tab)">@TeamReviewBuilder.LabelFor(tab)</a>
+                        </li>
+                    }
+                </ul>
+                <div class="chart-legend">
+                    <span><i class="legend-us"></i>Us</span>
+                    <span><i class="legend-adverse"></i>Opponent / adverse</span>
+                </div>
+                @Html.Raw(SvgCharts.SmallMultipleGrid(Model.TeamReviewCharts))
+            }
+        </article>
+    </section>
+
     @* C3 Game review (S3, #35 + #36): one cached Fixture, every squad slot, the
        locked seven Stat-Group tabs, every stat cell carrying its movement against
        the previous cached game in three display modes, and each tab opening with
@@ -446,46 +487,6 @@
 
 </section>
 
-@* C6 Team review (S6, #38): eight team trends across the cached window as
-   small-multiple line charts, each on its own scale, time running oldest to
-   newest. Inline SVG with no chart library; hover a point for its value. The tab
-   rides the query string, so switching is a plain link. *@
-<section class="chart-grid">
-    <article class="chart-panel full-width-panel">
-        <div class="section-heading">
-            <h2>Team review</h2>
-            @if (Model.TeamReviewCharts.Count > 0)
-            {
-                <p>
-                    Team trends across the cached window, oldest to newest — each chart on its own
-                    scale. Points show their value on hover; possession, territory and minutes in 22
-                    are shares of the Fixture total.
-                </p>
-            }
-            else
-            {
-                <p>No cached games yet — open a Fixture and it lands here.</p>
-            }
-        </div>
-        @if (Model.TeamReviewCharts.Count > 0)
-        {
-            <ul class="nav nav-pills stat-group-tabs">
-                @foreach (var tab in Model.ReviewTabs)
-                {
-                    <li class="nav-item">
-                        <a class="nav-link @(tab == Model.ReviewTab ? "active" : string.Empty)"
-                           href="@TeamTabUrl(tab)">@TeamReviewBuilder.LabelFor(tab)</a>
-                    </li>
-                }
-            </ul>
-            <div class="chart-legend">
-                <span><i class="legend-us"></i>Us</span>
-                <span><i class="legend-adverse"></i>Opponent / adverse</span>
-            </div>
-            @Html.Raw(SvgCharts.SmallMultipleGrid(Model.TeamReviewCharts))
-        }
-    </article>
-</section>
 }
 
 <partial name="_DebugPanel" />
