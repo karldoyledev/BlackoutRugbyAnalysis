@@ -798,6 +798,7 @@ public class MatchCacheService(
         return rows.ToDictionary(row => row.PlayerId, ToSeasonStatistics);
     }
 
+    /// <summary>
     /// One-time migration for the season-scope change: when the on-disk generation
     /// marker is behind <see cref="PlayerSeasonScopeGeneration"/>, wipes the PlayerSeasons
     /// table and stamps the marker, so the next Player History view refetches under the

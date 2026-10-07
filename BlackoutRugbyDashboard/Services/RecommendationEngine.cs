@@ -120,7 +120,7 @@ public static class RecommendationEngine
                 Raise(Driving), Cut(Expansive))));
         }
 
-        // 2 - Territory share.
+        // Territory share (compare pair 2).
         if (Share(us.Territory, them.Territory) is int territory && territory < Thresholds.TerritoryWatch)
         {
             items.Add((2, Item(
@@ -130,7 +130,7 @@ public static class RecommendationEngine
                 Raise(KickForTouch), Raise(Kicking))));
         }
 
-        // 3 - Lineouts: lost minus won.
+        // Lineouts: lost minus won (compare pair 8).
         var lineoutLoss = us.LineoutsLost - us.LineoutsWon;
         if (lineoutLoss >= Thresholds.LineoutLostMinusWonWatch)
         {
@@ -141,7 +141,7 @@ public static class RecommendationEngine
                 Raise(Driving), Cut(Expansive))));
         }
 
-        // 4 - Scrums lost on our own ball.
+        // Scrums lost on our own ball (compare pair 7).
         if (us.ScrumsLost >= Thresholds.ScrumLostWatch)
         {
             items.Add((7, Item(
@@ -151,7 +151,7 @@ public static class RecommendationEngine
                 Cut(Expansive))));
         }
 
-        // 5 - Rucks won: theirs minus yours.
+        // Rucks won: theirs minus yours (compare pair 5).
         var ruckDeficit = them.RucksWon - us.RucksWon;
         if (ruckDeficit >= Thresholds.RuckWonTheirsMinusYoursWatch)
         {
@@ -162,7 +162,7 @@ public static class RecommendationEngine
                 Raise(PickAndGo), Raise(Driving), Cut(Expansive))));
         }
 
-        // 6 - Turnovers: conceded minus won.
+        // Turnovers: conceded minus won (compare pair 12).
         var turnoverLoss = us.TurnoversConceded - us.Turnovers;
         if (turnoverLoss >= Thresholds.TurnoverConcededMinusWonWatch)
         {
@@ -173,7 +173,7 @@ public static class RecommendationEngine
                 Cut(Creative), Cut(Expansive), Raise(Driving))));
         }
 
-        // 7 - Penalties: conceded minus won.
+        // Penalties: conceded minus won (compare pair 11).
         var penaltyLoss = us.PenaltiesConceded - us.PenaltiesWon;
         if (penaltyLoss >= Thresholds.PenaltyConcededMinusWonWatch)
         {
@@ -184,7 +184,7 @@ public static class RecommendationEngine
                 EaseOff(Discipline))));
         }
 
-        // 8 - Tries conceded.
+        // Tries conceded (compare pair 3).
         if (them.Tries >= Thresholds.TriesConcededWatch)
         {
             items.Add((3, Item(
