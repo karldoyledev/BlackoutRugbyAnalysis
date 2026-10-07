@@ -418,13 +418,14 @@ namespace BlackoutRugby.Api
         }
 
         /// <summary>
-        /// The HTTP-boundary seam's season-filtered ps read: same endpoint and
-        /// request shape as the full parameter overload, exposed for the
-        /// IBlackoutRugbyApiClient interface.
+        /// The HTTP-boundary seam's season-scoped ps read: the player's league
+        /// statistics for one season. Sends league=1 because the API applies season
+        /// only alongside league/nat/u20 (live-verified 2026-10-07) - the exact
+        /// request shape the Player History card's season totals use.
         /// </summary>
         public Task<string> GetPlayerStatisticsAsync(int playerId, int? season)
         {
-            return GetPlayerStatisticsAsync((int?)playerId, season: season);
+            return GetPlayerStatisticsAsync((int?)playerId, league: true, season: season);
         }
 
         /// <summary>

@@ -377,4 +377,57 @@ public class MatchCacheServiceTests
         Assert.Equal(62, latest!.Value.Season);
         Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(400).UtcDateTime, latest.Value.FinishUtc);
     }
+
+    [Fact]
+    public async Task GetCachedSeasons_ReturnsDistinctCompletedSeasonsNewestFirst()
+    {
+        var (service, _, db, _) = BuildService();
+
+        Assert.Empty(await service.GetCachedSeasonsAsync(45047));
+
+        db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 1, HomeTeamId = 45047, GuestTeamId = 45037, Season = 61,
+            MatchStartUnix = 100, MatchFinishUnix = 200
+        });
+        db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 2, HomeTeamId = 45037, GuestTeamId = 45047, Season = 62,
+            MatchStartUnix = 300, MatchFinishUnix = 400
+        });
+        db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 3, HomeTeamId = 45047, GuestTeamId = 45037, Season = 62,
+            MatchStartUnix = 500, MatchFinishUnix = 600
+        });
+        db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 4, HomeTeamId = 45047, GuestTeamId = 45037, Season = 63,
+            MatchStartUnix = 700 // unplayed — never a season
+        });
+        await db.SaveChangesAsync();
+
+        Assert.Equal(new[] { 62, 61 }, await service.GetCachedSeasonsAsync(45047));
+    }
+
+    [Fact]
+    public async Task EnsurePlayerSeasonScope_MarkerMissing_WipesOnceThenStamps()
+    {
+        var (service, _, db, rawRoot) = BuildService();
+        db.PlayerSeasons.Add(new PlayerSeasonRow { PlayerId = 1, Season = 62, Tries = 5 });
+        await db.SaveChangesAsync();
+        var marker = Path.Combine(rawRoot, "player-season-scope.txt");
+
+        await service.EnsurePlayerSeasonScopeAsync(marker);
+
+        Assert.Empty(await db.PlayerSeasons.ToListAsync());
+        Assert.True(File.Exists(marker));
+
+        // With the marker current, later rows are left alone.
+        db.PlayerSeasons.Add(new PlayerSeasonRow { PlayerId = 1, Season = 62, Tries = 9 });
+        await db.SaveChangesAsync();
+        await service.EnsurePlayerSeasonScopeAsync(marker);
+
+        Assert.Equal(1, await db.PlayerSeasons.CountAsync());
+    }
 }

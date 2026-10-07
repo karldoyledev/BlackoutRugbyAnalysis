@@ -7,7 +7,7 @@ namespace BlackoutRugbyDashboard.Tests;
 /// <summary>
 /// The Player History page's pure pieces (D7) at their seam: the per-fixture trends
 /// table's context columns and values, the column sort, the per-field sparklines, and
-/// the cumulative career block — all from cached rows, no API.
+/// the season-league totals block — all from cached rows, no API.
 /// </summary>
 public class PlayerHistoryTests
 {
@@ -122,7 +122,7 @@ public class PlayerHistoryTests
     }
 
     [Fact]
-    public void BuildCareerTotals_GroupsByStatGroup_AndSumsCaps()
+    public void BuildSeasonTotals_GroupsByStatGroup_AndSumsCaps()
     {
         var row = new PlayerSeasonRow
         {
@@ -133,24 +133,36 @@ public class PlayerHistoryTests
             AvKickingMetres = 12
         };
 
-        var block = PlayerHistory.BuildCareerTotals(row);
+        var totals = PlayerHistory.BuildSeasonTotals(row);
 
-        Assert.NotNull(block);
-        Assert.Equal(7, block!.TotalCaps);
-        Assert.Equal(12, block.AverageKickingMetres);
-        Assert.Equal(GameReviewMatrix.Groups.Count, block.Groups.Count);
-        var attack = block.Groups.Single(group => group.Group == StatGroup.Attack);
+        Assert.NotNull(totals);
+        Assert.Equal(7, totals!.TotalCaps);
+        Assert.Equal(12, totals.AverageKickingMetres);
+        Assert.Equal(GameReviewMatrix.Groups.Count, totals.Groups.Count);
+        var attack = totals.Groups.Single(group => group.Group == StatGroup.Attack);
         Assert.Equal(7, attack.Fields.Single(field => field.Label == "Tries").Value);
-        var defence = block.Groups.Single(group => group.Group == StatGroup.Defence);
+        var defence = totals.Groups.Single(group => group.Group == StatGroup.Defence);
         Assert.Equal(40, defence.Fields.Single(field => field.Label == "Tackles").Value);
     }
 
     [Fact]
-    public void BuildCareerTotals_NoRowOrNoAverage_ReadsNull()
+    public void BuildSeasonTotals_NoRowOrNoAverage_ReadsNull()
     {
-        Assert.Null(PlayerHistory.BuildCareerTotals(null));
+        Assert.Null(PlayerHistory.BuildSeasonTotals(null));
 
-        var block = PlayerHistory.BuildCareerTotals(new PlayerSeasonRow());
-        Assert.Null(block!.AverageKickingMetres);
+        var totals = PlayerHistory.BuildSeasonTotals(new PlayerSeasonRow());
+        Assert.Null(totals!.AverageKickingMetres);
+    }
+
+    [Fact]
+    public void SeasonTotals_IsEmpty_OnlyWhenNothingWasRecorded()
+    {
+        // A season the player did not feature in: no caps, every field zero.
+        var blank = PlayerHistory.BuildSeasonTotals(new PlayerSeasonRow());
+        Assert.True(blank!.IsEmpty);
+
+        // One recorded field is enough to stop reading empty.
+        var played = PlayerHistory.BuildSeasonTotals(new PlayerSeasonRow { LeagueCaps = 3 });
+        Assert.False(played!.IsEmpty);
     }
 }

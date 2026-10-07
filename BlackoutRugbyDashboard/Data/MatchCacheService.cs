@@ -100,6 +100,14 @@ public class MatchCacheService(
     private static readonly JsonSerializerOptions JsonOptions = new();
 
     /// <summary>
+    /// The current shape of the cached PlayerSeason rows. Generation 1 was the bare-`ps`
+    /// <b>career</b> line stored under a season key; generation 2 is the season-scoped read
+    /// (`league=1&amp;season=N`). A row from another generation is wrong under its own label,
+    /// so a mismatch wipes the table once (see <see cref="EnsurePlayerSeasonScopeAsync"/>).
+    /// </summary>
+    private const int PlayerSeasonScopeGeneration = 2;
+
+    /// <summary>
     /// Fills the Home last-8 window: one `f` read (always, the window moves),
     /// one batched `ms` read + one batched `t` read for what is missing —
     /// a fully-cached window costs 1 call (D5).
@@ -623,6 +631,22 @@ public class MatchCacheService(
     }
 
     /// <summary>
+    /// The distinct seasons the Match Cache holds a completed Fixture for, newest
+    /// first — the seasons the Player History card's selector offers. The cache is the
+    /// only honest source of which seasons exist for this club; empty when nothing is
+    /// cached.
+    /// </summary>
+    public async Task<IReadOnlyList<int>> GetCachedSeasonsAsync(
+        int teamId, CancellationToken cancellationToken = default) =>
+        await db.Fixtures
+            .Where(fixture => (fixture.HomeTeamId == teamId || fixture.GuestTeamId == teamId)
+                              && fixture.MatchFinishUnix > 0 && fixture.Season > 0)
+            .Select(fixture => fixture.Season)
+            .Distinct()
+            .OrderByDescending(season => season)
+            .ToListAsync(cancellationToken);
+
+    /// <summary>
     /// Brings one Fixture's Match Analysis scope into the cache (D6 §8): a cold deep
     /// link fills the full D1 entry scope (5 calls), while a Fixture the Home window
     /// already holds (`f` + `ms`) fills only what the analysis adds — the squad `fs`,
@@ -772,6 +796,28 @@ public class MatchCacheService(
             .Where(row => ids.Contains(row.PlayerId) && row.Season == season)
             .ToListAsync(cancellationToken);
         return rows.ToDictionary(row => row.PlayerId, ToSeasonStatistics);
+    }
+
+    /// One-time migration for the season-scope change: when the on-disk generation
+    /// marker is behind <see cref="PlayerSeasonScopeGeneration"/>, wipes the PlayerSeasons
+    /// table and stamps the marker, so the next Player History view refetches under the
+    /// new scope. A disposable cache, so cheaper and clearer than a schema migration for a
+    /// semantic change the columns cannot hold. Called once at startup.
+    /// </summary>
+    public async Task EnsurePlayerSeasonScopeAsync(string markerPath, CancellationToken cancellationToken = default)
+    {
+        var onDisk = File.Exists(markerPath)
+            ? (await File.ReadAllTextAsync(markerPath, cancellationToken)).Trim()
+            : null;
+        if (onDisk == PlayerSeasonScopeGeneration.ToString(CultureInfo.InvariantCulture))
+        {
+            return;
+        }
+
+        await db.PlayerSeasons.ExecuteDeleteAsync(cancellationToken);
+        Directory.CreateDirectory(Path.GetDirectoryName(markerPath)!);
+        await File.WriteAllTextAsync(
+            markerPath, PlayerSeasonScopeGeneration.ToString(CultureInfo.InvariantCulture), cancellationToken);
     }
 
     /// <summary>

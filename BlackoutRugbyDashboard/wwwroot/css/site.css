@@ -1134,18 +1134,52 @@ input::placeholder {
   gap: 1rem;
 }
 
-.career-groups {
+.season-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.season-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.season-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.season-controls label > span {
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.season-controls .form-control {
+  width: auto;
+  min-width: 8rem;
+}
+
+.season-groups {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 8px 26px;
   margin-top: 10px;
 }
 
-.career-list {
+.season-list {
   margin: 0;
 }
 
-.career-item {
+.season-item {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -1154,12 +1188,12 @@ input::placeholder {
   border-bottom: 1px solid var(--line-soft);
 }
 
-.career-item dt {
+.season-item dt {
   color: var(--ink-soft);
   font-weight: 400;
 }
 
-.career-item dd {
+.season-item dd {
   margin: 0;
   color: var(--text);
   font-variant-numeric: tabular-nums;

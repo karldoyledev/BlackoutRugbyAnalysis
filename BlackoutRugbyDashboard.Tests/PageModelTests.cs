@@ -191,7 +191,7 @@ public class PageModelTests
         var harness = BuildHarness();
         harness.Db.Fixtures.Add(new FixtureRow
         {
-            FixtureId = 1, Season = 62, Competition = "League", Round = 1,
+            FixtureId = 1, Season = 61, Competition = "League", Round = 1,
             HomeTeamId = TeamId, GuestTeamId = OpponentId, MatchStartUnix = 100, MatchFinishUnix = 200
         });
         harness.Db.Fixtures.Add(new FixtureRow
@@ -225,8 +225,10 @@ public class PageModelTests
         Assert.False(model.EmptyTrends);
         Assert.Equal(2, model.Rows.Count);
         Assert.Equal(2, model.Rows[0].FixtureId); // newest first by default
-        Assert.NotNull(model.CareerTotals);
-        Assert.Equal("Tries", model.CareerTotals!.Groups.Single(group => group.Group == StatGroup.Attack).Fields[0].Label);
+        Assert.Equal(62, model.Season);           // the newest cached season
+        Assert.Equal(new[] { 62, 61 }, model.SeasonOptions);
+        Assert.NotNull(model.SeasonTotals);
+        Assert.Equal("Tries", model.SeasonTotals!.Groups.Single(group => group.Group == StatGroup.Attack).Fields[0].Label);
         Assert.Equal(0, harness.Api.Calls);
     }
 
@@ -242,7 +244,8 @@ public class PageModelTests
         Assert.Equal("Player 999999", model.PlayerName);
         Assert.False(model.IsKnown);
         Assert.True(model.EmptyTrends);
-        Assert.Null(model.CareerTotals);
+        Assert.Null(model.SeasonTotals);
+        Assert.Empty(model.SeasonOptions);
         Assert.Equal(0, harness.Api.Calls);
     }
 }

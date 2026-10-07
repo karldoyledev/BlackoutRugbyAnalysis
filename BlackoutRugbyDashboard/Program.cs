@@ -113,10 +113,14 @@ builder.Services.AddScoped<LeagueTableService>();
 var app = builder.Build();
 
 // Migrations live in the web project (D3); a local tool (dotnet-ef in the
-// manifest) authored them, and startup applies whatever is pending.
+// manifest) authored them, and startup applies whatever is pending. The
+// PlayerSeason scope marker rides along: the season-scoped ps read replaced the
+// career read under the same season key, so pre-change rows are wiped once here.
 using (var scope = app.Services.CreateScope())
 {
     scope.ServiceProvider.GetRequiredService<DashboardDbContext>().Database.Migrate();
+    await scope.ServiceProvider.GetRequiredService<MatchCacheService>()
+        .EnsurePlayerSeasonScopeAsync(Path.Combine(app.Environment.ContentRootPath, "Data", "player-season-scope.txt"));
 }
 
 // Configure the HTTP request pipeline.

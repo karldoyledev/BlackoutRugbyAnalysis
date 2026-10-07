@@ -7,13 +7,13 @@ namespace BlackoutRugbyDashboard.Pages.Players;
 
 /// <summary>
 /// Player History at /Players/{id:int} (D2 route, D7). The header (name + CSR chip
-/// from the latest Squad Snapshot) → the cumulative block (the cached `ps` row's
-/// career totals by Stat Group, career caps, and the one `ps` average) → the seven
-/// Stat-Group trend tabs, each a per-fixture table (newest first, context columns then
-/// the tab's fields) with a per-field header sparkline. Strictly cache-first: the
-/// trends make zero `fs` calls; `ps` is fetched once per Player+season on first view
-/// and cached. A foreign or unknown id makes zero API calls and opens with an
-/// empty-trends state.
+/// from the latest Squad Snapshot) → the season card (the cached season-scoped `ps`
+/// row's league totals by Stat Group, caps and the one `ps` average, with a selector
+/// over the seasons the cache holds) → the seven Stat-Group trend tabs, each a
+/// per-fixture table (newest first, context columns then the tab's fields) with a
+/// per-field header sparkline. Strictly cache-first for the trends (zero `fs` calls);
+/// `ps` is fetched once per Player+season on first view and cached. A foreign or
+/// unknown id makes zero API calls and opens with an empty-trends state.
 /// </summary>
 public class PlayerDetailModel(
     ClubLinkService clubLinks,
@@ -35,12 +35,17 @@ public class PlayerDetailModel(
     /// refresh and the CSR chip are ours-only; a foreign id gets neither.</summary>
     public bool IsKnown { get; private set; }
 
+    /// <summary>The season the card shows: a valid `?season=` choice, else the newest
+    /// season the cache holds a completed Fixture for (0 when nothing is cached).</summary>
     public int Season { get; private set; }
 
-    /// <summary>The player's cumulative career totals from the cached `ps` row, or null
-    /// when none is cached. Named for what it is: the `r=ps` read is cumulative, so
-    /// these are career figures, not a single season's.</summary>
-    public CareerTotals? CareerTotals { get; private set; }
+    /// <summary>The seasons the selector offers — the cache's completed-Fixture seasons,
+    /// newest first. A single season leaves the selector off (nothing to page through).</summary>
+    public IReadOnlyList<int> SeasonOptions { get; private set; } = Array.Empty<int>();
+
+    /// <summary>The Player's league totals for <see cref="Season"/>, from the cached
+    /// season-scoped `ps` row, or null when none is cached.</summary>
+    public SeasonTotals? SeasonTotals { get; private set; }
 
     /// <summary>The open Stat-Group tab (default Attack), its field set, and the sort.</summary>
     public StatGroup SelectedGroup { get; private set; } = StatGroup.Attack;
@@ -57,7 +62,7 @@ public class PlayerDetailModel(
     public bool EmptyTrends => Rows.Count == 0;
 
     public async Task<IActionResult> OnGetAsync(
-        int id, string? tab = null, string? sort = null, string? dir = null)
+        int id, string? tab = null, string? sort = null, string? dir = null, int? season = null)
     {
         PlayerId = id;
         var teamId = ClubLinks.GetLinkState()?.TeamId ?? 0;
@@ -79,22 +84,30 @@ public class PlayerDetailModel(
         PlayerName = player?.Name is { Length: > 0 } name ? name : $"Player {id}";
         PlayerCsr = player?.Csr;
 
+        // The season card's options are the seasons the cache holds a Fixture for, newest
+        // first; a valid `?season=` choice wins, else the newest. One season leaves no
+        // selector to draw.
+        var seasonOptions = await cache.GetCachedSeasonsAsync(teamId);
+        SeasonOptions = seasonOptions;
+        Season = season is int requested && seasonOptions.Contains(requested)
+            ? requested
+            : seasonOptions.Count > 0 ? seasonOptions[0] : 0;
+
         // `ps` is ours-only and fetched once per Player+season (1 call) on first view;
         // a foreign or unknown id makes no read at all.
-        var latest = await cache.GetLatestCachedFixtureAsync(teamId);
-        Season = latest?.Season ?? 0;
         if (IsKnown && Season > 0)
         {
+            var latest = await cache.GetLatestCachedFixtureAsync(teamId);
             try
             {
-                await cache.GetOrRefreshPlayerSeasonsAsync([id], Season, latest!.Value.FinishUtc);
+                await cache.GetOrRefreshPlayerSeasonsAsync([id], Season, latest?.FinishUtc);
             }
             catch (Exception exception)
             {
                 logger.LogWarning(exception, "The season refresh failed for Player {PlayerId}", id);
             }
 
-            CareerTotals = PlayerHistory.BuildCareerTotals(await cache.GetPlayerSeasonAsync(id, Season));
+            SeasonTotals = PlayerHistory.BuildSeasonTotals(await cache.GetPlayerSeasonAsync(id, Season));
         }
 
         var history = await cache.GetPlayerFixtureHistoryAsync(id);

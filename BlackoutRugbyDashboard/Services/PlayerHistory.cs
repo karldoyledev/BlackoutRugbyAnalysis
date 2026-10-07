@@ -46,25 +46,30 @@ public sealed record StatTotal(string Label, int Value);
 public sealed record GroupTotals(StatGroup Group, IReadOnlyList<StatTotal> Fields);
 
 /// <summary>
-/// The player's cumulative block: the cached `ps` row's totals organised by the same
-/// seven Stat Groups as the Match page, the reliable caps total, and the one `ps`
+/// One season's league totals for a Player: the cached `ps` row's figures organised by
+/// the same seven Stat Groups as the Match page, the caps total, and the one `ps`
 /// average the API provides (average kicking metres). Null when no row is cached.
 /// <para>
-/// The block is the player's <b>career</b> record, not a season's: `r=ps` without a
-/// competition flag is cumulative across all competitions and its caps are career
-/// caps (R3 — a season-62 read of one player returned 75 league caps; the API applies
-/// a `season` only alongside `league`/`nat`/`u20`, which this read never sends).
+/// The row is the season-scoped `ps` read (<c>league=1&amp;season=N</c>, live-verified
+/// 2026-10-07), so the figures are that season's <b>league</b> competition and the caps
+/// are that season's league caps — the API offers no all-competition season line.
 /// </para>
 /// </summary>
-public sealed record CareerTotals(
+public sealed record SeasonTotals(
     int TotalCaps,
     int? AverageKickingMetres,
-    IReadOnlyList<GroupTotals> Groups);
+    IReadOnlyList<GroupTotals> Groups)
+{
+    /// <summary>True when the read returned nothing at all — a season the Player did
+    /// not feature in — so the card can say so rather than print a grid of zeros.</summary>
+    public bool IsEmpty => TotalCaps == 0
+        && Groups.All(group => group.Fields.All(field => field.Value == 0));
+}
 
 /// <summary>
 /// The Player History page's pure pieces (D7): the per-fixture trends table (context
 /// columns plus the selected Stat Group's fields, sortable) with a per-field header
-/// sparkline, and the cumulative career block. It is a transformation of the cached
+/// sparkline, and the season-league totals block. It is a transformation of the cached
 /// PlayerFixture rows, the cached Fixture / Summary rows and the cached PlayerSeason
 /// row — no API client and no store, so the trends are cache-only by construction.
 /// </summary>
@@ -165,13 +170,12 @@ public static class PlayerHistory
 
 
     /// <summary>
-    /// The cumulative block from the cached `ps` row, or null when none is cached.
-    /// Totals are grouped by the same seven Stat Groups as the Match page; caps is the
-    /// reliable career count the `ps` read carries; average kicking metres is the one
-    /// `ps` average the API provides (surfaced only when it is above zero). No season
-    /// scoping — the `ps` read is cumulative (see <see cref="CareerTotals"/>).
+    /// The season totals from the cached season-scoped `ps` row, or null when none is
+    /// cached. Totals are grouped by the same seven Stat Groups as the Match page; caps
+    /// is the season's league cap count; average kicking metres is the one `ps` average
+    /// the API provides (surfaced only when it is above zero).
     /// </summary>
-    public static CareerTotals? BuildCareerTotals(PlayerSeasonRow? row)
+    public static SeasonTotals? BuildSeasonTotals(PlayerSeasonRow? row)
     {
         if (row is null)
         {
@@ -188,7 +192,7 @@ public static class PlayerHistory
                     .ToList()))
             .ToList();
 
-        return new CareerTotals(
+        return new SeasonTotals(
             row.LeagueCaps + row.FriendlyCaps + row.CupCaps + row.UnderTwentyCaps
                 + row.NationalCaps + row.WorldCupCaps + row.UnderTwentyWorldCupCaps + row.OtherCaps,
             row.AvKickingMetres > 0 ? row.AvKickingMetres : null,

@@ -20,9 +20,12 @@ public interface IBlackoutRugbyApiClient
     Task<string> GetPlayerStatisticsAsync(int playerId);
 
     /// <summary>
-    /// The season-filtered ps read (r=ps + playerid + season) that the Squad
-    /// page's cached season aggregates use. Distinct member from the plain ps
-    /// read — the concrete client delegates both to the same endpoint.
+    /// The season-scoped ps read (r=ps + playerid + league=1 + season): one Player's
+    /// league statistics for one season. The API applies `season` only alongside
+    /// league/nat/u20, so this read sends `league=1` — without it the response is the
+    /// player's cumulative career line (live-verified 2026-10-07: `league=1&amp;season=62`
+    /// returned a season line, `season=62` alone the career line). The Player History
+    /// card's season totals use this; the plain overload stays the career read.
     /// </summary>
     Task<string> GetPlayerStatisticsAsync(int playerId, int? season);
 

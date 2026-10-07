@@ -23,10 +23,6 @@
             {
                 <span class="pill neutral-pill" title="CSR from the latest Squad Snapshot">CSR @csr</span>
             }
-            @if (Model.Season > 0)
-            {
-                <span class="pill neutral-pill">Season @Model.Season</span>
-            }
             @if (!Model.IsKnown)
             {
                 <span class="pill neutral-pill" title="Not in your latest Squad Snapshot">Not in your squad</span>
@@ -36,41 +32,70 @@
     <a class="btn btn-outline-secondary action-button" asp-page="/Players/Index">All players</a>
 </section>
 
-@* Cumulative block (D7): the cached `ps` row's totals organised by the same seven Stat
-   Groups as the Match page, the career caps total, and the one `ps` average. The
-   `r=ps` read is cumulative across all competitions, so this is the player's career
-   record — the API offers no all-competition season total. *@
-@if (Model.CareerTotals is not null)
+@* Season card (D7): the cached season-scoped `ps` row — the player's league totals for
+   the chosen season, by Stat Group, with caps and the ps average. A subtle selector
+   pages through the seasons the cache holds; it appears only when there is more than
+   one, and sits apart in the header so it never competes with the numbers. *@
+@if (Model.IsKnown && Model.Season > 0)
 {
-    <section class="table-panel career-block">
-        <div class="section-heading">
-            <h2>Career totals</h2>
-            <p>The player's cumulative record (r=ps) — all competitions. Caps are career caps.</p>
-        </div>
-        <div class="pill-row">
-            <span class="pill neutral-pill">Career caps @Model.CareerTotals.TotalCaps</span>
-            @if (Model.CareerTotals.AverageKickingMetres is int avKicking)
+    <section class="table-panel season-block">
+        <div class="section-heading season-heading">
+            <div>
+                <h2>Season @Model.Season totals</h2>
+                <p>League competition — the API's season-scoped player statistics (r=ps).</p>
+            </div>
+            @if (Model.SeasonOptions.Count > 1)
             {
-                <span class="pill neutral-pill" title="Average kicking metres from the ps read">Av kicking m @avKicking</span>
+                <form method="get" class="season-controls">
+                    <label>
+                        <span>Season</span>
+                        <select name="season" class="form-control" data-autosubmit>
+                            @foreach (var option in Model.SeasonOptions)
+                            {
+                                <option value="@option" selected="@(option == Model.Season)">Season @option</option>
+                            }
+                        </select>
+                    </label>
+                    <input type="hidden" name="tab" value="@tabKey" />
+                    <input type="hidden" name="sort" value="@Model.SortKey" />
+                    <input type="hidden" name="dir" value="@dir" />
+                    <noscript>
+                        <button type="submit" class="btn btn-outline-secondary action-button">Show</button>
+                    </noscript>
+                </form>
             }
         </div>
-        <div class="career-groups">
-            @foreach (var group in Model.CareerTotals.Groups)
-            {
-                <div class="career-group">
-                    <h3 class="sheet-heading">@GameReviewMatrix.TitleFor(group.Group)</h3>
-                    <dl class="career-list">
-                        @foreach (var field in group.Fields)
-                        {
-                            <div class="career-item">
-                                <dt>@field.Label</dt>
-                                <dd>@field.Value</dd>
-                            </div>
-                        }
-                    </dl>
-                </div>
-            }
-        </div>
+        @if (Model.SeasonTotals is null || Model.SeasonTotals.IsEmpty)
+        {
+            <p class="mb-0 text-muted">No league statistics cached for Season @Model.Season.</p>
+        }
+        else
+        {
+            <div class="pill-row">
+                <span class="pill neutral-pill">League caps @Model.SeasonTotals.TotalCaps</span>
+                @if (Model.SeasonTotals.AverageKickingMetres is int avKicking)
+                {
+                    <span class="pill neutral-pill" title="Average kicking metres from the ps read">Av kicking m @avKicking</span>
+                }
+            </div>
+            <div class="season-groups">
+                @foreach (var group in Model.SeasonTotals.Groups)
+                {
+                    <div class="season-group">
+                        <h3 class="sheet-heading">@GameReviewMatrix.TitleFor(group.Group)</h3>
+                        <dl class="season-list">
+                            @foreach (var field in group.Fields)
+                            {
+                                <div class="season-item">
+                                    <dt>@field.Label</dt>
+                                    <dd>@field.Value</dd>
+                                </div>
+                            }
+                        </dl>
+                    </div>
+                }
+            </div>
+        }
     </section>
 }
 
