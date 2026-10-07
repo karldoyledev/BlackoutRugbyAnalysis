@@ -39,27 +39,32 @@ public sealed record TrendRow(
     };
 }
 
-/// <summary>One field of a Stat Group's season block: its label and its season total.</summary>
-public sealed record SeasonField(string Label, int Value);
+/// <summary>One field of a Stat Group's totals: its label and its value.</summary>
+public sealed record StatTotal(string Label, int Value);
 
-/// <summary>One Stat Group's season totals (D7's season block).</summary>
-public sealed record SeasonGroup(StatGroup Group, IReadOnlyList<SeasonField> Fields);
+/// <summary>One Stat Group's totals in the cumulative block.</summary>
+public sealed record GroupTotals(StatGroup Group, IReadOnlyList<StatTotal> Fields);
 
 /// <summary>
-/// The season block (D7): the cached PlayerSeason row's totals organised by the same
+/// The player's cumulative block: the cached `ps` row's totals organised by the same
 /// seven Stat Groups as the Match page, the reliable caps total, and the one `ps`
 /// average the API provides (average kicking metres). Null when no row is cached.
+/// <para>
+/// The block is the player's <b>career</b> record, not a season's: `r=ps` without a
+/// competition flag is cumulative across all competitions and its caps are career
+/// caps (R3 — a season-62 read of one player returned 75 league caps; the API applies
+/// a `season` only alongside `league`/`nat`/`u20`, which this read never sends).
+/// </para>
 /// </summary>
-public sealed record SeasonBlock(
-    int Season,
+public sealed record CareerTotals(
     int TotalCaps,
     int? AverageKickingMetres,
-    IReadOnlyList<SeasonGroup> Groups);
+    IReadOnlyList<GroupTotals> Groups);
 
 /// <summary>
 /// The Player History page's pure pieces (D7): the per-fixture trends table (context
 /// columns plus the selected Stat Group's fields, sortable) with a per-field header
-/// sparkline, and the season block. It is a transformation of the cached
+/// sparkline, and the cumulative career block. It is a transformation of the cached
 /// PlayerFixture rows, the cached Fixture / Summary rows and the cached PlayerSeason
 /// row — no API client and no store, so the trends are cache-only by construction.
 /// </summary>
@@ -160,12 +165,13 @@ public static class PlayerHistory
 
 
     /// <summary>
-    /// The season block from the cached PlayerSeason row, or null when none is cached.
+    /// The cumulative block from the cached `ps` row, or null when none is cached.
     /// Totals are grouped by the same seven Stat Groups as the Match page; caps is the
-    /// reliable one the `ps` read carries; average kicking metres is the single `ps`
-    /// average the API provides (surfaced only when it is above zero).
+    /// reliable career count the `ps` read carries; average kicking metres is the one
+    /// `ps` average the API provides (surfaced only when it is above zero). No season
+    /// scoping — the `ps` read is cumulative (see <see cref="CareerTotals"/>).
     /// </summary>
-    public static SeasonBlock? BuildSeasonBlock(int season, PlayerSeasonRow? row)
+    public static CareerTotals? BuildCareerTotals(PlayerSeasonRow? row)
     {
         if (row is null)
         {
@@ -173,17 +179,16 @@ public static class PlayerHistory
         }
 
         var groups = GameReviewMatrix.Groups
-            .Select(group => new SeasonGroup(
+            .Select(group => new GroupTotals(
                 group,
                 GameReviewMatrix.FieldsFor(group)
-                    .Select(field => new SeasonField(
+                    .Select(field => new StatTotal(
                         field.Title,
                         SeasonValues.TryGetValue(field.Key, out var read) ? read(row) : 0))
                     .ToList()))
             .ToList();
 
-        return new SeasonBlock(
-            season,
+        return new CareerTotals(
             row.LeagueCaps + row.FriendlyCaps + row.CupCaps + row.UnderTwentyCaps
                 + row.NationalCaps + row.WorldCupCaps + row.UnderTwentyWorldCupCaps + row.OtherCaps,
             row.AvKickingMetres > 0 ? row.AvKickingMetres : null,

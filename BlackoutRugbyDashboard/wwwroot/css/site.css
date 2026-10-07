@@ -1134,18 +1134,18 @@ input::placeholder {
   gap: 1rem;
 }
 
-.season-groups {
+.career-groups {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 8px 26px;
   margin-top: 10px;
 }
 
-.season-list {
+.career-list {
   margin: 0;
 }
 
-.season-item {
+.career-item {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -1154,12 +1154,12 @@ input::placeholder {
   border-bottom: 1px solid var(--line-soft);
 }
 
-.season-item dt {
+.career-item dt {
   color: var(--ink-soft);
   font-weight: 400;
 }
 
-.season-item dd {
+.career-item dd {
   margin: 0;
   color: var(--text);
   font-variant-numeric: tabular-nums;

@@ -7,12 +7,13 @@ namespace BlackoutRugbyDashboard.Pages.Players;
 
 /// <summary>
 /// Player History at /Players/{id:int} (D2 route, D7). The header (name + CSR chip
-/// from the latest Squad Snapshot) → the season block (the cached PlayerSeason row's
-/// totals by Stat Group, caps, and the one `ps` average) → the seven Stat-Group trend
-/// tabs, each a per-fixture table (newest first, context columns then the tab's
-/// fields) with a per-field header sparkline. Strictly cache-first: the trends make
-/// zero `fs` calls; `ps` is fetched once per Player+season on first view and cached.
-/// A foreign or unknown id makes zero API calls and opens with an empty-trends state.
+/// from the latest Squad Snapshot) → the cumulative block (the cached `ps` row's
+/// career totals by Stat Group, career caps, and the one `ps` average) → the seven
+/// Stat-Group trend tabs, each a per-fixture table (newest first, context columns then
+/// the tab's fields) with a per-field header sparkline. Strictly cache-first: the
+/// trends make zero `fs` calls; `ps` is fetched once per Player+season on first view
+/// and cached. A foreign or unknown id makes zero API calls and opens with an
+/// empty-trends state.
 /// </summary>
 public class PlayerDetailModel(
     ClubLinkService clubLinks,
@@ -35,7 +36,11 @@ public class PlayerDetailModel(
     public bool IsKnown { get; private set; }
 
     public int Season { get; private set; }
-    public SeasonBlock? SeasonStats { get; private set; }
+
+    /// <summary>The player's cumulative career totals from the cached `ps` row, or null
+    /// when none is cached. Named for what it is: the `r=ps` read is cumulative, so
+    /// these are career figures, not a single season's.</summary>
+    public CareerTotals? CareerTotals { get; private set; }
 
     /// <summary>The open Stat-Group tab (default Attack), its field set, and the sort.</summary>
     public StatGroup SelectedGroup { get; private set; } = StatGroup.Attack;
@@ -89,7 +94,7 @@ public class PlayerDetailModel(
                 logger.LogWarning(exception, "The season refresh failed for Player {PlayerId}", id);
             }
 
-            SeasonStats = PlayerHistory.BuildSeasonBlock(Season, await cache.GetPlayerSeasonAsync(id, Season));
+            CareerTotals = PlayerHistory.BuildCareerTotals(await cache.GetPlayerSeasonAsync(id, Season));
         }
 
         var history = await cache.GetPlayerFixtureHistoryAsync(id);

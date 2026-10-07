@@ -225,8 +225,8 @@ public class PageModelTests
         Assert.False(model.EmptyTrends);
         Assert.Equal(2, model.Rows.Count);
         Assert.Equal(2, model.Rows[0].FixtureId); // newest first by default
-        Assert.NotNull(model.SeasonStats);
-        Assert.Equal("Tries", model.SeasonStats!.Groups.Single(group => group.Group == StatGroup.Attack).Fields[0].Label);
+        Assert.NotNull(model.CareerTotals);
+        Assert.Equal("Tries", model.CareerTotals!.Groups.Single(group => group.Group == StatGroup.Attack).Fields[0].Label);
         Assert.Equal(0, harness.Api.Calls);
     }
 
@@ -242,7 +242,7 @@ public class PageModelTests
         Assert.Equal("Player 999999", model.PlayerName);
         Assert.False(model.IsKnown);
         Assert.True(model.EmptyTrends);
-        Assert.Null(model.SeasonStats);
+        Assert.Null(model.CareerTotals);
         Assert.Equal(0, harness.Api.Calls);
     }
 }

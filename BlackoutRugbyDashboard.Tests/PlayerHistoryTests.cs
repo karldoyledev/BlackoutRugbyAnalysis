@@ -7,7 +7,7 @@ namespace BlackoutRugbyDashboard.Tests;
 /// <summary>
 /// The Player History page's pure pieces (D7) at their seam: the per-fixture trends
 /// table's context columns and values, the column sort, the per-field sparklines, and
-/// the season block — all from cached rows, no API.
+/// the cumulative career block — all from cached rows, no API.
 /// </summary>
 public class PlayerHistoryTests
 {
@@ -122,7 +122,7 @@ public class PlayerHistoryTests
     }
 
     [Fact]
-    public void BuildSeasonBlock_GroupsByStatGroup_AndSumsCaps()
+    public void BuildCareerTotals_GroupsByStatGroup_AndSumsCaps()
     {
         var row = new PlayerSeasonRow
         {
@@ -133,7 +133,7 @@ public class PlayerHistoryTests
             AvKickingMetres = 12
         };
 
-        var block = PlayerHistory.BuildSeasonBlock(62, row);
+        var block = PlayerHistory.BuildCareerTotals(row);
 
         Assert.NotNull(block);
         Assert.Equal(7, block!.TotalCaps);
@@ -146,11 +146,11 @@ public class PlayerHistoryTests
     }
 
     [Fact]
-    public void BuildSeasonBlock_NoRowOrNoAverage_ReadsNull()
+    public void BuildCareerTotals_NoRowOrNoAverage_ReadsNull()
     {
-        Assert.Null(PlayerHistory.BuildSeasonBlock(62, null));
+        Assert.Null(PlayerHistory.BuildCareerTotals(null));
 
-        var block = PlayerHistory.BuildSeasonBlock(62, new PlayerSeasonRow());
+        var block = PlayerHistory.BuildCareerTotals(new PlayerSeasonRow());
         Assert.Null(block!.AverageKickingMetres);
     }
 }
