@@ -36,7 +36,7 @@
    the chosen season, by Stat Group, with caps and the ps average. A subtle selector
    pages through the seasons the cache holds; it appears only when there is more than
    one, and sits apart in the header so it never competes with the numbers. *@
-@if (Model.IsKnown && Model.Season > 0)
+@if (Model.ShowSeasonCard)
 {
     <section class="table-panel season-block">
         <div class="section-heading season-heading">

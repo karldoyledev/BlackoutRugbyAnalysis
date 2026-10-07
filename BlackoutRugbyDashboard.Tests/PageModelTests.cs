@@ -244,8 +244,42 @@ public class PageModelTests
         Assert.Equal("Player 999999", model.PlayerName);
         Assert.False(model.IsKnown);
         Assert.True(model.EmptyTrends);
+        Assert.False(model.ShowSeasonCard);
         Assert.Null(model.SeasonTotals);
         Assert.Empty(model.SeasonOptions);
+        Assert.Equal(0, harness.Api.Calls);
+    }
+
+    [Fact]
+    public async Task PlayerDetailModel_TransferredOutPlayer_StillRendersTheSeasonCard()
+    {
+        var harness = BuildHarness();
+        // Cached while ours, but absent from the latest snapshot: a transferred-out Player.
+        harness.Db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 1, Season = 62, Competition = "League", Round = 1,
+            HomeTeamId = TeamId, GuestTeamId = OpponentId, MatchStartUnix = 100, MatchFinishUnix = 200
+        });
+        harness.Db.PlayerFixtures.Add(new PlayerFixtureRow
+        {
+            FixtureId = 1, TeamId = TeamId, PlayerId = 777, Slot = 1, MinutesPlayed = 80, Tries = 2
+        });
+        harness.Db.MatchSummaries.Add(new MatchSummaryRow { FixtureId = 1, HomePoints = 20, GuestPoints = 10 });
+        harness.Db.PlayerSeasons.Add(new PlayerSeasonRow
+        {
+            PlayerId = 777, Season = 62, LeagueCaps = 4, FetchedAt = DateTime.UtcNow.AddYears(1)
+        });
+        await harness.Db.SaveChangesAsync();
+        await WriteSnapshotAsync(harness); // the snapshot carries no Player 777
+
+        var model = new PlayerDetailModel(harness.Links, harness.Cache, harness.Snapshots, NullLogger<PlayerDetailModel>.Instance);
+        await model.OnGetAsync(777);
+
+        Assert.False(model.IsKnown);
+        Assert.Null(model.PlayerCsr);       // the chip blanks once absent from the snapshot
+        Assert.True(model.ShowSeasonCard);  // but the card still renders (D7 §5)
+        Assert.NotNull(model.SeasonTotals);
+        Assert.False(model.EmptyTrends);
         Assert.Equal(0, harness.Api.Calls);
     }
 }

@@ -47,6 +47,11 @@ public class PlayerDetailModel(
     /// season-scoped `ps` row, or null when none is cached.</summary>
     public SeasonTotals? SeasonTotals { get; private set; }
 
+    /// <summary>True when the season card renders: a season is known and the Player is
+    /// ours — in the latest snapshot, or cached while ours (a transferred-out Player).
+    /// A foreign or unknown id gets no card and no `ps` read (D7 §5).</summary>
+    public bool ShowSeasonCard { get; private set; }
+
     /// <summary>The open Stat-Group tab (default Attack), its field set, and the sort.</summary>
     public StatGroup SelectedGroup { get; private set; } = StatGroup.Attack;
     public IReadOnlyList<GameReviewField> GroupFields { get; private set; } = GameReviewMatrix.FieldsFor(StatGroup.Attack);
@@ -93,9 +98,14 @@ public class PlayerDetailModel(
             ? requested
             : seasonOptions.Count > 0 ? seasonOptions[0] : 0;
 
-        // `ps` is ours-only and fetched once per Player+season (1 call) on first view;
-        // a foreign or unknown id makes no read at all.
-        if (IsKnown && Season > 0)
+        // The Player's cached appearances drive both the trends and whether the season
+        // card belongs: it is for a Player in the latest snapshot, or one we cached while
+        // ours (a transferred-out Player) — never a foreign id, which makes no `ps` read.
+        var history = await cache.GetPlayerFixtureHistoryAsync(id);
+        ShowSeasonCard = Season > 0 && (IsKnown || history.Count > 0);
+
+        // `ps` is fetched once per Player+season (1 call) on first view and cached.
+        if (ShowSeasonCard)
         {
             var latest = await cache.GetLatestCachedFixtureAsync(teamId);
             try
@@ -110,7 +120,6 @@ public class PlayerDetailModel(
             SeasonTotals = PlayerHistory.BuildSeasonTotals(await cache.GetPlayerSeasonAsync(id, Season));
         }
 
-        var history = await cache.GetPlayerFixtureHistoryAsync(id);
         if (history.Count == 0)
         {
             return Page();
