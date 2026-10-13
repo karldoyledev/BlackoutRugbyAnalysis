@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using BlackoutRugbyDashboard.Data;
 
 namespace BlackoutRugbyDashboard.Services;
@@ -124,6 +125,117 @@ public static class MatchAnalysis
     /// or null when our side's intensity is not cached (0 / missing) — never a made-up value.</summary>
     public static string? IntensityText(int? intensity) =>
         intensity is int value && value > 0 ? $"Intensity: {value}" : null;
+
+    /// <summary>
+    /// The weather pill's text from the cached Match Summary ("Weather 2 · Night"), or
+    /// null when no weather id is cached. The API documents only the night flag
+    /// (`night=1`) and carries no id-to-name map, so the id reads as itself.
+    /// </summary>
+    public static string? WeatherText(int? weatherId, bool? night)
+    {
+        if (weatherId is not int id || id <= 0)
+        {
+            return null;
+        }
+
+        return night == true ? $"Weather {id} · Night" : $"Weather {id}";
+    }
+
+    /// <summary>
+    /// The half-time score ("HT 12-7") from the cached half-1 team rows, or null when
+    /// either side's half-1 row is not cached (D6 §1: never a hard dependency — omit
+    /// cleanly). The half-1 team row carries the points at the break in `total_points`.
+    /// </summary>
+    public static string? HalfTimeScore(TeamFixtureStatRow? homeFirstHalf, TeamFixtureStatRow? guestFirstHalf) =>
+        homeFirstHalf is null || guestFirstHalf is null
+            ? null
+            : $"HT {homeFirstHalf.TotalPoints}-{guestFirstHalf.TotalPoints}";
+
+    /// <summary>
+    /// Our side's injuries as the notes card reads them ("M. Ratu 45' — 7 days, replaced
+    /// by J. Doe"), one line per event; empty when the summary is absent or holds none.
+    /// </summary>
+    public static IReadOnlyList<string> InjuryLines(
+        MatchSummaryRow? summary, bool oursIsHome, IReadOnlyDictionary<int, string> names) =>
+        EventLines(summary?.InjuriesJson, oursIsHome, names, injury: true);
+
+    /// <summary>Our side's substitutions, as the notes card reads them ("J. Doe 60' — replaced by K. Ali").</summary>
+    public static IReadOnlyList<string> SubstitutionLines(
+        MatchSummaryRow? summary, bool oursIsHome, IReadOnlyDictionary<int, string> names) =>
+        EventLines(summary?.SubstitutionsJson, oursIsHome, names, injury: false);
+
+    /// <summary>
+    /// Formats our side's events from one Match Summary JSON blob (`{ home: [...],
+    /// guest: [...] }` of `MatchSummaryEvent`s, as the cache writes it). A malformed or
+    /// absent blob, or the entity's default `"[]"`, reads as no events rather than
+    /// throwing; a Player unknown to the capture reads as "Player {id}".
+    /// </summary>
+    private static IReadOnlyList<string> EventLines(
+        string? json, bool oursIsHome, IReadOnlyDictionary<int, string> names, bool injury)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        JsonDocument document;
+        try
+        {
+            document = JsonDocument.Parse(json);
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+
+        using (document)
+        {
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object
+                || !root.TryGetProperty(oursIsHome ? "home" : "guest", out var events)
+                || events.ValueKind != JsonValueKind.Array)
+            {
+                return [];
+            }
+
+            var lines = new List<string>();
+            foreach (var item in events.EnumerateArray())
+            {
+                var playerId = ReadJsonInt(item, "PlayerId");
+                if (playerId <= 0)
+                {
+                    continue;
+                }
+
+                var minute = ReadJsonInt(item, "Minute");
+                var replacedBy = ReadJsonInt(item, "ReplacedById");
+                var name = PlayerNameFor(playerId, names);
+                if (injury)
+                {
+                    var days = ReadJsonInt(item, "DaysInjured");
+                    var tail = replacedBy > 0 ? $", replaced by {PlayerNameFor(replacedBy, names)}" : string.Empty;
+                    lines.Add($"{name} {minute}' — {days} {(days == 1 ? "day" : "days")}{tail}");
+                }
+                else
+                {
+                    var tail = replacedBy > 0 ? $" — replaced by {PlayerNameFor(replacedBy, names)}" : string.Empty;
+                    lines.Add($"{name} {minute}'{tail}");
+                }
+            }
+
+            return lines;
+        }
+    }
+
+    private static int ReadJsonInt(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number
+            ? value.GetInt32()
+            : 0;
+
+    private static string PlayerNameFor(int playerId, IReadOnlyDictionary<int, string> names) =>
+        names.TryGetValue(playerId, out var name) && !string.IsNullOrWhiteSpace(name)
+            ? name
+            : $"Player {playerId}";
 
     private static void AddSlot(
         List<TeamSheetSlot> slots, int slot, int playerId, bool isBench, Lineup lineup,

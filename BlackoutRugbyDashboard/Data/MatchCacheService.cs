@@ -51,7 +51,8 @@ public sealed record SquadFixtureRows(
     IReadOnlyList<PlayerFixtureRow> Players,
     TeamFixtureStatRow? TeamStats,
     TeamFixtureStatRow? OpponentStats = null,
-    TeamFixtureStatRow? TeamFirstHalfStats = null);
+    TeamFixtureStatRow? TeamFirstHalfStats = null,
+    TeamFixtureStatRow? OpponentFirstHalfStats = null);
 
 /// <summary>
 /// One cached appearance of a Player (D7): the Fixture it was, the PlayerFixture
@@ -526,7 +527,8 @@ public class MatchCacheService(
                 playersByFixture.TryGetValue(fixtureId, out var players) ? players : Array.Empty<PlayerFixtureRow>(),
                 fullStats.FirstOrDefault(row => row.TeamId == teamId),
                 fullStats.FirstOrDefault(row => row.TeamId != teamId),
-                teamStats.FirstOrDefault(row => row.TeamId == teamId && row.Half == "half1"));
+                teamStats.FirstOrDefault(row => row.TeamId == teamId && row.Half == "half1"),
+                teamStats.FirstOrDefault(row => row.TeamId != teamId && row.Half == "half1"));
         }
 
         return result;

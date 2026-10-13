@@ -156,13 +156,23 @@ public class PageModelTests
             FixtureId = 1, TeamId = OpponentId, Side = "guest", Half = "full",
             Possession = 60, Territory = 55, Tries = 1
         });
+        harness.Db.TeamFixtureStats.Add(new TeamFixtureStatRow
+        {
+            FixtureId = 1, TeamId = TeamId, Side = "home", Half = "half1", TotalPoints = 12
+        });
+        harness.Db.TeamFixtureStats.Add(new TeamFixtureStatRow
+        {
+            FixtureId = 1, TeamId = OpponentId, Side = "guest", Half = "half1", TotalPoints = 7
+        });
         harness.Db.PlayerFixtures.Add(new PlayerFixtureRow
         {
             FixtureId = 1, TeamId = TeamId, PlayerId = 16728687, Slot = 1, MinutesPlayed = 80
         });
         harness.Db.MatchSummaries.Add(new MatchSummaryRow
         {
-            FixtureId = 1, HomePoints = 31, GuestPoints = 17, HomeIntensity = 2
+            FixtureId = 1, HomePoints = 31, GuestPoints = 17, HomeIntensity = 2,
+            WeatherId = 2, WeatherNight = true,
+            InjuriesJson = """{"home":[{"PlayerId":16728687,"Minute":45,"DaysInjured":7,"ReplacedById":null}],"guest":[]}"""
         });
         await harness.Db.SaveChangesAsync();
         await WriteSnapshotAsync(harness);
@@ -173,6 +183,11 @@ public class PageModelTests
 
         Assert.False(model.NotFound);
         Assert.True(model.IsOurFixture);
+        Assert.Equal(62, model.Season);
+        Assert.Equal("Weather 2 · Night", model.WeatherLabel);
+        Assert.Equal("HT 12-7", model.HalfTime);
+        Assert.Equal("M. Ratu 45' — 7 days", Assert.Single(model.InjuryLines));
+        Assert.True(model.HasNotes);
         Assert.Equal(23, model.TeamSheet.Count);
         Assert.Equal("M. Ratu", model.TeamSheet[0].Name);
         Assert.True(model.TeamSheet.Single(slot => slot.PlayerId == 16398979).IsCaptain);

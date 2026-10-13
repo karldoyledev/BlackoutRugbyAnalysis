@@ -39,10 +39,22 @@ else
             <span class="masthead-team">@Model.HomeName</span>
             <span class="masthead-result">@Score(Model.HomeScore) - @Score(Model.GuestScore)</span>
             <span class="masthead-team">@Model.GuestName</span>
+            @if (Model.HalfTime is not null)
+            {
+                <span class="masthead-halftime" title="Half-time score">@Model.HalfTime</span>
+            }
         </div>
         <div class="pill-row">
             <span class="pill neutral-pill">@Model.Competition</span>
+            @if (Model.Season > 0)
+            {
+                <span class="pill neutral-pill">Season @Model.Season</span>
+            }
             <span class="pill neutral-pill">@Model.Date.ToString("MMM d, yyyy")</span>
+            @if (Model.WeatherLabel is not null)
+            {
+                <span class="pill neutral-pill">@Model.WeatherLabel</span>
+            }
             @if (!string.IsNullOrWhiteSpace(Model.Stadium))
             {
                 <span class="pill neutral-pill">@Model.Stadium</span>
@@ -196,13 +208,21 @@ else
     }
     else
     {
-        @if (Model.ScoringLines.Count > 0)
+        @if (Model.HasNotes)
         {
             <section class="table-panel">
                 <div class="section-heading"><h2>Match notes</h2></div>
                 @foreach (var line in Model.ScoringLines)
                 {
                     <p class="note-line">@line</p>
+                }
+                @if (Model.InjuryLines.Count > 0)
+                {
+                    <p class="note-line note-line-adverse">Injuries: @string.Join("; ", Model.InjuryLines)</p>
+                }
+                @if (Model.SubstitutionLines.Count > 0)
+                {
+                    <p class="note-line">Subs: @string.Join("; ", Model.SubstitutionLines)</p>
                 }
             </section>
         }

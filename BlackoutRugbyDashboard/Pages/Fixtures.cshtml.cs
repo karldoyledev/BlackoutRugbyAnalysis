@@ -62,6 +62,26 @@ public class FixtureModel(
 
     public IReadOnlyList<RecommendationItem> Recommendations { get; private set; } = Array.Empty<RecommendationItem>();
 
+    /// <summary>The Fixture's season, for the masthead sub-line (D6 §1).</summary>
+    public int Season { get; private set; }
+
+    /// <summary>The masthead's weather pill ("Weather 2 · Night"), or null when no
+    /// weather id is cached.</summary>
+    public string? WeatherLabel { get; private set; }
+
+    /// <summary>The masthead's half-time score ("HT 12-7"), or null when the half-1
+    /// blocks are not cached — D6 §1 keeps it a soft dependency, omitted cleanly.</summary>
+    public string? HalfTime { get; private set; }
+
+    /// <summary>Our side's injuries and substitutions from the cached Match Summary
+    /// (D6 §6), one line per event; empty when there are none.</summary>
+    public IReadOnlyList<string> InjuryLines { get; private set; } = Array.Empty<string>();
+    public IReadOnlyList<string> SubstitutionLines { get; private set; } = Array.Empty<string>();
+
+    /// <summary>True when the Match notes card has anything to show (scorers, injuries
+    /// or subs) — D6 §6 keeps the card always-on but slim.</summary>
+    public bool HasNotes => ScoringLines.Count > 0 || InjuryLines.Count > 0 || SubstitutionLines.Count > 0;
+
     /// <summary>The open Stat-Group tab and its locked field set, and the column sort.</summary>
     public StatGroup SelectedGroup { get; private set; } = GameReviewMatrix.ParseGroup(null);
     public IReadOnlyList<GameReviewField> GroupFields { get; private set; } = GameReviewMatrix.FieldsFor(GameReviewMatrix.ParseGroup(null));
@@ -112,6 +132,8 @@ public class FixtureModel(
         AttendanceTotal = MatchAnalysis.AttendanceTotal(fixtureRows.Summary);
         AttendanceBreakdown = MatchAnalysis.AttendanceBreakdown(fixtureRows.Summary);
         Compare = MatchAnalysis.BuildCompare(fixtureRows.TeamStats, fixtureRows.OpponentStats);
+        Season = fixture.Season;
+        WeatherLabel = MatchAnalysis.WeatherText(fixtureRows.Summary?.WeatherId, fixtureRows.Summary?.WeatherNight);
 
         SelectedGroup = GameReviewMatrix.ParseGroup(tab);
         GroupFields = GameReviewMatrix.FieldsFor(SelectedGroup);
@@ -148,6 +170,15 @@ public class FixtureModel(
                 ? fixtureRows.Summary?.GuestIntensity
                 : null;
         IntensityChip = MatchAnalysis.IntensityText(intensity);
+
+        // Masthead half-time score + the notes card's injuries and subs (D6 §1/§6): all
+        // from the cached Match Summary and half-1 team rows, ours-only.
+        var oursIsHome = fixture.HomeTeamId == teamId;
+        HalfTime = MatchAnalysis.HalfTimeScore(
+            oursIsHome ? fixtureRows.TeamFirstHalfStats : fixtureRows.OpponentFirstHalfStats,
+            oursIsHome ? fixtureRows.OpponentFirstHalfStats : fixtureRows.TeamFirstHalfStats);
+        InjuryLines = MatchAnalysis.InjuryLines(fixtureRows.Summary, oursIsHome, names);
+        SubstitutionLines = MatchAnalysis.SubstitutionLines(fixtureRows.Summary, oursIsHome, names);
 
         var previousRows = await ReadPreviousAsync(teamId, fixture);
         var built = GameReviewMatrix.BuildRows(fixtureRows, capture, SelectedGroup, previousRows);

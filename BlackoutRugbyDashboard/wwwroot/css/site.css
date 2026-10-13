@@ -930,6 +930,12 @@ input::placeholder {
   font-variant-numeric: tabular-nums;
 }
 
+.masthead-halftime {
+  font-size: 12px;
+  color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
 .compare-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -974,6 +980,10 @@ input::placeholder {
   margin: 0 0 4px;
   font-size: 13px;
   color: var(--text);
+}
+
+.note-line-adverse {
+  color: var(--loss);
 }
 
 /* ---- Playground / misc ---- */

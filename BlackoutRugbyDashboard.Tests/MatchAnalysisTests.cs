@@ -145,4 +145,59 @@ public class MatchAnalysisTests
     {
         Assert.Equal(expected, MatchAnalysis.IntensityText(intensity));
     }
+
+    [Theory]
+    [InlineData(2, true, "Weather 2 · Night")]
+    [InlineData(2, false, "Weather 2")]
+    [InlineData(2, null, "Weather 2")]
+    [InlineData(0, true, null)]
+    [InlineData(null, true, null)]
+    public void WeatherText_ReadsTheIdAndNightFlag(int? weatherId, bool? night, string? expected)
+    {
+        Assert.Equal(expected, MatchAnalysis.WeatherText(weatherId, night));
+    }
+
+    [Fact]
+    public void HalfTimeScore_ReadsBothHalves_OrOmitsWhenEitherIsMissing()
+    {
+        var home = new TeamFixtureStatRow { TotalPoints = 12 };
+        var guest = new TeamFixtureStatRow { TotalPoints = 7 };
+
+        Assert.Equal("HT 12-7", MatchAnalysis.HalfTimeScore(home, guest));
+        Assert.Null(MatchAnalysis.HalfTimeScore(home, null));
+        Assert.Null(MatchAnalysis.HalfTimeScore(null, guest));
+    }
+
+    [Fact]
+    public void InjuryAndSubstitutionLines_ReadOurSide_WithNamesAndReplacements()
+    {
+        var summary = new MatchSummaryRow
+        {
+            InjuriesJson = """{"home":[{"PlayerId":1,"Minute":45,"DaysInjured":7,"ReplacedById":2}],"guest":[{"PlayerId":9,"Minute":10,"DaysInjured":3,"ReplacedById":null}]}""",
+            SubstitutionsJson = """{"home":[{"PlayerId":2,"Minute":60,"DaysInjured":0,"ReplacedById":3}],"guest":[]}"""
+        };
+        var names = new Dictionary<int, string> { [1] = "M. Ratu", [2] = "J. Doe", [3] = "K. Ali" };
+
+        Assert.Equal("M. Ratu 45' — 7 days, replaced by J. Doe",
+            Assert.Single(MatchAnalysis.InjuryLines(summary, oursIsHome: true, names)));
+        Assert.Equal("J. Doe 60' — replaced by K. Ali",
+            Assert.Single(MatchAnalysis.SubstitutionLines(summary, oursIsHome: true, names)));
+
+        // The away side reads the guest array; an unknown Player falls back to its id.
+        Assert.Equal("Player 9 10' — 3 days",
+            Assert.Single(MatchAnalysis.InjuryLines(summary, oursIsHome: false, names)));
+        Assert.Empty(MatchAnalysis.SubstitutionLines(summary, oursIsHome: false, names));
+    }
+
+    [Theory]
+    [InlineData("[]")]                                   // the entity's default
+    [InlineData("")]
+    [InlineData("not json")]
+    public void InjuryLines_MalformedOrEmpty_ReadNoEvents(string json)
+    {
+        var summary = new MatchSummaryRow { InjuriesJson = json };
+
+        Assert.Empty(MatchAnalysis.InjuryLines(summary, oursIsHome: true, new Dictionary<int, string>()));
+        Assert.Empty(MatchAnalysis.InjuryLines(null, oursIsHome: true, new Dictionary<int, string>()));
+    }
 }
