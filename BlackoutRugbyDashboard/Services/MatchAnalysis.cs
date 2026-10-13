@@ -76,10 +76,7 @@ public static class MatchAnalysis
             .Select(entry => (Label: entry.Item2, Rows: scorers.Where(row => row.ScorerType == entry.Item1).ToList()))
             .Where(entry => entry.Rows.Count > 0)
             .Select(entry => $"{entry.Label}: " + string.Join(", ", entry.Rows.Select(row =>
-                (names.TryGetValue(row.PlayerId, out var name) && !string.IsNullOrWhiteSpace(name)
-                    ? name
-                    : $"Player {row.PlayerId}")
-                + (row.Count > 1 ? $" ×{row.Count}" : string.Empty))))
+                PlayerNameFor(row.PlayerId, names) + (row.Count > 1 ? $" ×{row.Count}" : string.Empty))))
             .ToList();
     }
 
@@ -246,10 +243,9 @@ public static class MatchAnalysis
             return;
         }
 
-        var name = names.TryGetValue(playerId, out var resolved) && !string.IsNullOrWhiteSpace(resolved)
-            ? resolved
-            : $"Player {playerId}";
-        slots.Add(new TeamSheetSlot(slot, playerId, name, isBench, lineup.CaptainId == playerId, lineup.KickerId == playerId));
+        slots.Add(new TeamSheetSlot(
+            slot, playerId, PlayerNameFor(playerId, names), isBench,
+            lineup.CaptainId == playerId, lineup.KickerId == playerId));
     }
 
     private static CompareRow Share(string label, int? us, int? them)
