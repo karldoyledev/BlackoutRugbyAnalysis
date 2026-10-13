@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using BlackoutRugbyDashboard.Data;
 using BlackoutRugbyDashboard.Models;
 using BlackoutRugbyDashboard.Pages;
@@ -88,13 +89,19 @@ public class PageModelTests
         CountingApi Api,
         string ContentRoot);
 
-    private static Harness BuildHarness()
+    private static Harness BuildHarness(bool linked = true)
     {
         var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
         var db = new DashboardDbContext(new DbContextOptionsBuilder<DashboardDbContext>().UseSqlite(connection).Options);
         db.Database.EnsureCreated();
-        db.Users.Add(new DashboardUser { Id = "u1", UserName = "u@example.com", MemberId = 1000, TeamId = TeamId });
+        db.Users.Add(new DashboardUser
+        {
+            Id = "u1",
+            UserName = "u@example.com",
+            MemberId = linked ? 1000 : null,
+            TeamId = linked ? TeamId : null
+        });
         db.SaveChanges();
 
         var httpContext = new DefaultHttpContext
@@ -296,6 +303,49 @@ public class PageModelTests
         Assert.NotNull(model.SeasonTotals);
         Assert.False(model.EmptyTrends);
         Assert.Equal(0, harness.Api.Calls);
+    }
+
+    [Fact]
+    public async Task PlaygroundModel_PrefillsCardDefaults_FromTheLinkedClubCache()
+    {
+        var harness = BuildHarness();
+        harness.Db.Fixtures.Add(new FixtureRow
+        {
+            FixtureId = 5001, Season = 62, LeagueId = 349097, Round = 3, Competition = "League",
+            HomeTeamId = TeamId, GuestTeamId = OpponentId, MatchStartUnix = 100, MatchFinishUnix = 200
+        });
+        harness.Db.TeamFacts.Add(new TeamFactRow
+        {
+            TeamId = TeamId, Name = "Testers", CountryIso = "NZ", CapturedAt = DateTime.UtcNow
+        });
+        await harness.Db.SaveChangesAsync();
+        await WriteSnapshotAsync(harness);
+
+        var model = new PlaygroundModel(
+            harness.Links, harness.Cache, harness.Snapshots, NullLogger<PlaygroundModel>.Instance);
+        await model.OnGetAsync();
+
+        var defaults = JsonSerializer.Deserialize<Dictionary<string, string>>(model.DefaultsJson)!;
+        Assert.Equal("45047", defaults["teamid"]);
+        Assert.Equal("1000", defaults["memberid"]);
+        Assert.Equal("5001", defaults["fixtureid"]);
+        Assert.Equal("62", defaults["season"]);
+        Assert.Equal("3", defaults["round"]);
+        Assert.Equal("349097", defaults["leagueid"]);
+        Assert.Equal("NZ", defaults["country_iso"]);
+        Assert.Equal("16728687", defaults["playerid"]); // the snapshot's first Player
+    }
+
+    [Fact]
+    public async Task PlaygroundModel_Unlinked_PrefillsNothing()
+    {
+        var harness = BuildHarness(linked: false);
+
+        var model = new PlaygroundModel(
+            harness.Links, harness.Cache, harness.Snapshots, NullLogger<PlaygroundModel>.Instance);
+        await model.OnGetAsync();
+
+        Assert.Equal("{}", model.DefaultsJson);
     }
 }
 

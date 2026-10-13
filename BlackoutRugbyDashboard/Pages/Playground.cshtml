@@ -121,8 +121,9 @@
 
     .response-container {
         margin-top: 15px;
-        max-height: 400px;
-        overflow-y: auto;
+        max-height: 560px;
+        overflow: auto;
+        resize: vertical;
     }
 
     .response-box {
@@ -130,12 +131,13 @@
         border: 1px solid #ddd;
         border-radius: 4px;
         padding: 12px;
+        min-height: 260px;
         font-family: 'Courier New', monospace;
         font-size: 0.8em;
-        white-space: pre-wrap;
-        word-wrap: break-word;
+        white-space: pre;
+        overflow-x: auto;
         color: #333;
-        line-height: 1.3;
+        line-height: 1.4;
     }
 
     .response-box.error {
@@ -193,6 +195,10 @@
 <div id="endpointsContainer"></div>
 
 <script>
+    // Card field defaults from the linked club's own cache (see PlaygroundModel); a
+    // card falls back to its placeholder when a parameter is not listed here.
+    const defaults = @Html.Raw(Model.DefaultsJson);
+
     const endpoints = {
         countries: {
             code: 'c',
@@ -432,7 +438,7 @@
 
         config.parameters.forEach(param => {
             const requiredMark = param.required ? '<span class="parameter-required">*</span>' : '';
-            const defaultVal = param.default || '';
+            const defaultVal = param.default || defaults[param.name] || '';
             
             if (param.type === 'checkbox') {
                 html += `
@@ -509,7 +515,7 @@
 
             if (data.success) {
                 responseBox.className = 'response-box success';
-                responseBox.textContent = data.response;
+                responseBox.textContent = formatResponse(data.response);
             } else {
                 responseBox.className = 'response-box error';
                 responseBox.textContent = `Error: ${data.error}`;
@@ -525,13 +531,63 @@
         config.parameters.forEach(param => {
             const input = document.getElementById(`${endpoint}-${param.name}`);
             if (input) {
-                input.value = param.default || '';
+                input.value = param.default || defaults[param.name] || '';
             }
         });
         
         const responseBox = document.getElementById(`response-${endpoint}`);
         responseBox.className = 'response-box no-response';
         responseBox.textContent = 'No response yet';
+    }
+
+    // The API returns XML as one long line; pretty-print it so a response is readable.
+    // Bodies that are not XML (JSON, plain text, an HTML error page) pass through.
+    function formatResponse(text) {
+        if (!text) {
+            return '(empty response)';
+        }
+
+        if (text.trim().charAt(0) !== '<') {
+            return text;
+        }
+
+        const doc = new DOMParser().parseFromString(text, 'application/xml');
+        if (doc.querySelector('parsererror')) {
+            return text;
+        }
+
+        return prettyXml(doc.documentElement, '');
+    }
+
+    function prettyXml(node, indent) {
+        const ELEMENT_NODE = 1;
+        const TEXT_NODE = 3;
+
+        const attributes = Array.from(node.attributes || [])
+            .map(attribute => ` ${attribute.name}="${attribute.value}"`)
+            .join('');
+
+        const children = Array.from(node.childNodes).filter(child =>
+            child.nodeType === ELEMENT_NODE ||
+            (child.nodeType === TEXT_NODE && child.nodeValue.trim() !== ''));
+
+        const open = `${indent}<${node.nodeName}${attributes}`;
+
+        if (children.length === 0) {
+            return `${open} />\n`;
+        }
+
+        if (children.length === 1 && children[0].nodeType === TEXT_NODE) {
+            return `${open}>${children[0].nodeValue.trim()}</${node.nodeName}>\n`;
+        }
+
+        let out = `${open}>\n`;
+        for (const child of children) {
+            out += child.nodeType === TEXT_NODE
+                ? `${indent}  ${child.nodeValue.trim()}\n`
+                : prettyXml(child, indent + '  ');
+        }
+        return `${out}${indent}</${node.nodeName}>\n`;
     }
 
     // Initialize on load
